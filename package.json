@@ -1,0 +1,34 @@
+{
+  "name": "simpleservermonitoring",
+  "description": "The first steps in the node.js development, using express. Also it's using the vue.js for the frontend.",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "migrate": "node ./bin/migrate.js",
+    "insert": "node ./bin/insertion.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EvilMurlok/simpleServerMonitoring.git"
+  },
+  "keywords": [
+    "node",
+    "server",
+    "monitoring",
+    "training"
+  ],
+  "author": "Ilya Panin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/EvilMurlok/simpleServerMonitoring/issues"
+  },
+  "homepage": "https://github.com/EvilMurlok/simpleServerMonitoring#readme",
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "express": "^4.17.3",
+    "morgan": "^1.10.0",
+    "pg": "^8.7.3",
+    "sequelize": "^6.16.2"
+  }
+}
