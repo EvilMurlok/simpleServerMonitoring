@@ -1,5 +1,5 @@
-let db = require('../database.js');
+let sequelize = require('../sequelize/index');
 
-db.sequelize.sync().then(() => {
+sequelize.sync().then(() => {
     console.log("Сервер ожидает подключения...");
 }).catch(err => console.log(err));
