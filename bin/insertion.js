@@ -6,4 +6,4 @@ async function insertion(){
     await models.user.create({ username: "Denis",  password: getPassword("qwerty123") });
 }
 
-insertion();
+insertion().then();

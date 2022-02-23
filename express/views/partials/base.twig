@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+{#    <link rel="shortcut icon" href="/static/media/nav/logo.png" type="image/png">#}
+    <link href="./css/bootstrap.min.css" rel="stylesheet">
+{#    <link href="/express/views/bootstrap/css/style.css" rel="stylesheet">#}
+    <title>
+        {% block title %}
+
+        {% endblock %}
+    </title>
+</head>
+<body>
+<div class="container">
+    {% include 'partials/_nav.twig' %}
+    <div class="row">
+        <div class="col-md-3 mb-5">
+            {% include 'partials/_sidebar.twig' %}
+        </div>
+        <div class="col-md-9 mb-5">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+    {% include 'partials/_footer.twig' %}
+</div>
+<script src="./js/bootstrap.min.js"></script>
+</body>
+</html>

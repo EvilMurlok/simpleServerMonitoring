@@ -1,18 +1,18 @@
 const { models } = require("../../sequelize");
 const getPassword = require('../ulils/utils');
 
-const hello = async (req, res, next) => {
+const hello = async (req, res) => {
     res.send("Hello, world!");
 }
 
-const findAll = async (req, res, next) => {
+const findAll = async (req, res) => {
     const users = await models.user.findAll({
         attributes: ["username", "createdAt"],
     });
     res.json(users);
 }
 
-const addUser = async (req, res, next) => {
+const addUser = async (req, res) => {
     if (!req.body.password){
         res.status(403).send({error: "Password required!"});
     }
