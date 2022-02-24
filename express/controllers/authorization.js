@@ -20,7 +20,7 @@ const user_register = async (req, res) => {
 const user_register_post = async (req, res) => {
     let { username, user_password, confirm_password } = req.body;
     let messages = [];
-    let [right_username, right_password] = [/^[a-zA-Z0-9_]{3,16}$/, /^[a-z0-9_-]+/];
+    let [right_username, right_password] = [/^[a-zA-Z0-9_]{3,16}$/, /^[a-zA-Z0-9_-]+/];
     // All required validations
     if ( !username ){
         messages.push({ message: "Поле никнейма обязательно для заполнения!"});
