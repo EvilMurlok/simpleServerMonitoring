@@ -1,0 +1,24 @@
+{% extends '../partials/base.twig' %}
+
+{% block title %}
+    Вход пользователя
+{% endblock %}
+
+{% block content %}
+    <h2>Форма входа</h2>
+    {% include '../partials/_message.twig' %}
+    <form class="mb-3" method="post" action="/login">
+        <div class="mb-3">
+            <label for="username" class="form-label">Ваш никнейм</label>
+            <input type="text" name="username" class="form-control" id="username" value="{{ form ? form.Username }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="user_password" class="form-label">Пароль</label>
+            <input type="password" name="user_password" class="form-control" id="user_password" required>
+        </div>
+        <button type="submit" class="btn btn-success">Войти</button>
+    </form>
+    <div>
+        <span>Нет аккаунта? Не проблема!</span> <a href="/register" >Зарегистрироваться!</a>
+    </div>
+{% endblock %}

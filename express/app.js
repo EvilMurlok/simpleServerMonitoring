@@ -3,13 +3,18 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const path = require("path");
+const session = require("express-session");
+const flash = require('express-flash');
+const passport = require('passport');
 
 // local routes requirements
 const testRouter = require('./routes/testRoutes');
 const authRouter = require('./routes/authorization');
-
+const { SESSION_SECRET } = require('../config/session.conf');
+const initializePassport = require('./passportConfig');
 
 const app = express();
+
 
 // templating setup
 app.set('views', path.join(__dirname, './views'));
@@ -22,23 +27,24 @@ app.set("twig options", {
 app.use(morgan('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(
+    session({
+        secret: SESSION_SECRET,
+        resave: false,
+        saveUninitialized: false,
+        cookie: { maxAge: 60000,  secure: false }
+    })
+);
+app.use(passport.initialize({}));
+// Store our variables to be persisted across the whole session.
+// Works with app.use(Session) above
+app.use(passport.session({}));
+app.use(flash());
 
-// connection the bootstrap module
-app.use('/css', express.static(path.join(__dirname, '../node_modules/bootstrap/dist/css')))
-app.use('/js', express.static(path.join(__dirname, '../node_modules/bootstrap/dist/js')))
-
-// We create a wrapper to workaround async errors not being transmitted correctly.
-// function makeHandlerAwareOfAsyncErrors(handler) {
-//     return async function(req, res, next) {
-//         try {
-//             await handler(req, res);
-//         } catch (error) {
-//             next(error);
-//         }
-//     };
-// }
-
+// include all routes
 app.use('', authRouter);
 app.use('', testRouter);
+
+initializePassport(passport);
 
 module.exports = app;
