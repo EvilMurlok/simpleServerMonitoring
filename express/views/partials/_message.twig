@@ -21,3 +21,10 @@
         </li>
     {% endif %}
 </ul>
+<ul>
+    {% if messages.info %}
+        <li class="mb-3 alert-info" role="alert">
+            {{ messages.info }}
+        </li>
+    {% endif %}
+</ul>

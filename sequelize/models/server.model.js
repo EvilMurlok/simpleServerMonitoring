@@ -3,6 +3,11 @@ const { DataTypes } = require('sequelize');
 module.exports = (sequelize) => {
     sequelize.define(
         'server', {
+            id: {
+                autoIncrement: true,
+                primaryKey: true,
+                type: DataTypes.INTEGER
+            },
             hostname: {
                 type: DataTypes.STRING,
                 unique: true,
@@ -10,6 +15,7 @@ module.exports = (sequelize) => {
             },
             status: {
                 type: DataTypes.ENUM('on', 'off'),
+                defaultValue: 'on',
                 allowNull: false,
             },
             CPU_number: {

@@ -3,7 +3,6 @@ const bcrypt = require("bcrypt");
 const { Op } = require("sequelize");
 
 const { models } = require("../sequelize");
-const constants = require("constants");
 
 function initialize(passport) {
     const authenticateUser = (username, password, done) => {

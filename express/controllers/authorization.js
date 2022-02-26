@@ -3,15 +3,14 @@ const bcrypt = require("bcrypt");
 
 const { models } = require("../../sequelize");
 
-// Rendering "/index" view file
-const index = async (req, res) => {
-    console.log(req.isAuthenticated());
-    res.render("index.twig", {
-        isAuth: req.isAuthenticated(),
-        name: req.user.username,
-        title: "Your Website"
-    });
-};
+// // Rendering "/index" view file
+// const index = async (req, res) => {
+//     res.render("index.twig", {
+//         isAuth: req.isAuthenticated(),
+//         name: req.user.username,
+//         title: "Your servers"
+//     });
+// };
 
 const user_register = async (req, res) => {
     res.render("./auth/register-user.twig");
@@ -66,7 +65,7 @@ const user_register_post = async (req, res) => {
                 password: hashedPassword
             });
             req.flash("success_msg", `Пользователь ${username} успешно зарегистрирован!`);
-            res.status(201).redirect("/login");
+            res.status(201).redirect("/login/");
         }
     }
 }
@@ -78,11 +77,10 @@ const user_login = async (req, res) => {
 const user_logout = async (req, res) => {
     req.flash("success_msg", `Пользователь ${req.user.username} успешно разлогинен!`);
     req.logout();
-    res.redirect('/login');
+    res.redirect('/login/');
 }
 
 module.exports = {
-    index,
     user_register,
     user_register_post,
     user_login,

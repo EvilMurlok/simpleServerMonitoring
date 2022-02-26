@@ -10,6 +10,7 @@ const passport = require('passport');
 // local routes requirements
 const testRouter = require('./routes/testRoutes');
 const authRouter = require('./routes/authorization');
+const serverRouter = require('./routes/server');
 const { SESSION_SECRET } = require('../config/session.conf');
 const initializePassport = require('./passportConfig');
 
@@ -32,7 +33,7 @@ app.use(
         secret: SESSION_SECRET,
         resave: false,
         saveUninitialized: false,
-        cookie: { maxAge: 60000,  secure: false }
+        cookie: { maxAge: 360000,  secure: false }
     })
 );
 app.use(passport.initialize({}));
@@ -43,6 +44,7 @@ app.use(flash());
 
 // include all routes
 app.use('', authRouter);
+app.use('', serverRouter);
 app.use('', testRouter);
 
 initializePassport(passport);

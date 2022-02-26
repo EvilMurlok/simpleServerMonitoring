@@ -4,7 +4,7 @@ const checkAuthenticated = (req, res, next) => {
         return next();
     }
     req.flash("error", "Вы уже вошли в систему!");
-    res.redirect("/index");
+    res.redirect("/show-servers/");
 }
 
 const checkNotAuthenticated = (req, res, next) => {
@@ -13,7 +13,7 @@ const checkNotAuthenticated = (req, res, next) => {
         return next();
     }
     req.flash("error", "Для посещения этой страницы необходима авторизация!");
-    res.redirect("/login");
+    res.redirect("/login/");
 }
 
 module.exports = {

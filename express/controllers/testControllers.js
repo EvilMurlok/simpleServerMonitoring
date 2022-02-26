@@ -1,5 +1,5 @@
 const { models } = require("../../sequelize");
-const getPassword = require('../ulils/utils');
+const getPassword = require('../utils/utils');
 
 const hello = async (req, res) => {
     res.send("Hello, world!");
@@ -10,6 +10,11 @@ const findAll = async (req, res) => {
         attributes: ["username", "createdAt"],
     });
     res.json(users);
+}
+
+const findAllServer = async (req, res) => {
+    const servers = await models.server.findAll();
+    res.json(servers);
 }
 
 const addUser = async (req, res) => {
@@ -24,5 +29,6 @@ const addUser = async (req, res) => {
 module.exports = {
     hello,
     findAll,
-    addUser
+    addUser,
+    findAllServer
 }
