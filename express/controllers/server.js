@@ -36,7 +36,13 @@ const show_servers = async (req, res) => {
         },
         order: [ ['createdAt', 'DESC'] ]
     });
-    res.render("../views/index.twig", {
+    // res.render("../views/index.twig", {
+    //     title: `Сервера ${req.user.username}`,
+    //     name: req.user.username,
+    //     servers: servers,
+    //     isAuth: req.isAuthenticated()
+    // });
+    res.json({
         title: `Сервера ${req.user.username}`,
         name: req.user.username,
         servers: servers,

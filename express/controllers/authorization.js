@@ -3,14 +3,6 @@ const bcrypt = require("bcrypt");
 
 const { models } = require("../../sequelize");
 
-// // Rendering "/index" view file
-// const index = async (req, res) => {
-//     res.render("index.twig", {
-//         isAuth: req.isAuthenticated(),
-//         name: req.user.username,
-//         title: "Your servers"
-//     });
-// };
 
 const user_register = async (req, res) => {
     res.render("./auth/register-user.twig");
@@ -19,7 +11,8 @@ const user_register = async (req, res) => {
 const user_register_post = async (req, res) => {
     let { username, user_password, confirm_password } = req.body;
     let messages = [];
-    let [right_username, right_password] = [/^[a-zA-Z0-9_]{3,16}$/, /^[a-zA-Z0-9_-]+/];
+    let [right_username, right_password] = [/^[0-9a-zA-Z!.@#$%^&*]{3,16}$/,
+        /(?=.*[0-9])(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z!.@#$%^&*]{6,}/g];
     // All required validations
     if ( !username ){
         messages.push({ message: "Поле никнейма обязательно для заполнения!"});
