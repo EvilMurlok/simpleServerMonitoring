@@ -3,8 +3,13 @@ const checkAuthenticated = (req, res, next) => {
     if (!req.isAuthenticated()) {
         return next();
     }
-    req.flash("error", "Вы уже вошли в систему!");
-    res.redirect("/show-servers/");
+    res.send({
+        message: "Вы уже вошли в систему!",
+        status: "danger",
+        isLoggedIn: req.isAuthenticated()
+    });
+    // req.flash("error", "Вы уже вошли в систему!");
+    // res.redirect("http://localhost:8081/#/show-servers");
 }
 
 const checkNotAuthenticated = (req, res, next) => {
@@ -12,8 +17,13 @@ const checkNotAuthenticated = (req, res, next) => {
     if (req.isAuthenticated()) {
         return next();
     }
-    req.flash("error", "Для посещения этой страницы необходима авторизация!");
-    res.redirect("/login/");
+    res.send({
+        message: "Для посещения этой страницы необходима авторизация!",
+        status: "danger",
+        isLoggedIn: req.isAuthenticated()
+    });
+    // req.flash("error", "Для посещения этой страницы необходима авторизация!");
+    // res.redirect("http://localhost:8081/#/login");
 }
 
 module.exports = {

@@ -6,13 +6,19 @@ const validate_data_addition = async (req, res, next) => {
     let {hostname, CPU_number} = req.body;
     let messages = validate_data(hostname, CPU_number);
     if (messages.length > 0) {
-        res.render("./server/add-server.twig", {
-            info: messages,
+        res.send({
             status: "danger",
-            hostname,
-            CPU_number,
-            isAuth: req.isAuthenticated()
+            messages: messages,
+            isLoggedIn: req.isAuthenticated()
         });
+
+        // res.render("./server/add-server.twig", {
+        //     info: messages,
+        //     status: "danger",
+        //     hostname,
+        //     CPU_number,
+        //     isAuth: req.isAuthenticated()
+        // });
     } else {
         const server = await models.server.findOne({
             where: {
@@ -24,13 +30,18 @@ const validate_data_addition = async (req, res, next) => {
         });
         if (server) {
             messages.push({message: "У Вас уже есть сервер с таким наименованием!"});
-            res.render("./server/add-server.twig", {
-                info: messages,
+            res.send({
+                messages: messages,
                 status: "danger",
-                hostname,
-                CPU_number,
-                isAuth: req.isAuthenticated()
+                isLoggedIn: req.isAuthenticated()
             });
+            // res.render("./server/add-server.twig", {
+            //     info: messages,
+            //     status: "danger",
+            //     hostname,
+            //     CPU_number,
+            //     isAuth: req.isAuthenticated()
+            // });
         } else {
             return next();
         }
@@ -47,25 +58,39 @@ const validate_data_update = async (req, res, next) => {
         }
     });
     if (!server) {
-        req.flash("error", "У Вас нет такого сервера!");
-        res.redirect("/show-servers/");
+        res.send({
+            message: "У Вас нет такого сервера!",
+            status: "no_server",
+            isLoggedIn: req.isAuthenticated()
+        });
+        // req.flash("error", "У Вас нет такого сервера!");
+        // res.redirect("/show-servers/");
     } else {
         let {hostname, CPU_number} = req.body;
         let messages = validate_data(hostname, CPU_number);
         if (messages.length > 0) {
-            res.render("./server/view-server.twig", {
-                info: messages,
+            res.send({
+                messages: messages,
                 status: "danger",
-                server,
-                isAuth: req.isAuthenticated()
+                isLoggedIn: req.isAuthenticated()
             });
+            // res.render("./server/view-server.twig", {
+            //     info: messages,
+            //     status: "danger",
+            //     server,
+            //     isAuth: req.isAuthenticated()
+            // });
         } else {
-            console.log(server.hostname, hostname, server.CPU_number, CPU_number);
-            if (hostname != server.hostname || server.CPU_number != CPU_number) {
+            if (String(hostname) !== String(server.hostname) || String(server.CPU_number) !== String(CPU_number)) {
                 return next();
             } else {
-                req.flash("info", "Данные изменены не были!");
-                res.redirect("/show-servers/");
+                res.send({
+                    message: "Данные изменены не были!",
+                    status: "info",
+                    isLoggedIn: req.isAuthenticated()
+                });
+                // req.flash("info", "Данные изменены не были!");
+                // res.redirect("/show-servers/");
             }
         }
     }

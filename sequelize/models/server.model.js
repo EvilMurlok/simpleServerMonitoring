@@ -10,7 +10,6 @@ module.exports = (sequelize) => {
             },
             hostname: {
                 type: DataTypes.STRING,
-                unique: true,
                 allowNull: false,
             },
             status: {

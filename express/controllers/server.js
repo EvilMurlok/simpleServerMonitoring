@@ -2,11 +2,11 @@ const {Op} = require("sequelize");
 const {models} = require("../../sequelize");
 const generate = require("../utils/generateServer");
 
-const add_server = async (req, res) => {
-    res.render("./server/add-server.twig", {
-        isAuth: req.isAuthenticated(),
-    });
-}
+// const add_server = async (req, res) => {
+//     res.render("./server/add-server.twig", {
+//         isAuth: req.isAuthenticated(),
+//     });
+// }
 
 const add_server_post = async (req, res) => {
     const memoryUsage = generate.generateMemoryUsage();
@@ -25,8 +25,13 @@ const add_server_post = async (req, res) => {
         latency: latency
 
     });
-    req.flash("success_msg", `Сервер ${req.body.hostname} успешно добавлен!`);
-    res.status(201).redirect("/show-servers/");
+    res.send({
+        status: "success",
+        message: `Сервер ${req.body.hostname} успешно добавлен!`,
+        isLoggedIn: req.isAuthenticated()
+    });
+    // req.flash("success_msg", `Сервер ${req.body.hostname} успешно добавлен!`);
+    // res.redirect("http://localhost:8081/#/show-servers");
 }
 
 const show_servers = async (req, res) => {
@@ -36,12 +41,17 @@ const show_servers = async (req, res) => {
         },
         order: [ ['createdAt', 'DESC'] ]
     });
-    res.render("../views/index.twig", {
-        title: `Сервера ${req.user.username}`,
-        name: req.user.username,
+    res.send({
+        // title: `Сервера ${req.user.username}`,
         servers: servers,
-        isAuth: req.isAuthenticated()
+        isLoggedIn: req.isAuthenticated()
     });
+    // res.render("../views/index.twig", {
+    //     title: `Сервера ${req.user.username}`,
+    //     name: req.user.username,
+    //     servers: servers,
+    //     isAuth: req.isAuthenticated()
+    // });
 }
 
 const view_server = async (req, res) => {
@@ -54,15 +64,24 @@ const view_server = async (req, res) => {
         }
     });
     if (!server) {
-        req.flash("error", "У вас такого сервера не существует!");
-        res.redirect("/show-servers/");
-    } else {
-        res.render("../views/server/view-server.twig", {
-            name: req.user.username,
-            title: server.hostname,
-            server: server,
-            isAuth: req.isAuthenticated()
+        res.send({
+            status: "danger",
+            message: "У вас такого сервера не существует!",
+            isLoggedIn: req.isAuthenticated()
         });
+        // req.flash("error", "У вас такого сервера не существует!");
+        // res.redirect("/show-servers/");
+    } else {
+        res.send({
+            server: server,
+            isLoggedIn: req.isAuthenticated()
+        });
+        // res.render("../views/server/view-server.twig", {
+        //     name: req.user.username,
+        //     title: server.hostname,
+        //     server: server,
+        //     isAuth: req.isAuthenticated()
+        // });
     }
 }
 
@@ -75,8 +94,13 @@ const update_server = async (req, res) => {
             id: req.params.serverId
         }
     });
-    req.flash("success_msg", `Сервер ${req.body.hostname} успешно изменен!`);
-    res.redirect("/show-servers/");
+    res.send({
+        message: `Сервер ${req.body.hostname} успешно изменен!`,
+        status: "success",
+        isLoggedIn: req.isAuthenticated()
+    });
+    // req.flash("success_msg", `Сервер ${req.body.hostname} успешно изменен!`);
+    // res.redirect("/show-servers/");
 }
 
 const delete_server = async (req, res) => {
@@ -89,8 +113,13 @@ const delete_server = async (req, res) => {
         }
     });
     if (!server){
-        req.flash("error", "У вас нет такого сервера!");
-        res.redirect("/show-servers/");
+        res.send({
+            message: "У вас нет такого сервера!",
+            status: "danger",
+            isLoggedIn: req.isAuthenticated()
+        });
+        // req.flash("error", "У вас нет такого сервера!");
+        // res.redirect("/show-servers/");
     }
     else{
         await models.server.destroy({
@@ -98,13 +127,18 @@ const delete_server = async (req, res) => {
                 id: req.params.serverId
             }
         });
-        req.flash("success_msg", `Сервер ${server.hostname} успешно удален!`);
-        res.redirect("/show-servers/");
+        res.send({
+            message: `Сервер ${server.hostname} успешно удален!`,
+            status: "success",
+            isLoggedIn: req.isAuthenticated()
+        });
+        // req.flash("success_msg", `Сервер ${server.hostname} успешно удален!`);
+        // res.redirect("/show-servers/");
     }
 }
 
 module.exports = {
-    add_server,
+    // add_server,
     add_server_post,
     show_servers,
     view_server,

@@ -6,7 +6,7 @@ const serverControllers = require('../controllers/server');
 
 const router = express.Router();
 
-router.get('/add-server/', middlewaresAuth.checkNotAuthenticated, serverControllers.add_server);
+// router.get('/add-server/', middlewaresAuth.checkNotAuthenticated, serverControllers.add_server);
 router.post('/add-server/', middlewaresAuth.checkNotAuthenticated,
     middlewaresServer.validate_data_addition, serverControllers.add_server_post);
 

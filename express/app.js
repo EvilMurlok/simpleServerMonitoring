@@ -2,10 +2,10 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
-const path = require("path");
 const session = require("express-session");
 const flash = require('express-flash');
 const passport = require('passport');
+
 
 // local routes requirements
 const testRouter = require('./routes/testRoutes');
@@ -16,18 +16,15 @@ const initializePassport = require('./passportConfig');
 
 const app = express();
 
+const allowCrossDomain = function (req, res, next) {
+    res.header('Access-Control-Allow-Origin', 'http://localhost:8081');
+    res.header('Access-Control-Allow-Methods', '*');
+    res.header('Access-Control-Allow-Headers', 'origin, content-type, accept');
+    res.header('Access-Control-Allow-Credentials', true);
+    next();
+}
+app.use(allowCrossDomain);
 
-// templating setup
-app.set('views', path.join(__dirname, './views'));
-app.set("twig options", {
-    allow_async: true, // Allow asynchronous compiling
-    strict_variables: false
-});
-
-// using the middlewares
-app.use(morgan('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
     session({
         secret: SESSION_SECRET,
@@ -40,13 +37,18 @@ app.use(passport.initialize({}));
 // Store our variables to be persisted across the whole session.
 // Works with app.use(Session) above
 app.use(passport.session({}));
+initializePassport(passport);
+
+// using the middlewares
+app.use(morgan('dev'));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(flash());
+
 
 // include all routes
 app.use('', authRouter);
 app.use('', serverRouter);
 app.use('', testRouter);
-
-initializePassport(passport);
 
 module.exports = app;

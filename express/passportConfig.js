@@ -36,14 +36,14 @@ function initialize(passport) {
 
     passport.use("local",
         new LocalStrategy(
-            { usernameField: "username", passwordField: "user_password" },
+            { usernameField: "username", passwordField: "password" },
             authenticateUser
         )
     );
 
     passport.serializeUser((user, done) => {
-        console.log("serializeUser")
-        done(null, user.id)
+        console.log("serializeUser");
+        done(null, user.id);
     });
 
     passport.deserializeUser( (id, done) => {
