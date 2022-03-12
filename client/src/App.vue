@@ -1,41 +1,33 @@
 <template>
   <div id="app">
-    <v-nav></v-nav>
-    <FlashMessage :position="'right top'"></FlashMessage>
-    <img class="monitoring-icon" alt="Vue logo" src="./assets/monitoring_icon.png">
-    <v-main-wrapper></v-main-wrapper>
-    <v-footer></v-footer>
+<!--    TODO-->
+<!--      <FlashMessage :position="'right top'"></FlashMessage>-->
+    <router-view></router-view>
   </div>
 </template>
 
 <script>
-import vMainWrapper from './components/v-main-wrapper';
-import VNav from "./components/partials/v-nav";
-import VFooter from "./components/partials/v-footer";
 
 export default {
   name: 'App',
   components: {
-    vMainWrapper,
-    VNav,
-    VFooter
   }
 }
 </script>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
+<style lang="scss">
+// Main Stylesheet
+@import './src/assets/scss/main';
 
-.monitoring-icon {
-  max-width: 300px;
-  max-height: 300px;
-  margin: 30px;
-}
+// Bootstrap Vue Stylesheet
+@import '~bootstrap-vue/src/index';
+
+// All color themes are included and available by default
+// Feel free to comment out any of them if you won't use them in your project
+//@import './src/assets/scss/oneui/themes/amethyst';
+//@import './src/assets/scss/oneui/themes/city';
+//@import './src/assets/scss/oneui/themes/flat';
+@import './src/assets/scss/oneui/themes/modern';
+//@import './src/assets/scss/oneui/themes/smooth';
 
 </style>

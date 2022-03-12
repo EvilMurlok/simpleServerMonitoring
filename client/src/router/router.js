@@ -1,12 +1,15 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 
-import vMainWrapper from '../components/v-main-wrapper';
-import vLogin from '../components/authorization/v-login';
-import vRegister from '../components/authorization/v-register';
-import vShowServers from '../components/server/v-show-servers';
-import vAddServer from '../components/server/v-add-server';
-import vServerItem from '../components/server/v-server-item';
+import vLogin from '../views/authorization/v-login';
+import vRegister from '../views/authorization/v-register';
+import vShowServers from '../views/server/v-show-servers';
+import vAddServer from '../views/server/v-add-server';
+import vServerItem from '../views/server/v-server-item';
+
+import LayoutSimple from '../layouts/variations/Simple';
+import LayoutBackend from '../layouts/variations/BackendStarter';
+
 
 Vue.use(Router);
 
@@ -14,52 +17,82 @@ let router = new Router({
     // mode: "history",
     routes: [
         {
-            path: '/',
-            name: 'mainWrapper',
-            component: vMainWrapper
-        },
-        {
-            path: '/login/',
-            name: 'login',
-            component: vLogin,
+            path: '/login',
+            redirect: '/login',
+            component: LayoutSimple,
             props: true,
             meta: {
                 guest: true
-            }
+            },
+            children: [
+                {
+                    path: '/login',
+                    name: 'login',
+                    component: vLogin
+                }
+            ]
         },
         {
-            path: '/register/',
-            name: 'register',
-            component: vRegister,
+            path: '/register',
+            redirect: '/register',
+            component: LayoutSimple,
             props: true,
             meta: {
                 guest: true
-            }
+            },
+            children: [
+                {
+                    path: '/register',
+                    name: 'register',
+                    component: vRegister
+                }
+            ]
         },
         {
             path: '/show-servers/',
-            name: 'showServers',
-            component: vShowServers,
+            redirect: '/show-servers',
+            component: LayoutBackend,
             meta: {
                 requiresAuth: true
-            }
+            },
+            children: [
+                {
+                    path: '/show-servers',
+                    name: 'showServers',
+                    component: vShowServers
+                }
+            ]
         },
         {
             path: '/view-server/:serverId/',
-            name: 'viewServer',
-            component: vServerItem,
+            redirect: '/view-server/:serverId/',
+            component: LayoutBackend,
             meta: {
                 requiresAuth: true
-            }
+            },
+            children: [
+                {
+                    path: '/view-server/:serverId/',
+                    name: 'viewServer',
+                    component: vServerItem
+                }
+            ]
         },
         {
             path: '/add-server/',
-            name: 'addServer',
-            component: vAddServer,
+            redirect: '/add-server/',
+            component: LayoutBackend,
             meta: {
                 requiresAuth: true
-            }
-        }
+            },
+            children: [
+                {
+                    path: '/add-server/',
+                    name: 'addServer',
+                    component: vAddServer
+                }
+            ]
+        },
     ]
 });
 
