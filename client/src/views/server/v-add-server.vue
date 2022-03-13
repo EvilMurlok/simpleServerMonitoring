@@ -92,10 +92,7 @@ export default {
               this.SET_LOGGED_IN("out");
               this.SET_USERNAME("");
               this.SET_USER_ID(0);
-              this.flashMessage.error({
-                message: res.data.message,
-                time: 7000,
-              });
+              localStorage.setItem("loggedOutMessage",  res.data.message + " (вероятная причина: Ваша сессия устарела)");
               this.$router.push("/login/");
             } else {
               if (res.data.status === "danger") {

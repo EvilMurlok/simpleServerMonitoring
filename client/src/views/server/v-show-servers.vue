@@ -7,8 +7,8 @@
             Мои сервера
           </h1>
           <h2 class="h6 font-w500 text-muted mb-0">
-            Привет, <b>{{ USERNAME }}</b>.
-            Это список твоих серверов
+            Приветсвуем, <b>{{ USERNAME }}</b>.
+            Здесь отображается список Ваших серверов
           </h2>
         </div>
         <div class="mt-3 mt-sm-0 ml-sm-3">
@@ -57,6 +57,9 @@
           </b-tbody>
         </b-table-simple>
       </base-block>
+      <b-button v-if="isLoadMore === true" class="btn btn-outline-info mb-3 mb-3" @click="loadMore" size="sm" variant="light">
+        <i class="fa fa-fw fa-plus-circle"></i> Загрузить ещё
+      </b-button>
     </div>
     <div v-else class="content">
       Вы ещё не добавили ни одного сервера!
@@ -76,7 +79,10 @@ export default {
 
   data() {
     return {
-      servers: []
+      servers: [],
+      offset: 0,
+      limit: 3,
+      isLoadMore: true
     }
   },
 
@@ -93,10 +99,7 @@ export default {
               this.SET_LOGGED_IN("out");
               this.SET_USERNAME("");
               this.SET_USER_ID(0);
-              this.flashMessage.error({
-                message: res.data.message,
-                time: 7000,
-              });
+              localStorage.setItem("loggedOutMessage",  res.data.message + " (вероятная причина: Ваша сессия устарела)");
               this.$router.push("/login/");
             }
             else{
@@ -117,11 +120,35 @@ export default {
           })
           .catch(err => console.error(err));
     },
+
+    loadMore() {
+      this.$http
+          .get(`show-servers-amount/${this.offset}/${this.limit}`)
+          .then(res => {
+            if (!res.data.isLoggedIn) {
+              localStorage.removeItem("isLoggedIn");
+              localStorage.removeItem("username");
+              localStorage.removeItem("id");
+              this.SET_LOGGED_IN("out");
+              this.SET_USERNAME("");
+              this.SET_USER_ID(0);
+              localStorage.setItem("loggedOutMessage",  res.data.message + " (вероятная причина: Ваша сессия устарела)");
+              this.$router.push("/login/");
+            } else {
+              this.servers = [...this.servers, ...res.data.servers.rows];
+              this.offset += res.data.servers.rows.length;
+              if (res.data.servers.count === this.offset){
+                this.isLoadMore = false;
+              }
+            }
+          })
+          .catch(err => console.error(err))
+    }
   },
 
-  mounted() {
+  created() {
     this.$http
-        .get('show-servers')
+        .get(`show-servers-amount/${this.offset}/${this.limit}`)
         .then(res => {
           if (!res.data.isLoggedIn) {
             localStorage.removeItem("isLoggedIn");
@@ -130,13 +157,14 @@ export default {
             this.SET_LOGGED_IN("out");
             this.SET_USERNAME("");
             this.SET_USER_ID(0);
-            this.flashMessage.error({
-              message: res.data.message,
-              time: 7000,
-            });
+            localStorage.setItem("loggedOutMessage",  res.data.message + " (вероятная причина: Ваша сессия устарела)");
             this.$router.push("/login/");
           } else {
-            this.servers = res.data.servers;
+            this.servers = res.data.servers.rows;
+            this.offset += res.data.servers.rows.length;
+            if (res.data.servers.count === this.offset){
+              this.isLoadMore = false;
+            }
           }
         })
         .catch(err => console.error(err));

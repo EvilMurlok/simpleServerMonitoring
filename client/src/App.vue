@@ -1,7 +1,6 @@
 <template>
   <div id="app">
-<!--    TODO-->
-<!--      <FlashMessage :position="'right top'"></FlashMessage>-->
+<!--      <FlashMessage class="custom-flash" :position="'right top'"></FlashMessage>-->
     <router-view></router-view>
   </div>
 </template>

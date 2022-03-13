@@ -82,6 +82,13 @@ export default {
     }
   },
 
+  created() {
+    if (localStorage.getItem("loggedOutMessage")) {
+      this.messages.push({message: localStorage.getItem("loggedOutMessage")});
+      localStorage.removeItem("loggedOutMessage");
+    }
+  },
+
   methods: {
     ...mapActions(['SET_USERNAME', 'SET_LOGGED_IN', 'SET_USER_ID']),
     login() {
