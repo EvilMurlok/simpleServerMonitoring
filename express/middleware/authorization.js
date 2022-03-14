@@ -16,7 +16,7 @@ const checkNotAuthenticated = (req, res, next) => {
         return next();
     }
     res.send({
-        message: "Для посещения этой страницы необходима авторизация!",
+        message: "Для посещения этой страницы необходима авторизация! Возможные причины: сессия устарела (авторизуйтесь заново) ИЛИ вы не вошли на сайт",
         status: "danger",
         isLoggedIn: req.isAuthenticated()
     });

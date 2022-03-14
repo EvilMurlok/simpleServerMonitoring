@@ -65,11 +65,8 @@ const view_server = async (req, res) => {
     });
     if (!server) {
         res.send({
-            status: "danger",
-            message: {
-                type: 'error',
-                text: "У вас такого сервера не существует!"
-            },
+            status: "no_server",
+            message: "У вас такого сервера не существует!",
             // message: "У вас такого сервера не существует!",
             isLoggedIn: req.isAuthenticated()
         });

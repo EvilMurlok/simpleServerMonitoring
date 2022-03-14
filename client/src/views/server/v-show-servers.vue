@@ -8,8 +8,7 @@
             Мои сервера
           </h1>
           <h2 class="h6 font-w500 text-muted mb-0">
-            Привет, <b>{{ USERNAME }}</b>.
-            Это список твоих серверов
+            Приветствуем, <b>{{ USERNAME }}</b>. Список Ваших серверов
           </h2>
         </div>
         <div class="mt-3 mt-sm-0 ml-sm-3">
@@ -37,6 +36,16 @@
                    show class="d-flex align-items-center">
             <div class="flex-00-auto">
               <i class="fa fa-fw fa-check"></i>
+            </div>
+            <div class="flex-fill ml-3">
+              <p class="mb-0">{{message.text}}</p>
+            </div>
+          </b-alert>
+
+          <b-alert v-else-if="message.type === 'info'" variant="info"
+                   show class="d-flex align-items-center">
+            <div class="flex-00-auto">
+              <i class="fa fa-fw fa-info-circle"></i>
             </div>
             <div class="flex-fill ml-3">
               <p class="mb-0">{{message.text}}</p>
@@ -84,6 +93,9 @@
           </b-tbody>
         </b-table-simple>
       </base-block>
+      <b-button v-if="isLoadMore === true" class="btn btn-outline-info mb-3 mb-3" @click="loadMore" size="sm" variant="light">
+        <i class="fa fa-fw fa-plus-circle"></i> Загрузить ещё
+      </b-button>
     </div>
     <div v-else class="content">
       Вы ещё не добавили ни одного сервера!
@@ -103,23 +115,60 @@ export default {
 
   data() {
     return {
+      offset: 0,
+      limit: 3,
       messages: [],
-      servers: []
+      servers: [],
+      isLoadMore: true
     }
   },
 
   created() {
-    console.log(this.$route.params.messages)
     if (this.$route.params.messages !== undefined) {
       this.messages = this.$route.params.messages;
     } else {
       this.messages = []
     }
+    this.$http
+        .get(`show-servers-amount/${this.offset}/${this.limit}`)
+        .then(res => {
+          if (!res.data.isLoggedIn) {
+            localStorage.removeItem("isLoggedIn");
+            localStorage.removeItem("username");
+            localStorage.removeItem("id");
+            this.SET_LOGGED_IN("out");
+            this.SET_USERNAME("");
+            this.SET_USER_ID(0);
+            this.$router.push(
+                {
+                  name: 'login',
+                  params: {
+                    messages: [
+                      {
+                        type: 'error',
+                        text: res.data.message
+                      }
+                    ]
+                  }
+                }
+            )
+          } else {
+            this.servers = res.data.servers.rows;
+            this.offset += res.data.servers.rows.length;
+            if (res.data.servers.count === this.offset){
+              this.isLoadMore = false;
+            }
+          }
+        })
+        .catch(err => console.error(err));
   },
 
   methods: {
     ...mapActions(['SET_USERNAME', 'SET_USER_ID', 'SET_LOGGED_IN']),
     deleteServer(serverId) {
+      if (this.messages.length !== 0) {
+        this.messages = [];
+      }
       this.$http
           .get(`delete-server/${serverId}`)
           .then(res => {
@@ -147,7 +196,10 @@ export default {
             else{
               if (res.data.status === "danger"){
                 this.messages.push(
-                    res.data.message
+                    {
+                      type: "error",
+                      text: res.data.message
+                    }
                 );
               }
               else{
@@ -158,42 +210,47 @@ export default {
                     }
                 );
                 this.servers = this.servers.filter((item) => parseInt(item.id) !== parseInt(serverId));
+                this.offset -= 1;
               }
             }
           })
           .catch(err => console.error(err));
     },
-  },
 
-  mounted() {
-    this.$http
-        .get('show-servers')
-        .then(res => {
-          if (!res.data.isLoggedIn) {
-            localStorage.removeItem("isLoggedIn");
-            localStorage.removeItem("username");
-            localStorage.removeItem("id");
-            this.SET_LOGGED_IN("out");
-            this.SET_USERNAME("");
-            this.SET_USER_ID(0);
-            this.$router.push(
-                {
-                  name: 'login',
-                  params: {
-                    messages: [
-                      {
-                        type: 'error',
-                        text: res.data.message
-                      }
-                    ]
+    loadMore() {
+      this.$http
+          .get(`show-servers-amount/${this.offset}/${this.limit}`)
+          .then(res => {
+            if (!res.data.isLoggedIn) {
+              localStorage.removeItem("isLoggedIn");
+              localStorage.removeItem("username");
+              localStorage.removeItem("id");
+              this.SET_LOGGED_IN("out");
+              this.SET_USERNAME("");
+              this.SET_USER_ID(0);
+              this.$router.push(
+                  {
+                    name: 'login',
+                    params: {
+                      messages: [
+                        {
+                          type: 'error',
+                          text: res.data.message
+                        }
+                      ]
+                    }
                   }
-                }
-            )
-          } else {
-            this.servers = res.data.servers;
-          }
-        })
-        .catch(err => console.error(err));
-  }
+              )
+            } else {
+              this.servers = [...this.servers, ...res.data.servers.rows];
+              this.offset += res.data.servers.rows.length;
+              if (res.data.servers.count === this.offset){
+                this.isLoadMore = false;
+              }
+            }
+          })
+          .catch(err => console.error(err))
+    }
+  },
 }
 </script>

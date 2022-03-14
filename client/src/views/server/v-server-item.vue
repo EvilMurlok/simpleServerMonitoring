@@ -165,7 +165,6 @@ export default {
                         ]
                       }
                     });
-
               } else if (res.data.status === "no_server") {
                 this.$router.push(
                     {
@@ -190,7 +189,7 @@ export default {
                       params: {
                         messages: [
                           {
-                            type: 'error',
+                            type: 'info',
                             text: res.data.message,
                           }
                         ]
@@ -225,7 +224,7 @@ export default {
               }
             });
       } else {
-        if (res.data.status === "danger") {
+        if (res.data.status === "danger" || res.data.status === "no_server") {
           this.$router.push(
               {
                 name: "showServers",
@@ -238,7 +237,8 @@ export default {
                   ]
                 }
               });
-        } else {
+        }
+        else {
           this.server = res.data.server;
         }
       }

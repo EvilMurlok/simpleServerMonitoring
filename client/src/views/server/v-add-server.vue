@@ -127,8 +127,7 @@ export default {
               );
             } else {
               if (res.data.status === "danger") {
-                console.log(res.data.messages);
-                this.messages = res.data.messages;
+                this.messages = res.data.messages
               } else {
                 this.$router.push(
                     {

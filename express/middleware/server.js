@@ -21,7 +21,10 @@ const validate_data_addition = async (req, res, next) => {
             }
         });
         if (server) {
-            messages.push({message: "У Вас уже есть сервер с таким наименованием!"});
+            messages.push({
+                type: "error",
+                text: "У Вас уже есть сервер с таким наименованием!"
+            });
             res.send({
                 messages: messages,
                 status: "danger",
