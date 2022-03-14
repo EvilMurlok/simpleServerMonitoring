@@ -18,17 +18,42 @@
     <div class="content">
       <base-block title="Конфигурация" rounded header-bg content-full>
 
-        <div v-if="messages.length">
-          <b-alert v-for="message in messages" :key="message.message" variant="warning"
-                   show class="d-flex align-items-center justify-content-between">
-            <div class="flex-fill mr-3">
-              <p class="mb-0">{{ message.message }}</p>
-            </div>
-            <div class="flex-00-auto">
-              <i class="fa fa-fw fa-exclamation-circle"></i>
-            </div>
-          </b-alert>
-        </div>
+        <b-col md="8" lg="6" xl="4">
+          <div v-for="message in messages" :key="message.message">
+            <b-alert v-if="message.type === 'error'" variant="warning"
+                     show class="d-flex align-items-center justify-content-between">
+              <div class="flex-00-auto">
+                <i class="fa fa-fw fa-exclamation-circle"></i>
+              </div>
+              <div class="flex-fill mr-3">
+                <p class="mb-0">{{message.text}}</p>
+              </div>
+            </b-alert>
+
+            <b-alert v-else-if="message.type === 'success'" variant="success"
+                     show class="d-flex align-items-center">
+              <div class="flex-00-auto">
+                <i class="fa fa-fw fa-check"></i>
+              </div>
+              <div class="flex-fill ml-3">
+                <p class="mb-0">{{message.text}}</p>
+              </div>
+            </b-alert>
+          </div>
+        </b-col>
+
+
+<!--        <div v-if="messages.length">-->
+<!--          <b-alert v-for="message in messages" :key="message.message" variant="warning"-->
+<!--                   show class="d-flex align-items-center justify-content-between">-->
+<!--            <div class="flex-fill mr-3">-->
+<!--              <p class="mb-0">{{ message.message }}</p>-->
+<!--            </div>-->
+<!--            <div class="flex-00-auto">-->
+<!--              <i class="fa fa-fw fa-exclamation-circle"></i>-->
+<!--            </div>-->
+<!--          </b-alert>-->
+<!--        </div>-->
 
         <b-form @submit.prevent="updateServer">
           <div class="py-3">
@@ -127,34 +152,83 @@ export default {
               this.SET_LOGGED_IN("out");
               this.SET_USERNAME("");
               this.SET_USER_ID(0);
-              this.flashMessage.error({
-                message: res.data.message,
-                time: 7000,
-              });
-              this.$router.push("/login/");
+              // this.flashMessage.error({
+              //   message: res.data.message,
+              //   time: 7000,
+              // });
+              // this.$router.push("/login/");
+              this.$router.push(
+                  {
+                    name: "login",
+                    params: {
+                      messages: [
+                        {
+                          type: 'error',
+                          text: res.data.message,
+                        }
+                      ]
+                    }
+                  });
             } else {
               if (res.data.status === "success") {
-                this.flashMessage.success({
-                  message: res.data.message,
-                  time: 7000,
-                });
-                this.$router.push("/show-servers/");
+                // this.flashMessage.success({
+                //   message: res.data.message,
+                //   time: 7000,
+                // });
+                // this.$router.push("/show-servers/");
+                this.$router.push(
+                    {
+                      name: "showServers",
+                      params: {
+                        messages: [
+                          {
+                            type: 'success',
+                            text: res.data.message,
+                          }
+                        ]
+                      }
+                    });
+
               } else if (res.data.status === "no_server") {
-                this.flashMessage.error({
-                  message: res.data.message,
-                  time: 7000,
-                });
-                this.$router.push("/show-servers/");
+                // this.flashMessage.error({
+                //   message: res.data.message,
+                //   time: 7000,
+                // });
+                // this.$router.push("/show-servers/");
+                this.$router.push(
+                    {
+                      name: "showServers",
+                      params: {
+                        messages: [
+                          {
+                            type: 'error',
+                            text: res.data.message,
+                          }
+                        ]
+                      }
+                    });
               }
               else if (res.data.status === "danger"){
                 this.messages = res.data.messages;
               }
               else if (res.data.status === "info"){
-                this.flashMessage.info({
-                  message: res.data.message,
-                  time: 7000,
-                });
-                this.$router.push("/show-servers/");
+                // this.flashMessage.info({
+                //   message: res.data.message,
+                //   time: 7000,
+                // });
+                // this.$router.push("/show-servers/");
+                this.$router.push(
+                    {
+                      name: "showServers",
+                      params: {
+                        messages: [
+                          {
+                            type: 'error',
+                            text: res.data.message,
+                          }
+                        ]
+                      }
+                    });
               }
             }
           })
@@ -171,22 +245,53 @@ export default {
         this.SET_LOGGED_IN("out");
         this.SET_USERNAME("");
         this.SET_USER_ID(0);
-        this.flashMessage.error({
-          message: res.data.message,
-          time: 7000,
-        });
-        this.$router.push("/login/");
+        // this.flashMessage.error({
+        //   message: res.data.message,
+        //   time: 7000,
+        // });
+        // this.$router.push("/login/");
+        this.$router.push(
+            {
+              name: "login",
+              params: {
+                messages: [
+                  {
+                    type: 'error',
+                    text: res.data.message,
+                  }
+                ]
+              }
+            });
       } else {
         if (res.data.status === "danger") {
-          this.flashMessage.error({
-            message: res.data.message,
-            time: 7000,
-          });
-          this.$router.push("/show-servers/");
+          // this.flashMessage.error({
+          //   message: res.data.message,
+          //   time: 7000,
+          // });
+          // this.$router.push("/show-servers/");
+          this.$router.push(
+              {
+                name: "showServers",
+                params: {
+                  messages: [
+                    {
+                      type: 'error',
+                      text: res.data.message,
+                    }
+                  ]
+                }
+              });
         } else {
           this.server = res.data.server;
         }
       }
+
+      if (this.$route.params.messages !== undefined) {
+        this.messages = this.$route.params.messages;
+      } else {
+        this.messages = []
+      }
+
     }).catch(err => console.error(err));
   },
 }

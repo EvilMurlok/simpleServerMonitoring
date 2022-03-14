@@ -2,6 +2,7 @@
   <div class="v-show-servers">
     <div class="content">
       <div class="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center py-2 text-center text-sm-left">
+
         <div class="flex-sm-fill">
           <h1 class="h3 font-w700 mb-2">
             Мои сервера
@@ -19,6 +20,32 @@
       </div>
     </div>
     <!-- END Hero -->
+    <div class="content">
+      <b-col md="8" lg="6" xl="4">
+        <div v-for="message in messages" :key="message.message">
+          <b-alert v-if="message.type === 'error'" variant="warning"
+                   show class="d-flex align-items-center justify-content-between">
+            <div class="flex-00-auto">
+              <i class="fa fa-fw fa-exclamation-circle"></i>
+            </div>
+            <div class="flex-fill mr-3">
+              <p class="mb-0">{{message.text}}</p>
+            </div>
+          </b-alert>
+
+          <b-alert v-else-if="message.type === 'success'" variant="success"
+                   show class="d-flex align-items-center">
+            <div class="flex-00-auto">
+              <i class="fa fa-fw fa-check"></i>
+            </div>
+            <div class="flex-fill ml-3">
+              <p class="mb-0">{{message.text}}</p>
+            </div>
+          </b-alert>
+        </div>
+      </b-col>
+    </div>
+
 
     <!-- Page Content -->
     <div v-if="servers.length > 0" class="content">
@@ -76,7 +103,17 @@ export default {
 
   data() {
     return {
+      messages: [],
       servers: []
+    }
+  },
+
+  created() {
+    console.log(this.$route.params.messages)
+    if (this.$route.params.messages !== undefined) {
+      this.messages = this.$route.params.messages;
+    } else {
+      this.messages = []
     }
   },
 
@@ -93,24 +130,46 @@ export default {
               this.SET_LOGGED_IN("out");
               this.SET_USERNAME("");
               this.SET_USER_ID(0);
-              this.flashMessage.error({
-                message: res.data.message,
-                time: 7000,
-              });
-              this.$router.push("/login/");
+              // this.flashMessage.error({
+              //   message: res.data.message,
+              //   time: 7000,
+              // });
+              // this.$router.push("/login/");
+              this.$router.push(
+                  {
+                    name: 'login',
+                    params: {
+                      messages: [
+                        {
+                          type: 'error',
+                          text: res.data.message
+                        }
+                      ]
+                    }
+                  }
+              );
             }
             else{
               if (res.data.status === "danger"){
-                this.flashMessage.error({
-                  message: res.data.message,
-                  time: 7000,
-                });
+                // this.flashMessage.error({
+                //   message: res.data.message,
+                //   time: 7000,
+                // });
+                this.messages.push(
+                    res.data.message
+                );
               }
               else{
-                this.flashMessage.success({
-                  message: res.data.message,
-                  time: 7000,
-                });
+                // this.flashMessage.success({
+                //   message: res.data.message,
+                //   time: 7000,
+                // });
+                this.messages.push(
+                    {
+                      type: 'success',
+                      text: res.data.message
+                    }
+                );
                 this.servers = this.servers.filter((item) => parseInt(item.id) !== parseInt(serverId));
               }
             }
@@ -130,11 +189,24 @@ export default {
             this.SET_LOGGED_IN("out");
             this.SET_USERNAME("");
             this.SET_USER_ID(0);
-            this.flashMessage.error({
-              message: res.data.message,
-              time: 7000,
-            });
-            this.$router.push("/login/");
+            // this.flashMessage.error({
+            //   message: res.data.message,
+            //   time: 7000,
+            // });
+            // this.$router.push("/login/");
+            this.$router.push(
+                {
+                  name: 'login',
+                  params: {
+                    messages: [
+                      {
+                        type: 'error',
+                        text: res.data.message
+                      }
+                    ]
+                  }
+                }
+            )
           } else {
             this.servers = res.data.servers;
           }

@@ -19,16 +19,40 @@
                   Форма входа
                 </p>
 
-                <div v-if="messages.length">
-                  <b-alert v-for="message in messages" :key="message.message" variant="warning"
+<!--                <div v-if="messages.length">-->
+                <div v-for="message in messages" :key="message.message">
+
+                  <b-alert v-if="message.type === 'error'" variant="warning"
                            show class="d-flex align-items-center justify-content-between">
-                    <div class="flex-fill mr-3">
-                      <p class="mb-0">{{ message.message }}</p>
-                    </div>
                     <div class="flex-00-auto">
                       <i class="fa fa-fw fa-exclamation-circle"></i>
                     </div>
+                    <div class="flex-fill mr-3">
+                      <p class="mb-0">{{message.text}}</p>
+                    </div>
                   </b-alert>
+
+                  <b-alert v-else-if="message.type === 'success'" variant="success"
+                           show class="d-flex align-items-center">
+                    <div class="flex-00-auto">
+                      <i class="fa fa-fw fa-check"></i>
+                    </div>
+                    <div class="flex-fill ml-3">
+                      <p class="mb-0">{{message.text}}</p>
+                    </div>
+                  </b-alert>
+
+
+
+<!--                  <b-alert variant="warning"-->
+<!--                           show class="d-flex align-items-center justify-content-between">-->
+<!--                    <div class="flex-fill mr-3">-->
+<!--                      <p class="mb-0">{{ message.message }}</p>-->
+<!--                    </div>-->
+<!--                    <div class="flex-00-auto">-->
+<!--                      <i class="fa fa-fw fa-exclamation-circle"></i>-->
+<!--                    </div>-->
+<!--                  </b-alert>-->
                 </div>
 
                 <!-- Sign In Form -->
@@ -82,6 +106,19 @@ export default {
     }
   },
 
+  created() {
+    if (this.$route.params.messages !== undefined) {
+      this.messages = this.$route.params.messages;
+    } else {
+      this.messages = []
+    }
+    if (this.$route.params.username !== undefined) {
+      this.username = this.$route.params.username;
+    } else {
+      this.username = ''
+    }
+  },
+
   methods: {
     ...mapActions(['SET_USERNAME', 'SET_LOGGED_IN', 'SET_USER_ID']),
     login() {
@@ -89,10 +126,22 @@ export default {
         this.messages = [];
       }
       if (!this.username) {
-        this.messages.push({message: "Поле никнейма обязательно для заполнения!"});
+        // this.messages.push({message: "Поле никнейма обязательно для заполнения!"});
+        this.messages.push(
+            {
+              type: "success",
+              text: "Поле никнейма обязательно для заполнения!"
+            }
+        );
       }
       if (!this.password) {
-        this.messages.push({message: "Поле пароля обязательно для заполнения!"});
+        // this.messages.push({message: "Поле пароля обязательно для заполнения!"});
+        this.messages.push(
+            {
+              type: "error",
+              text: "Поле пароля обязательно для заполнения!"
+            }
+        );
       }
       if (this.messages.length === 0) {
         this.$http
@@ -108,16 +157,33 @@ export default {
                 this.SET_USERNAME(res.data.username);
                 this.SET_LOGGED_IN("in");
                 this.SET_USER_ID(res.data.id);
-                this.flashMessage.success({
-                  message: "Успешная авторизация",
-                  time: 7000,
-                });
-                this.$router.push('/show-servers/');
+                // this.flashMessage.success({
+                //   message: "Успешная авторизация",
+                //   time: 7000,
+                // });
+                // this.$router.push('/show-servers/');
+                this.$router.push(
+                    {
+                      name: 'showServers',
+                      params: {
+                        messages: [{
+                          type: 'success',
+                          text: "Успешная авторизация"
+                        }]
+                      }
+                    }
+                );
               }
             })
             .catch(error => {
               console.error(error);
-              this.messages.push({message: "Неправильный логин или пароль!"});
+              // this.messages.push({message: "Неправильный логин или пароль!"});
+              this.messages.push(
+                  {
+                    type: "error",
+                    text: "Неправильный логин или пароль!"
+                  }
+              );
               this.password = "";
             });
       } else {

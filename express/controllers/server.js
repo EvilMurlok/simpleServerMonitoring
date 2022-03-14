@@ -28,6 +28,7 @@ const add_server_post = async (req, res) => {
     res.send({
         status: "success",
         message: `Сервер ${req.body.hostname} успешно добавлен!`,
+        // message: `Сервер ${req.body.hostname} успешно добавлен!`,
         isLoggedIn: req.isAuthenticated()
     });
     // req.flash("success_msg", `Сервер ${req.body.hostname} успешно добавлен!`);
@@ -66,7 +67,11 @@ const view_server = async (req, res) => {
     if (!server) {
         res.send({
             status: "danger",
-            message: "У вас такого сервера не существует!",
+            message: {
+                type: 'error',
+                text: "У вас такого сервера не существует!"
+            },
+            // message: "У вас такого сервера не существует!",
             isLoggedIn: req.isAuthenticated()
         });
         // req.flash("error", "У вас такого сервера не существует!");
