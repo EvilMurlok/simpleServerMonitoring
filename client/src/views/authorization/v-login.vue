@@ -115,7 +115,7 @@ export default {
       if (!this.username) {
         this.messages.push(
             {
-              type: "success",
+              type: "error",
               text: "Поле никнейма обязательно для заполнения!"
             }
         );
