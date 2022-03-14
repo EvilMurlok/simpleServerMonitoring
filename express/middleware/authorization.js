@@ -8,8 +8,6 @@ const checkAuthenticated = (req, res, next) => {
         status: "danger",
         isLoggedIn: req.isAuthenticated()
     });
-    // req.flash("error", "Вы уже вошли в систему!");
-    // res.redirect("http://localhost:8081/#/show-servers");
 }
 
 const checkNotAuthenticated = (req, res, next) => {
@@ -22,8 +20,6 @@ const checkNotAuthenticated = (req, res, next) => {
         status: "danger",
         isLoggedIn: req.isAuthenticated()
     });
-    // req.flash("error", "Для посещения этой страницы необходима авторизация!");
-    // res.redirect("http://localhost:8081/#/login");
 }
 
 module.exports = {

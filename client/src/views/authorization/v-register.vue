@@ -17,15 +17,25 @@
                   Форма регистрации пользователя
                 </p>
 
-                <div v-if="messages.length">
-                  <b-alert  v-for="message in messages"
-                            :key="message.message" variant="warning"
-                            show class="d-flex align-items-center justify-content-between">
-                    <div class="flex-fill mr-3">
-                      <p class="mb-0">{{ message.message }}</p>
-                    </div>
+                <div v-for="message in messages" :key="message.message">
+
+                  <b-alert v-if="message.type === 'error'" variant="warning"
+                           show class="d-flex align-items-center justify-content-between">
                     <div class="flex-00-auto">
                       <i class="fa fa-fw fa-exclamation-circle"></i>
+                    </div>
+                    <div class="flex-fill mr-3">
+                      <p class="mb-0">{{message.text}}</p>
+                    </div>
+                  </b-alert>
+
+                  <b-alert v-else-if="message.type === 'success'" variant="success"
+                           show class="d-flex align-items-center">
+                    <div class="flex-00-auto">
+                      <i class="fa fa-fw fa-check"></i>
+                    </div>
+                    <div class="flex-fill ml-3">
+                      <p class="mb-0">{{message.text}}</p>
                     </div>
                   </b-alert>
                 </div>
@@ -94,25 +104,61 @@ export default {
       }
       let [right_username, right_password] = [/^[a-zA-Z0-9_]{3,16}$/, /^[a-zA-Z0-9_-]+/];
       if (!this.username) {
-        this.messages.push({message: "Поле никнейма обязательно для заполнения!"});
+        this.messages.push(
+            {
+              type: "error",
+              text: "Поле никнейма обязательно для заполнения!"
+            }
+        );
       }
       if (!this.password) {
-        this.messages.push({message: "Поле пароля обязательно для заполнения!"});
+        this.messages.push(
+            {
+              type: "error",
+              text: "Поле никнейма обязательно для заполнения!"
+            }
+        );
       }
       if (!this.confirm_password) {
-        this.messages.push({message: "Поле 'подтверждения пароля' обязательно для заполнения!"});
+        this.messages.push(
+            {
+              type: "error",
+              text: "Поле 'подтверждения пароля' обязательно для заполнения!"
+            }
+        );
       }
       if (this.password && this.password.length < 6) {
-        this.messages.push({message: "Пароль не должен быть короче 6 символов!"});
+        // this.messages.push({message: "Пароль не должен быть короче 6 символов!"});
+        this.messages.push(
+            {
+              type: "error",
+              text: "Пароль не должен быть короче 6 символов!"
+            }
+        );
       }
       if (this.password && this.confirm_password && (this.password !== this.confirm_password)) {
-        this.messages.push({message: "Пароли не совпадают!"});
+        this.messages.push(
+            {
+              type: "error",
+              text: "Пароли не совпадают!"
+            }
+        );
       }
       if (this.username && !right_username.test(this.username)) {
-        this.messages.push({message: "Никнейм должен состоять только из латинских букв, цифр, символов подчеркивания длиной 3-16 символов!"});
+        this.messages.push(
+            {
+              type: "error",
+              text: "Никнейм должен состоять только из латинских букв, цифр, символов подчеркивания длиной 3-16 символов!"
+            }
+        );
       }
       if (this.password && !right_password.test(this.password)) {
-        this.messages.push({message: "Пароль  должен состоять только из латинских буквы и цифр, символов подчеркивания и тире!"});
+        this.messages.push(
+            {
+              type: "error",
+              text: "Пароль  должен состоять только из латинских буквы и цифр, символов подчеркивания и тире!"
+            }
+        );
       }
       if (this.messages.length === 0) {
         this.$http
@@ -123,11 +169,18 @@ export default {
             })
             .then(res => {
               if (res.data.status === "success") {
-                this.flashMessage.success({
-                  message: res.data.message,
-                  time: 7000,
-                });
-                this.$router.push('/login/');
+                console.log(res.data.message)
+                this.$router.push(
+                    {
+                      name: 'login',
+                      params: {
+                        username: '',
+                        messages: [
+                          res.data.message
+                        ]
+                      }
+                    }
+                );
               } else {
                 this.messages = res.data.messages;
                 this.password = "";

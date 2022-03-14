@@ -2,13 +2,14 @@
   <div class="v-show-servers">
     <div class="content">
       <div class="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center py-2 text-center text-sm-left">
+
         <div class="flex-sm-fill">
           <h1 class="h3 font-w700 mb-2">
             Мои сервера
           </h1>
           <h2 class="h6 font-w500 text-muted mb-0">
-            Приветсвуем, <b>{{ USERNAME }}</b>.
-            Здесь отображается список Ваших серверов
+            Привет, <b>{{ USERNAME }}</b>.
+            Это список твоих серверов
           </h2>
         </div>
         <div class="mt-3 mt-sm-0 ml-sm-3">
@@ -19,6 +20,32 @@
       </div>
     </div>
     <!-- END Hero -->
+    <div class="content">
+      <b-col md="8" lg="6" xl="4">
+        <div v-for="message in messages" :key="message.message">
+          <b-alert v-if="message.type === 'error'" variant="warning"
+                   show class="d-flex align-items-center justify-content-between">
+            <div class="flex-00-auto">
+              <i class="fa fa-fw fa-exclamation-circle"></i>
+            </div>
+            <div class="flex-fill mr-3">
+              <p class="mb-0">{{message.text}}</p>
+            </div>
+          </b-alert>
+
+          <b-alert v-else-if="message.type === 'success'" variant="success"
+                   show class="d-flex align-items-center">
+            <div class="flex-00-auto">
+              <i class="fa fa-fw fa-check"></i>
+            </div>
+            <div class="flex-fill ml-3">
+              <p class="mb-0">{{message.text}}</p>
+            </div>
+          </b-alert>
+        </div>
+      </b-col>
+    </div>
+
 
     <!-- Page Content -->
     <div v-if="servers.length > 0" class="content">
@@ -57,9 +84,6 @@
           </b-tbody>
         </b-table-simple>
       </base-block>
-      <b-button v-if="isLoadMore === true" class="btn btn-outline-info mb-3 mb-3" @click="loadMore" size="sm" variant="light">
-        <i class="fa fa-fw fa-plus-circle"></i> Загрузить ещё
-      </b-button>
     </div>
     <div v-else class="content">
       Вы ещё не добавили ни одного сервера!
@@ -79,10 +103,17 @@ export default {
 
   data() {
     return {
-      servers: [],
-      offset: 0,
-      limit: 3,
-      isLoadMore: true
+      messages: [],
+      servers: []
+    }
+  },
+
+  created() {
+    console.log(this.$route.params.messages)
+    if (this.$route.params.messages !== undefined) {
+      this.messages = this.$route.params.messages;
+    } else {
+      this.messages = []
     }
   },
 
@@ -99,56 +130,44 @@ export default {
               this.SET_LOGGED_IN("out");
               this.SET_USERNAME("");
               this.SET_USER_ID(0);
-              localStorage.setItem("loggedOutMessage",  res.data.message + " (вероятная причина: Ваша сессия устарела)");
-              this.$router.push("/login/");
+              this.$router.push(
+                  {
+                    name: 'login',
+                    params: {
+                      messages: [
+                        {
+                          type: 'error',
+                          text: res.data.message
+                        }
+                      ]
+                    }
+                  }
+              );
             }
             else{
               if (res.data.status === "danger"){
-                this.flashMessage.error({
-                  message: res.data.message,
-                  time: 7000,
-                });
+                this.messages.push(
+                    res.data.message
+                );
               }
               else{
-                this.flashMessage.success({
-                  message: res.data.message,
-                  time: 7000,
-                });
+                this.messages.push(
+                    {
+                      type: 'success',
+                      text: res.data.message
+                    }
+                );
                 this.servers = this.servers.filter((item) => parseInt(item.id) !== parseInt(serverId));
               }
             }
           })
           .catch(err => console.error(err));
     },
-
-    loadMore() {
-      this.$http
-          .get(`show-servers-amount/${this.offset}/${this.limit}`)
-          .then(res => {
-            if (!res.data.isLoggedIn) {
-              localStorage.removeItem("isLoggedIn");
-              localStorage.removeItem("username");
-              localStorage.removeItem("id");
-              this.SET_LOGGED_IN("out");
-              this.SET_USERNAME("");
-              this.SET_USER_ID(0);
-              localStorage.setItem("loggedOutMessage",  res.data.message + " (вероятная причина: Ваша сессия устарела)");
-              this.$router.push("/login/");
-            } else {
-              this.servers = [...this.servers, ...res.data.servers.rows];
-              this.offset += res.data.servers.rows.length;
-              if (res.data.servers.count === this.offset){
-                this.isLoadMore = false;
-              }
-            }
-          })
-          .catch(err => console.error(err))
-    }
   },
 
-  created() {
+  mounted() {
     this.$http
-        .get(`show-servers-amount/${this.offset}/${this.limit}`)
+        .get('show-servers')
         .then(res => {
           if (!res.data.isLoggedIn) {
             localStorage.removeItem("isLoggedIn");
@@ -157,14 +176,21 @@ export default {
             this.SET_LOGGED_IN("out");
             this.SET_USERNAME("");
             this.SET_USER_ID(0);
-            localStorage.setItem("loggedOutMessage",  res.data.message + " (вероятная причина: Ваша сессия устарела)");
-            this.$router.push("/login/");
+            this.$router.push(
+                {
+                  name: 'login',
+                  params: {
+                    messages: [
+                      {
+                        type: 'error',
+                        text: res.data.message
+                      }
+                    ]
+                  }
+                }
+            )
           } else {
-            this.servers = res.data.servers.rows;
-            this.offset += res.data.servers.rows.length;
-            if (res.data.servers.count === this.offset){
-              this.isLoadMore = false;
-            }
+            this.servers = res.data.servers;
           }
         })
         .catch(err => console.error(err));
