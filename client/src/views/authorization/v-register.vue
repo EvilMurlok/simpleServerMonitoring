@@ -38,16 +38,6 @@
                       <p class="mb-0">{{message.text}}</p>
                     </div>
                   </b-alert>
-<!--                  <b-alert  v-for="message in messages"-->
-<!--                            :key="message.message" variant="warning"-->
-<!--                            show class="d-flex align-items-center justify-content-between">-->
-<!--                    <div class="flex-fill mr-3">-->
-<!--                      <p class="mb-0">{{ message.message }}</p>-->
-<!--                    </div>-->
-<!--                    <div class="flex-00-auto">-->
-<!--                      <i class="fa fa-fw fa-exclamation-circle"></i>-->
-<!--                    </div>-->
-<!--                  </b-alert>-->
                 </div>
 
                 <!-- Sign Up Form -->
@@ -114,7 +104,6 @@ export default {
       }
       let [right_username, right_password] = [/^[a-zA-Z0-9_]{3,16}$/, /^[a-zA-Z0-9_-]+/];
       if (!this.username) {
-        // this.messages.push({message: "Поле никнейма обязательно для заполнения!"});
         this.messages.push(
             {
               type: "error",
@@ -123,7 +112,6 @@ export default {
         );
       }
       if (!this.password) {
-        // this.messages.push({message: "Поле пароля обязательно для заполнения!"});
         this.messages.push(
             {
               type: "error",
@@ -132,7 +120,6 @@ export default {
         );
       }
       if (!this.confirm_password) {
-        // this.messages.push({message: "Поле 'подтверждения пароля' обязательно для заполнения!"});
         this.messages.push(
             {
               type: "error",
@@ -150,7 +137,6 @@ export default {
         );
       }
       if (this.password && this.confirm_password && (this.password !== this.confirm_password)) {
-        // this.messages.push({message: "Пароли не совпадают!"});
         this.messages.push(
             {
               type: "error",
@@ -159,7 +145,6 @@ export default {
         );
       }
       if (this.username && !right_username.test(this.username)) {
-        // this.messages.push({message: "Никнейм должен состоять только из латинских букв, цифр, символов подчеркивания длиной 3-16 символов!"});
         this.messages.push(
             {
               type: "error",
@@ -168,7 +153,6 @@ export default {
         );
       }
       if (this.password && !right_password.test(this.password)) {
-        // this.messages.push({message: "Пароль  должен состоять только из латинских буквы и цифр, символов подчеркивания и тире!"});
         this.messages.push(
             {
               type: "error",
@@ -185,11 +169,6 @@ export default {
             })
             .then(res => {
               if (res.data.status === "success") {
-                // this.flashMessage.success({
-                //   message: res.data.message,
-                //   time: 7000,
-                // });
-                // this.$router.push('/login/');
                 console.log(res.data.message)
                 this.$router.push(
                     {

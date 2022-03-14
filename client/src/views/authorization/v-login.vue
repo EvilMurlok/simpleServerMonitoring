@@ -19,7 +19,6 @@
                   Форма входа
                 </p>
 
-<!--                <div v-if="messages.length">-->
                 <div v-for="message in messages" :key="message.message">
 
                   <b-alert v-if="message.type === 'error'" variant="warning"
@@ -41,18 +40,6 @@
                       <p class="mb-0">{{message.text}}</p>
                     </div>
                   </b-alert>
-
-
-
-<!--                  <b-alert variant="warning"-->
-<!--                           show class="d-flex align-items-center justify-content-between">-->
-<!--                    <div class="flex-fill mr-3">-->
-<!--                      <p class="mb-0">{{ message.message }}</p>-->
-<!--                    </div>-->
-<!--                    <div class="flex-00-auto">-->
-<!--                      <i class="fa fa-fw fa-exclamation-circle"></i>-->
-<!--                    </div>-->
-<!--                  </b-alert>-->
                 </div>
 
                 <!-- Sign In Form -->
@@ -126,7 +113,6 @@ export default {
         this.messages = [];
       }
       if (!this.username) {
-        // this.messages.push({message: "Поле никнейма обязательно для заполнения!"});
         this.messages.push(
             {
               type: "success",
@@ -135,7 +121,6 @@ export default {
         );
       }
       if (!this.password) {
-        // this.messages.push({message: "Поле пароля обязательно для заполнения!"});
         this.messages.push(
             {
               type: "error",
@@ -157,11 +142,6 @@ export default {
                 this.SET_USERNAME(res.data.username);
                 this.SET_LOGGED_IN("in");
                 this.SET_USER_ID(res.data.id);
-                // this.flashMessage.success({
-                //   message: "Успешная авторизация",
-                //   time: 7000,
-                // });
-                // this.$router.push('/show-servers/');
                 this.$router.push(
                     {
                       name: 'showServers',
@@ -177,7 +157,6 @@ export default {
             })
             .catch(error => {
               console.error(error);
-              // this.messages.push({message: "Неправильный логин или пароль!"});
               this.messages.push(
                   {
                     type: "error",

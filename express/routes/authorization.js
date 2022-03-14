@@ -6,9 +6,7 @@ const authControllers = require('../controllers/authorization');
 
 const router = express.Router();
 
-// router.get('/register/', middlewaresAuth.checkAuthenticated, authControllers.user_register);
 router.post('/register/', authControllers.user_register_post);
-// router.get('/login/', middlewaresAuth.checkAuthenticated, authControllers.user_login);
 router.post('/login/', passport.authenticate('local', {}),
     function (req, res) {
         res.send({

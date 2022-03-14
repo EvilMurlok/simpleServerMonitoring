@@ -42,19 +42,6 @@
           </div>
         </b-col>
 
-
-<!--        <div v-if="messages.length">-->
-<!--          <b-alert v-for="message in messages" :key="message.message" variant="warning"-->
-<!--                   show class="d-flex align-items-center justify-content-between">-->
-<!--            <div class="flex-fill mr-3">-->
-<!--              <p class="mb-0">{{ message.message }}</p>-->
-<!--            </div>-->
-<!--            <div class="flex-00-auto">-->
-<!--              <i class="fa fa-fw fa-exclamation-circle"></i>-->
-<!--            </div>-->
-<!--          </b-alert>-->
-<!--        </div>-->
-
         <b-form @submit.prevent="updateServer">
           <div class="py-3">
             <div class="form-group">
@@ -152,11 +139,6 @@ export default {
               this.SET_LOGGED_IN("out");
               this.SET_USERNAME("");
               this.SET_USER_ID(0);
-              // this.flashMessage.error({
-              //   message: res.data.message,
-              //   time: 7000,
-              // });
-              // this.$router.push("/login/");
               this.$router.push(
                   {
                     name: "login",
@@ -171,11 +153,6 @@ export default {
                   });
             } else {
               if (res.data.status === "success") {
-                // this.flashMessage.success({
-                //   message: res.data.message,
-                //   time: 7000,
-                // });
-                // this.$router.push("/show-servers/");
                 this.$router.push(
                     {
                       name: "showServers",
@@ -190,11 +167,6 @@ export default {
                     });
 
               } else if (res.data.status === "no_server") {
-                // this.flashMessage.error({
-                //   message: res.data.message,
-                //   time: 7000,
-                // });
-                // this.$router.push("/show-servers/");
                 this.$router.push(
                     {
                       name: "showServers",
@@ -212,11 +184,6 @@ export default {
                 this.messages = res.data.messages;
               }
               else if (res.data.status === "info"){
-                // this.flashMessage.info({
-                //   message: res.data.message,
-                //   time: 7000,
-                // });
-                // this.$router.push("/show-servers/");
                 this.$router.push(
                     {
                       name: "showServers",
@@ -245,11 +212,6 @@ export default {
         this.SET_LOGGED_IN("out");
         this.SET_USERNAME("");
         this.SET_USER_ID(0);
-        // this.flashMessage.error({
-        //   message: res.data.message,
-        //   time: 7000,
-        // });
-        // this.$router.push("/login/");
         this.$router.push(
             {
               name: "login",
@@ -264,11 +226,6 @@ export default {
             });
       } else {
         if (res.data.status === "danger") {
-          // this.flashMessage.error({
-          //   message: res.data.message,
-          //   time: 7000,
-          // });
-          // this.$router.push("/show-servers/");
           this.$router.push(
               {
                 name: "showServers",

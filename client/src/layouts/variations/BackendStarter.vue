@@ -198,10 +198,6 @@ export default {
             this.SET_USERNAME("");
             this.SET_USER_ID(0);
             if (res.data.status === "danger") {
-              // this.flashMessage.error({
-              //   message: res.data.message,
-              //   time: 7000,
-              // });
               console.log(res.data.message)
               this.$router.push({
                 name: "login",
@@ -215,10 +211,6 @@ export default {
                 }
               });
             } else {
-              // this.flashMessage.success({
-              //   message: res.data.message,
-              //   time: 7000,
-              // });
               console.log(res.data.message)
               this.$router.push({
                 name: "login",
@@ -232,7 +224,6 @@ export default {
                 }
               });
             }
-            // this.$router.push("/login/");
           })
           .catch(error => console.error(error));
     }

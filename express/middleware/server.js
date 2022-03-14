@@ -11,14 +11,6 @@ const validate_data_addition = async (req, res, next) => {
             messages: messages,
             isLoggedIn: req.isAuthenticated()
         });
-
-        // res.render("./server/add-server.twig", {
-        //     info: messages,
-        //     status: "danger",
-        //     hostname,
-        //     CPU_number,
-        //     isAuth: req.isAuthenticated()
-        // });
     } else {
         const server = await models.server.findOne({
             where: {
@@ -35,13 +27,6 @@ const validate_data_addition = async (req, res, next) => {
                 status: "danger",
                 isLoggedIn: req.isAuthenticated()
             });
-            // res.render("./server/add-server.twig", {
-            //     info: messages,
-            //     status: "danger",
-            //     hostname,
-            //     CPU_number,
-            //     isAuth: req.isAuthenticated()
-            // });
         } else {
             return next();
         }
@@ -63,8 +48,6 @@ const validate_data_update = async (req, res, next) => {
             status: "no_server",
             isLoggedIn: req.isAuthenticated()
         });
-        // req.flash("error", "У Вас нет такого сервера!");
-        // res.redirect("/show-servers/");
     } else {
         let {hostname, CPU_number} = req.body;
         let messages = validate_data(hostname, CPU_number);
@@ -74,12 +57,6 @@ const validate_data_update = async (req, res, next) => {
                 status: "danger",
                 isLoggedIn: req.isAuthenticated()
             });
-            // res.render("./server/view-server.twig", {
-            //     info: messages,
-            //     status: "danger",
-            //     server,
-            //     isAuth: req.isAuthenticated()
-            // });
         } else {
             if (String(hostname) !== String(server.hostname) || String(server.CPU_number) !== String(CPU_number)) {
                 return next();
@@ -89,8 +66,6 @@ const validate_data_update = async (req, res, next) => {
                     status: "info",
                     isLoggedIn: req.isAuthenticated()
                 });
-                // req.flash("info", "Данные изменены не были!");
-                // res.redirect("/show-servers/");
             }
         }
     }

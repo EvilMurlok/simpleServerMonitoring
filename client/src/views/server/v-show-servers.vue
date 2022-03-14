@@ -130,11 +130,6 @@ export default {
               this.SET_LOGGED_IN("out");
               this.SET_USERNAME("");
               this.SET_USER_ID(0);
-              // this.flashMessage.error({
-              //   message: res.data.message,
-              //   time: 7000,
-              // });
-              // this.$router.push("/login/");
               this.$router.push(
                   {
                     name: 'login',
@@ -151,19 +146,11 @@ export default {
             }
             else{
               if (res.data.status === "danger"){
-                // this.flashMessage.error({
-                //   message: res.data.message,
-                //   time: 7000,
-                // });
                 this.messages.push(
                     res.data.message
                 );
               }
               else{
-                // this.flashMessage.success({
-                //   message: res.data.message,
-                //   time: 7000,
-                // });
                 this.messages.push(
                     {
                       type: 'success',
@@ -189,11 +176,6 @@ export default {
             this.SET_LOGGED_IN("out");
             this.SET_USERNAME("");
             this.SET_USER_ID(0);
-            // this.flashMessage.error({
-            //   message: res.data.message,
-            //   time: 7000,
-            // });
-            // this.$router.push("/login/");
             this.$router.push(
                 {
                   name: 'login',
