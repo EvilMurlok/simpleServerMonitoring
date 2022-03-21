@@ -9,6 +9,7 @@ import vServerItem from '../views/server/v-server-item';
 
 import LayoutSimple from '../layouts/variations/Simple';
 import LayoutBackend from '../layouts/variations/BackendStarter';
+import TestMetric from "@/views/test_views/TestMetric";
 
 
 Vue.use(Router);
@@ -94,6 +95,22 @@ let router = new Router({
                     path: '/add-server/',
                     name: 'addServer',
                     component: vAddServer
+                }
+            ]
+        },
+        {
+            path: '/button',
+            redirect: '/button',
+            component: LayoutSimple,
+            props: true,
+            meta: {
+                guest: true
+            },
+            children: [
+                {
+                    path: '/button',
+                    name: 'testMetric',
+                    component: TestMetric
                 }
             ]
         },
