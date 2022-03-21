@@ -25,18 +25,16 @@
   },
   "homepage": "https://github.com/EvilMurlok/simpleServerMonitoring#readme",
   "dependencies": {
-    "@smartweb/vue-flash-message": "^0.6.10",
-    "bcrypt": "^5.0.1",
-    "body-parser": "^1.19.2",
-    "cors": "^2.8.5",
-    "express": "^4.17.3",
-    "express-flash": "^0.0.2",
-    "express-session": "^1.17.2",
-    "morgan": "^1.10.0",
-    "passport": "^0.5.2",
-    "passport-local": "^1.0.0",
-    "pg": "^8.7.3",
-    "sequelize": "^6.16.2",
-    "twig": "^1.15.4"
+    "bcrypt": "5.0.1",
+    "body-parser": "1.19.2",
+    "express": "4.17.3",
+    "express-flash": "0.0.2",
+    "express-session": "1.17.2",
+    "morgan": "1.10.0",
+    "passport": "0.5.2",
+    "passport-local": "1.0.0",
+    "pg": "8.7.3",
+    "sequelize": "6.16.2",
+    "prom-client": "14.0.1"
   }
 }

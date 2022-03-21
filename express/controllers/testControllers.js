@@ -1,5 +1,7 @@
 const { models } = require("../../sequelize");
 const getPassword = require('../utils/utils');
+const register = require("../prometheus/promClientConfig")
+const metrics = require("../prometheus/metrics")
 
 const hello = async (req, res) => {
     res.send("Hello, world!");
@@ -26,9 +28,21 @@ const addUser = async (req, res) => {
     res.status(201).json(user);
 }
 
+const get_metrics = async (req, res) => {
+    res.setHeader('Content-Type', register.contentType);
+    res.send(await register.metrics());
+}
+
+const increment_counter =  async (req, res) => {
+    metrics.buttonClicksCounter.inc()
+    res.send('4u4a')
+}
+
 module.exports = {
     hello,
     findAll,
     addUser,
-    findAllServer
+    findAllServer,
+    get_metrics,
+    increment_counter,
 }
