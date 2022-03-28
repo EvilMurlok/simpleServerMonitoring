@@ -21,8 +21,10 @@
 
         <b-col md="8" lg="6" xl="4">
           <div v-for="message in messages" :key="message.message">
-            <b-alert v-if="message.type === 'error'" variant="warning"
-                     show class="d-flex align-items-center justify-content-between">
+            <b-alert v-if="message.type === 'error'"
+                     variant="warning"
+                     show class="d-flex align-items-center justify-content-between"
+            >
               <div class="flex-00-auto">
                 <i class="fa fa-fw fa-exclamation-circle"></i>
               </div>

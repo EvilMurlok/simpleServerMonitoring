@@ -1,6 +1,6 @@
 const validate_data = (hostname, CPU_number) => {
     let messages = [];
-    let [right_hostname, right_cpu_number] = [/^[a-zA-Z0-9_]{5,40}$/, /^[0-9]+$/];
+    let [right_hostname, right_cpu_number] = [/^[a-zA-Z0-9_]{5,255}$/, /^[0-9]+$/];
     if ( !hostname ){
         messages.push(
             {

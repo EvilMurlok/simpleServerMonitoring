@@ -1,4 +1,4 @@
-let sequelize = require('../sequelize/index');
+let sequelize = require('../sequelize');
 
 sequelize.sync().then(() => {
     console.log("Сервер ожидает подключения...");

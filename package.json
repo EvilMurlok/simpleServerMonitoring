@@ -5,8 +5,8 @@
   "main": "app.js",
   "scripts": {
     "start": "node index.js",
-    "migrate": "node ./bin/migrate.js",
-    "insert": "node ./bin/insertion.js"
+    "migrate": "node server/bin/migrate.js",
+    "insert": "node server/bin/insertion.js"
   },
   "repository": {
     "type": "git",
@@ -34,7 +34,8 @@
     "passport": "0.5.2",
     "passport-local": "1.0.0",
     "pg": "8.7.3",
-    "sequelize": "6.16.2",
-    "prom-client": "14.0.1"
+    "prom-client": "14.0.1",
+    "prometheus-api-metrics": "3.2.1",
+    "sequelize": "6.16.2"
   }
 }

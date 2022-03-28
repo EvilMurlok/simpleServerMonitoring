@@ -10,16 +10,20 @@ const sequelize = new Sequelize(
     {
         host: dbConfig.HOST,
         port: dbConfig.PORT,
-        dialect: dbConfig.dialect
-    }
+        dialect: dbConfig.dialect,
+    },
 );
 
 
 const modelDefiners = [
+    require('./models/ability.model'),
+    require('./models/dashboard.model'),
+    require('./models/permission.model'),
+    require('./models/project.model'),
     require('./models/user.model'),
     require('./models/server.model'),
-    // Add more models here...
-    // require('./models/item'),
+    require('./models/server.model'),
+    require('./models/tag.model'),
 ];
 
 // We define all models according to their files.
