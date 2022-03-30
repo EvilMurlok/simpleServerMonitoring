@@ -1,8 +1,8 @@
-const { DataTypes } = require('sequelize');
+const {Model} = require("sequelize");
 
-module.exports = (sequelize) => {
-    sequelize.define(
-        'dashboard', {
+module.exports = class Dashboard extends Model {
+    static init(sequelize, DataTypes) {
+        return super.init({
             id: {
                 autoIncrement: true,
                 primaryKey: true,
@@ -12,6 +12,16 @@ module.exports = (sequelize) => {
                 type: DataTypes.STRING,
                 allowNull: false,
             },
-        },
-    );
+        }, {
+            modelName: 'dashboard',
+            tableName: 'dashboard',
+            paranoid: true,
+            timestamps: true,
+            createdAt: 'created',
+            updatedAt: 'updated',
+            deletedAt: 'deleted',
+            sequelize: sequelize,
+        });
+    };
+
 };

@@ -1,5 +1,4 @@
 const { Sequelize } = require('sequelize');
-const { applyExtraSetup } = require('./extra_setup');
 
 const dbConfig = require('../config/config.db.js');
 
@@ -14,25 +13,22 @@ const sequelize = new Sequelize(
     },
 );
 
-
-const modelDefiners = [
-    require('./models/ability.model'),
-    require('./models/dashboard.model'),
-    require('./models/permission.model'),
-    require('./models/project.model'),
-    require('./models/user.model'),
-    require('./models/server.model'),
-    require('./models/server.model'),
-    require('./models/tag.model'),
-];
-
-// We define all models according to their files.
-for (const modelDefiner of modelDefiners) {
-    modelDefiner(sequelize);
+const models = {
+    user: require('../sequelize/models/user.model'),
+    ability: require('./models/ability.model'),
+    dashboard: require('./models/dashboard.model'),
+    permission: require('./models/permission.model'),
+    project: require('./models/project.model'),
+    server: require('./models/server.model'),
+    tag: require('./models/tag.model')
 }
 
-// We execute any extra setup after the models are defined, such as adding associations.
-applyExtraSetup(sequelize);
+for (const model in models) {
+    models[model].init(sequelize, Sequelize);
+}
 
-// We export the sequelize connection instance to be used around our app.
+let associations = require('./associations');
+
+associations(sequelize);
+
 module.exports = sequelize;

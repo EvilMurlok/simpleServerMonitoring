@@ -1,14 +1,11 @@
-function applyExtraSetup(sequelize) {
-    const { server, user, permission, project, tag, ability, dashboard, metadata } = sequelize.models;
-
+module.exports = function (sequelize) {
+    const {server, user, permission, project, tag, ability, dashboard} = sequelize.models;
     user.hasMany(project);
     project.belongsTo(user);
     user.belongsToMany(permission, {through: 'UserPermission'})
     permission.belongsToMany(user, {through: 'UserPermission'})
     user.hasMany(dashboard);
     dashboard.belongsTo(user);
-    user.hasOne(metadata);
-    metadata.belongsTo(user);
 
     project.hasMany(server);
     server.belongsTo(project);
@@ -30,7 +27,4 @@ function applyExtraSetup(sequelize) {
 
     permission.belongsToMany(ability, {through: 'AbilityPermission'});
     ability.belongsToMany(permission, {through: 'AbilityPermission'});
-
 }
-
-module.exports = { applyExtraSetup };

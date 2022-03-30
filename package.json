@@ -5,8 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "node index.js",
-    "migrate": "node server/bin/migrate.js",
-    "insert": "node server/bin/insertion.js"
+    "migrate": "node server/bin/migrate.js"
   },
   "repository": {
     "type": "git",

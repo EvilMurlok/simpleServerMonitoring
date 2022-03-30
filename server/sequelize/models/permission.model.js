@@ -1,8 +1,8 @@
-const { DataTypes } = require('sequelize');
+const {Model} = require("sequelize");
 
-module.exports = (sequelize) => {
-    sequelize.define(
-        'permission', {
+module.exports = class Permission extends Model {
+    static init(sequelize, DataTypes) {
+        return super.init({
             id: {
                 autoIncrement: true,
                 primaryKey: true,
@@ -16,6 +16,16 @@ module.exports = (sequelize) => {
             end_of_life: {
                 type: DataTypes.DATE,
             }
-        },
-    );
+        }, {
+            modelName: 'permission',
+            tableName: 'permission',
+            paranoid: true,
+            timestamps: true,
+            createdAt: 'created',
+            updatedAt: 'updated',
+            deletedAt: 'deleted',
+            sequelize: sequelize,
+        });
+    };
+
 };

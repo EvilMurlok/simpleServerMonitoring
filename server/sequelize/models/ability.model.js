@@ -1,8 +1,8 @@
-const { DataTypes } = require('sequelize');
+const {Model} = require("sequelize");
 
-module.exports = (sequelize) => {
-    sequelize.define(
-        'ability', {
+module.exports = class Ability extends Model {
+    static init(sequelize, DataTypes) {
+        return super.init({
             id: {
                 autoIncrement: true,
                 primaryKey: true,
@@ -13,6 +13,16 @@ module.exports = (sequelize) => {
                 allowNull: false,
                 is: /^[a-zA-Z0-9_]{3,255}$/
             },
-        },
-    );
+        }, {
+            modelName: 'ability',
+            tableName: 'ability',
+            paranoid: true,
+            timestamps: true,
+            createdAt: 'created',
+            updatedAt: 'updated',
+            deletedAt: 'deleted',
+            sequelize: sequelize,
+        });
+    };
+
 };

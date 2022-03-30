@@ -1,8 +1,8 @@
-const { DataTypes } = require('sequelize');
+const {Model} = require("sequelize");
 
-module.exports = (sequelize) => {
-    sequelize.define(
-        'server', {
+module.exports = class Server extends Model {
+    static init(sequelize, DataTypes) {
+        return super.init({
             id: {
                 autoIncrement: true,
                 primaryKey: true,
@@ -18,6 +18,25 @@ module.exports = (sequelize) => {
                 allowNull: false,
                 is: /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
             },
-        },
-    );
+        }, {
+            modelName: 'server',
+            tableName: 'server',
+            paranoid: true,
+            timestamps: true,
+            createdAt: 'created',
+            updatedAt: 'updated',
+            deletedAt: 'deleted',
+            sequelize: sequelize,
+        });
+    };
+
+    static createServer = async ({hostname = "", ip = ""}, models) => {
+        if (hostname && ip) {
+
+        }
+        return {
+            status: "danger",
+
+        }
+    }
 };

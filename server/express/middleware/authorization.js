@@ -1,5 +1,4 @@
 const checkAuthenticated = (req, res, next) => {
-    console.log("checkAuthenticated", req.isAuthenticated())
     if (!req.isAuthenticated()) {
         return next();
     }
@@ -11,7 +10,6 @@ const checkAuthenticated = (req, res, next) => {
 }
 
 const checkNotAuthenticated = (req, res, next) => {
-    console.log("checkNotAuthenticated", req.isAuthenticated())
     if (req.isAuthenticated()) {
         return next();
     }

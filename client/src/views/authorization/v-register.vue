@@ -18,24 +18,13 @@
                 </p>
 
                 <div v-for="message in messages" :key="message.message">
-
-                  <b-alert v-if="message.type === 'error'" variant="warning"
+                  <b-alert variant="warning"
                            show class="d-flex align-items-center justify-content-between">
                     <div class="flex-00-auto">
                       <i class="fa fa-fw fa-exclamation-circle"></i>
                     </div>
                     <div class="flex-fill mr-3">
-                      <p class="mb-0">{{message.text}}</p>
-                    </div>
-                  </b-alert>
-
-                  <b-alert v-else-if="message.type === 'success'" variant="success"
-                           show class="d-flex align-items-center">
-                    <div class="flex-00-auto">
-                      <i class="fa fa-fw fa-check"></i>
-                    </div>
-                    <div class="flex-fill ml-3">
-                      <p class="mb-0">{{message.text}}</p>
+                      <p class="mb-0">{{ message.text }}</p>
                     </div>
                   </b-alert>
                 </div>
@@ -47,6 +36,18 @@
                       <b-form-input size="lg" class="form-control-alt" id="username" name="username"
                                     placeholder="Никнейм" aria-describedby="username-feedback"
                                     v-model="username" required>
+                      </b-form-input>
+                    </div>
+                    <div class="form-group">
+                      <b-form-input size="lg" class="form-control-alt" id="email" name="email"
+                                    placeholder="Почта" aria-describedby="email"
+                                    v-model="email" required>
+                      </b-form-input>
+                    </div>
+                    <div class="form-group">
+                      <b-form-input size="lg" class="form-control-alt" id="phone" name="phone"
+                                    placeholder="Телефон" aria-describedby="phone"
+                                    v-model="phone" required>
                       </b-form-input>
                     </div>
                     <div class="form-group">
@@ -92,6 +93,8 @@ export default {
     return {
       messages: [],
       username: "",
+      email: "",
+      phone: "",
       password: "",
       confirm_password: ""
     }
@@ -99,10 +102,21 @@ export default {
 
   methods: {
     register() {
-      if (this.messages.length !== 0) {
+      if (this.messages && this.messages.length !== 0) {
         this.messages = [];
       }
-      let [right_username, right_password] = [/^[a-zA-Z0-9_]{3,16}$/, /^[a-zA-Z0-9_-]+/];
+      let [
+        right_username,
+        right_password,
+        right_phone,
+        right_email,
+
+      ] = [
+        /^[a-zA-Z0-9_]{3,16}$/,
+        /^[a-zA-Z0-9_-]+/,
+        /^[+]*[0-9]{0,3}[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/,
+        /^(([^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*)|(".+"))@(([^<>()[\].,;:\s@"]+\.)+[^<>()[\].,;:\s@"]{2,})$/i
+      ];
       if (!this.username) {
         this.messages.push(
             {
@@ -124,6 +138,22 @@ export default {
             {
               type: "error",
               text: "Поле 'подтверждения пароля' обязательно для заполнения!"
+            }
+        );
+      }
+      if (!this.email) {
+        this.messages.push(
+            {
+              type: "error",
+              text: "Поле 'почта' обязательно для заполнения!"
+            }
+        );
+      }
+      if (!this.phone) {
+        this.messages.push(
+            {
+              type: "error",
+              text: "Поле 'телефон' обязательно для заполнения!"
             }
         );
       }
@@ -160,28 +190,47 @@ export default {
             }
         );
       }
+      if (this.phone && !right_phone.test(this.phone)) {
+        this.messages.push(
+            {
+              type: "error",
+              text: "Неверный формат телефона!"
+            }
+        );
+      }
+      if (this.email && !right_email.test(this.email)) {
+        this.messages.push(
+            {
+              type: "error",
+              text: "Неверный формат почты!"
+            }
+        );
+      }
       if (this.messages.length === 0) {
         this.$http
             .post("register", {
               username: this.username,
+              phone: this.phone,
+              email: this.email,
               password: this.password,
               confirm_password: this.confirm_password
             })
             .then(res => {
+              console.log(res.data);
               if (res.data.status === "success") {
-                console.log(res.data.message)
                 this.$router.push(
                     {
                       name: 'login',
                       params: {
                         username: '',
                         messages: [
-                          res.data.message
+                          res.data.messages
                         ]
                       }
                     }
                 );
               } else {
+                console.log(res.data.messages);
                 this.messages = res.data.messages;
                 this.password = "";
                 this.confirm_password = "";
