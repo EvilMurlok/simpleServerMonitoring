@@ -1,31 +1,32 @@
 // global requirements
-const express = require('express');
-const bodyParser = require('body-parser');
-const morgan = require('morgan');
+const express = require("express");
+const bodyParser = require("body-parser");
+const morgan = require("morgan");
 const session = require("express-session");
-const flash = require('express-flash');
-const passport = require('passport');
+const flash = require("express-flash");
+const passport = require("passport");
 
 // local routes requirements
-const testRouter = require('./routes/monitoring');
-const authRouter = require('./routes/authorization');
-const serverRouter = require('./routes/server');
+const testRouter = require("./routes/monitoring");
+const authRouter = require("./routes/authorization");
+const userRouter = require("./routes/user");
+const serverRouter = require("./routes/server");
 
 // local auth requirements
-const {SESSION_SECRET} = require('../config/session.conf');
-const initializePassport = require('./passportConfig');
+const {SESSION_SECRET} = require("../config/session.conf");
+const initializePassport = require("./passportConfig");
 
 // local monitoring requirements
-const {monitoringMiddleware} = require('./middleware/monitoring');
+const {monitoringMiddleware} = require("./middleware/monitoring");
 
 const app = express();
 
 const allowCrossDomain = function (req, res, next) {
     // res.header('Access-Control-Allow-Origin', 'http://159.223.42.191:8080');
-    res.header('Access-Control-Allow-Origin', 'http://localhost:8080');
-    res.header('Access-Control-Allow-Methods', '*');
-    res.header('Access-Control-Allow-Headers', 'origin, content-type, accept');
-    res.header('Access-Control-Allow-Credentials', true);
+    res.header("Access-Control-Allow-Origin", "http://localhost:8080");
+    res.header("Access-Control-Allow-Methods", "*");
+    res.header("Access-Control-Allow-Headers", "origin, content-type, accept");
+    res.header("Access-Control-Allow-Credentials", true);
     next();
 }
 app.use(allowCrossDomain);
@@ -45,7 +46,7 @@ app.use(passport.session({}));
 initializePassport(passport);
 
 // using the middlewares
-app.use(morgan('dev'));
+app.use(morgan("dev"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(flash());
@@ -58,6 +59,7 @@ app.use(monitoringMiddleware);
 
 // include all routes
 app.use('', authRouter);
+app.use('', userRouter);
 app.use('', serverRouter);
 
 module.exports = app;

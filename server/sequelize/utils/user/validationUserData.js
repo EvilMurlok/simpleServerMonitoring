@@ -1,6 +1,6 @@
-const {UserCredentialsException} = require("../../errors/user/userExceptions");
+const {UserCredentialsError} = require("../../errors/user/userExceptions");
 
-async function validateUserData({username, phone, email, password, confirm_password}, isRegistry=false) {
+async function validateUserData({username, phone, email, password, confirm_password}, isEdition= false) {
     let messages = [];
     let [
         rightUsername,
@@ -21,14 +21,14 @@ async function validateUserData({username, phone, email, password, confirm_passw
             }
         );
     }
-    if (isRegistry && !password) {
+    if (!isEdition && !password) {
         messages.push(
             {
-                text: "Поле никнейма обязательно для заполнения!"
+                text: "Поле пароля обязательно для заполнения!"
             }
         );
     }
-    if (isRegistry && !confirm_password) {
+    if (!isEdition && !confirm_password) {
         messages.push(
             {
                 text: "Поле 'подтверждения пароля' обязательно для заполнения!"
@@ -49,7 +49,7 @@ async function validateUserData({username, phone, email, password, confirm_passw
             }
         );
     }
-    if (isRegistry && password && password.length < 6) {
+    if (!isEdition && password && password.length < 6) {
         // this.messages.push({message: "Пароль не должен быть короче 6 символов!"});
         messages.push(
             {
@@ -57,7 +57,7 @@ async function validateUserData({username, phone, email, password, confirm_passw
             }
         );
     }
-    if (isRegistry && password && confirm_password && (password !== confirm_password)) {
+    if (!isEdition && password && confirm_password && (password !== confirm_password)) {
         messages.push(
             {
                 text: "Пароли не совпадают!"
@@ -71,10 +71,10 @@ async function validateUserData({username, phone, email, password, confirm_passw
             }
         );
     }
-    if (isRegistry && password && !rightPassword.test(password)) {
+    if (!isEdition && password && !rightPassword.test(password)) {
         messages.push(
             {
-                text: "Пароль  должен состоять только из латинских букв и цифр, символов подчеркивания и тире!"
+                text: "Пароль должен состоять только из латинских букв и цифр, символов подчеркивания и тире!"
             }
         );
     }

@@ -1,3 +1,5 @@
+const {ProjectCredentialsError} = require('../../errors/project/projectException');
+
 async function validateProjectData({projectName}) {
     let messages = [];
     let rightProjectName = /^[a-zA-Z0-9_-]{3,255}$/
@@ -15,7 +17,9 @@ async function validateProjectData({projectName}) {
             }
         );
     }
-    return messages;
+    if (messages.length > 0) {
+        throw new ProjectCredentialsError("Invalid project data", messages);
+    }
 }
 
 module.exports = {

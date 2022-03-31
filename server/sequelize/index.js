@@ -24,7 +24,8 @@ const models = {
 }
 
 for (const model in models) {
-    models[model].init(sequelize, Sequelize);
+    const myModel = models[model](sequelize.models);
+    myModel.initModel(sequelize);
 }
 
 let associations = require('./associations');
