@@ -8,10 +8,14 @@ services:
     build:
       context: .
     restart: on-failure
+    working_dir: "/app"
     ports:
-      - '4000:4000'
+      - "4000:4000"
     depends_on:
       - db
+    volumes:
+      - ".:/app"
+      - "/app/node_modules"
 
   db:
     image: 'postgres'

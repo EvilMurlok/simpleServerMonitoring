@@ -11,6 +11,7 @@ const testRouter = require("./routes/monitoring");
 const authRouter = require("./routes/authorization");
 const userRouter = require("./routes/user");
 const serverRouter = require("./routes/server");
+const projectRouter = require("./routes/project");
 
 // local auth requirements
 const {SESSION_SECRET} = require("../config/session.conf");
@@ -61,5 +62,6 @@ app.use(monitoringMiddleware);
 app.use('', authRouter);
 app.use('', userRouter);
 app.use('', serverRouter);
+app.use('', projectRouter);
 
 module.exports = app;

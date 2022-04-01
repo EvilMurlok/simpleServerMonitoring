@@ -3,7 +3,8 @@ const {Op, Model, DataTypes} = require("sequelize");
 const {
     ServerCommonError,
     ServerDeletionError,
-    ServerNotUpdatedError
+    ServerNotUpdatedError,
+    ServerNotFoundError
 } = require("../errors/server/serverException");
 const {validateServerData} = require("../utils/server/validationServerData");
 const {validateSameServerData} = require("../utils/server/validationSameServerData");
@@ -118,6 +119,32 @@ module.exports = (models) => {
             }]);
         }
 
+        static retrieveProjectServer = async ({serverId = 0, projectId = 0}) => {
+            const currentServer = await this.findOne({
+                where: {
+                    [Op.and]: [
+                        {
+                            projectId: projectId
+                        },
+                        {
+                            id: serverId
+                        }
+                    ]
+                }
+            });
+            if (currentServer) {
+                return currentServer;
+            }
+            throw new ServerNotFoundError("Such server not found!", [{
+                text: "В данном проекте такого сервера не найдено!"
+            }])
+        }
+
+        static retrieveServersByTags = async ({tagId = 0}) => {
+            const currentTag = await models.tag.findByPk(tagId);
+            return await currentTag.getServers();
+        }
+
         static deletionServer = async ({serverId = 0, projectId = 0}) => {
             const currentServer = await this.findOne({
                 where: {
@@ -153,8 +180,8 @@ module.exports = (models) => {
                 text: "Не удалось удалить сервер!"
             }]);
         }
-
     }
+
 
     return Server;
 };
