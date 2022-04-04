@@ -39,13 +39,25 @@ module.exports = (models) => {
             });
         };
 
-        static createServer = async ({projectId = 0, hostname = "", ip = ""}) => {
-            const currentProject = await models.project.findByPk(projectId);
-            if (currentProject) {
+        static createServer = async ({projectId = 0, projectName = "", userId = 0, hostname = "", ip = ""}) => {
+            const currentProjectById = await models.project.findByPk(projectId);
+            const currentProjectByName = await models.project.findOne({
+                where: {
+                    [Op.and]: [
+                        {
+                            name: projectName
+                        },
+                        {
+                            userId: userId
+                        }
+                    ]
+                }
+            });
+            if (currentProjectByName || currentProjectById) {
+                projectId = projectId || currentProjectByName.id
                 try {
                     await validateServerData({hostname, ip});
-                    const bindValidateSameServerData = validateSameServerData.bind(this);
-                    await bindValidateSameServerData({projectId, hostname, ip});
+                    await validateSameServerData.bind(this)({projectId, hostname, ip});
                 } catch (e) {
                     throw e;
                 }

@@ -6,8 +6,8 @@ const authControllers = require('../controllers/authorization');
 
 const router = express.Router();
 
-router.post('/register/', authControllers.user_register_post);
-router.post('/login/', passport.authenticate('local', {}),
+router.post('/auth/register/', authControllers.user_register_post);
+router.post('/auth/login/', passport.authenticate('local', {}),
     function (req, res) {
         res.send({
             status: "success",
@@ -17,6 +17,6 @@ router.post('/login/', passport.authenticate('local', {}),
         });
     }
 );
-router.get('/logout/', middlewaresAuth.checkNotAuthenticated, authControllers.user_logout);
+router.get('/auth/logout/', middlewaresAuth.checkNotAuthenticated, authControllers.user_logout);
 
 module.exports = router;

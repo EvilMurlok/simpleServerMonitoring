@@ -1,10 +1,10 @@
 const {models} = require("../../sequelize");
 
 const create_server = async (req, res) => {
-    const {hostname, ip} = req.body;
-    const projectId = req.params.projectId;
+    const {hostname, ip, projectId, projectName} = req.body;
+    const userId = req.user.id;
     try {
-        const createdServer = await models.server.createServer({projectId, hostname, ip});
+        const createdServer = await models.server.createServer({projectId, projectName, userId, hostname, ip});
         res.send({
             status: "success",
             messages: [{
@@ -14,7 +14,7 @@ const create_server = async (req, res) => {
         });
     } catch (e) {
         res.send({
-            status: "danger",
+            status: "warning",
             messages: e.messages
         });
     }
@@ -30,7 +30,7 @@ const retrieve_project_servers = async (req, res) => {
         });
     } catch (e) {
         res.send({
-            status: "danger",
+            status: "warning",
             messages: e.messages
         });
     }
@@ -54,7 +54,7 @@ const retrieve_server_in_project = async (req, res) => {
         })
     } catch (e) {
         res.send({
-            status: "danger",
+            status: "warning",
             messages: e.messages
         });
     }
@@ -64,6 +64,7 @@ const update_server = async (req, res) => {
     const [serverId, projectId] = [req.params.serverId, req.params.projectId];
     const {hostname, ip} = req.body;
     try {
+
         const editedServer = await models.server.editServer({projectId, serverId, hostname, ip});
         res.send({
             status: "success",
@@ -73,7 +74,7 @@ const update_server = async (req, res) => {
         });
     } catch (e) {
         res.send({
-            status: "danger",
+            status: "warning",
             messages: e.messages
         });
     }
@@ -91,7 +92,7 @@ const delete_server = async (req, res) => {
         });
     } catch (e) {
         res.send({
-            status: "danger",
+            status: "warning",
             messages: e.messages
         });
     }

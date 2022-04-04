@@ -57,13 +57,42 @@ module.exports = (models) => {
         }
 
         static editProject = async ({userId = 0, projectId = 0, projectName = ""}) => {
-            const currentUser = await models.user.findByPk(userId);
-            if (currentUser) {
-                const currentProject = await this.findOne({
+            const currentProject = await this.findOne({
+                where: {
+                    [Op.and]: [
+                        {
+                            userId: userId
+                        },
+                        {
+                            id: projectId
+                        }
+                    ]
+                }
+            });
+            if (currentProject) {
+                const projectNameUser = currentProject.name;
+                console.log(projectNameUser, projectName);
+                if (projectNameUser === projectName) {
+                    throw new ProjectNotUpdatedDataError("Data was not changed", [{
+                        text: `Данные о проекте ${projectName} изменены не были!`
+                    }]);
+                } else {
+                    try {
+                        await validateProjectData({projectName});
+                        const bindValidateSameProjectData = validateSameProjectData.bind(this);
+                        await bindValidateSameProjectData({userId, projectName, projectNameUser}, true);
+                    } catch (e) {
+                        throw e;
+                    }
+                }
+                return await this.update({
+                    userId: userId,
+                    name: projectName
+                }, {
                     where: {
                         [Op.and]: [
                             {
-                                userId: userId
+                                userId: userId,
                             },
                             {
                                 id: projectId
@@ -71,59 +100,62 @@ module.exports = (models) => {
                         ]
                     }
                 });
-                if (currentProject) {
-                    const projectNameUser = currentProject.name;
-                    console.log(projectNameUser, projectName);
-                    if (projectNameUser === projectName) {
-                        throw new ProjectNotUpdatedDataError("Data was not changed", [{
-                            text: `Данные о проекте ${projectName} изменены не были!`
-                        }]);
-                    } else {
-                        try {
-                            await validateProjectData({projectName});
-                            const bindValidateSameProjectData = validateSameProjectData.bind(this);
-                            await bindValidateSameProjectData({userId, projectName, projectNameUser}, true);
-                        } catch (e) {
-                            throw e;
-                        }
-                    }
-                    return await this.update({
-                        userId: userId,
-                        name: projectName
-                    }, {
-                        where: {
-                            [Op.and]: [
-                                {
-                                    userId: userId,
-                                },
-                                {
-                                    id: projectId
-                                }
-                            ]
-                        }
-                    });
-                } else {
-                    throw new ProjectNotFoundError("Such project not found", [{
-                        text: "Такого проекта у Вас нет!"
-                    }]);
-                }
             }
-            throw new ProjectCommonError("Cannot update the project", [{
-                text: "Невозможно обновить информацию о проекте!"
+            throw new ProjectNotFoundError("Such project not found", [{
+                text: "Такого проекта у Вас нет!"
             }]);
         }
 
-        static retrieveUserProjects = async ({userId = 0}) => {
+        static retrieveUserProjects = async ({userId = 0, offset, limit}) => {
+            const currentUser = await models.user.findByPk(userId);
+            if (currentUser) {
+                return await this.findAndCountAll({
+                    where: {
+                        userId: userId
+                    },
+                    order: [['created', 'DESC']],
+                    offset: offset,
+                    limit: limit
+                });
+            }
+            throw new ProjectCommonError("Cannot retrieve user projects", [{
+                text: "Невозможно получить список проектов!"
+            }]);
+        }
+
+        static retrieveAllUserProjects = async ({userId = 0}) => {
             const currentUser = await models.user.findByPk(userId);
             if (currentUser) {
                 return await this.findAll({
                     where: {
                         userId: userId
-                    }
+                    },
+                    order: [['created', 'DESC']],
                 });
             }
             throw new ProjectCommonError("Cannot retrieve user projects", [{
                 text: "Невозможно получить список проектов!"
+            }]);
+        }
+
+        static retrieveProject = async ({projectId, userId}) => {
+            const currentProject = await this.findOne({
+                where: {
+                    [Op.and]: [
+                        {
+                            id: projectId
+                        },
+                        {
+                            userId: userId
+                        }
+                    ]
+                }
+            });
+            if (currentProject) {
+                return currentProject;
+            }
+            throw new ProjectNotFoundError("Such project not found", [{
+                text: "Такого проекта у вас нет!"
             }]);
         }
 

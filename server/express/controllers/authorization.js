@@ -15,7 +15,7 @@ const user_register_post = async (req, res) => {
         });
     } catch (e) {
         res.send({
-            status: "danger",
+            status: "warning",
             messages: e.messages
         });
     }
@@ -41,7 +41,7 @@ const user_edition = async (req, res) => {
             })
         } else {
             res.send({
-                status: "danger",
+                status: "warning",
                 messages: e.messages
             });
         }
@@ -58,7 +58,7 @@ const user_retrieve = async (req, res) => {
         });
     } catch (e) {
         res.send({
-            status: "danger",
+            status: "warning",
             messages: e.messages
         });
     }
@@ -76,7 +76,7 @@ const user_deletion = async (req, res) => {
         });
     } catch (e) {
         res.send({
-            status: "danger",
+            status: "warning",
             messages: e.messages
         });
     }
@@ -86,8 +86,9 @@ const user_logout = async (req, res) => {
     req.logout();
     res.send({
         status: "success",
-        message: "Вы успешно вышли из системы!",
-        isLoggedIn: req.isAuthenticated()
+        messages: [{
+            text: "Вы успешно вышли из системы!"
+        }],
     });
 }
 

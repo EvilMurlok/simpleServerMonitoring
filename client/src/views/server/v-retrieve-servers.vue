@@ -1,15 +1,11 @@
 <template>
   <div class="v-show-servers">
     <div class="content">
-      <div class="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center py-2 text-center text-sm-left">
-
+      <div
+          class="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center py-2 text-center text-sm-left">
         <div class="flex-sm-fill">
-          <h1 class="h3 font-w700 mb-2">
-            Мои сервера
-          </h1>
-          <h2 class="h6 font-w500 text-muted mb-0">
-            Приветствуем, <b>{{ USERNAME }}</b>. Список Ваших серверов
-          </h2>
+          <h1 class="h3 font-w700 mb-2">Мои сервера</h1>
+          <h2 class="h6 font-w500 text-muted mb-0">Приветствуем, <b>{{  }}</b>. Список Ваших серверов</h2>
         </div>
         <div class="mt-3 mt-sm-0 ml-sm-3">
           <b-button variant="alt-primary" class="mr-1" to="/add-server" v-click-ripple>
@@ -20,39 +16,11 @@
     </div>
     <!-- END Hero -->
     <div class="content">
-      <b-col md="8" lg="6" xl="4">
-        <div v-for="message in messages" :key="message.message">
-          <b-alert v-if="message.type === 'error'" variant="warning"
-                   show class="d-flex align-items-center justify-content-between">
-            <div class="flex-00-auto">
-              <i class="fa fa-fw fa-exclamation-circle"></i>
-            </div>
-            <div class="flex-fill mr-3">
-              <p class="mb-0">{{message.text}}</p>
-            </div>
-          </b-alert>
-
-          <b-alert v-else-if="message.type === 'success'" variant="success"
-                   show class="d-flex align-items-center">
-            <div class="flex-00-auto">
-              <i class="fa fa-fw fa-check"></i>
-            </div>
-            <div class="flex-fill ml-3">
-              <p class="mb-0">{{message.text}}</p>
-            </div>
-          </b-alert>
-
-          <b-alert v-else-if="message.type === 'info'" variant="info"
-                   show class="d-flex align-items-center">
-            <div class="flex-00-auto">
-              <i class="fa fa-fw fa-info-circle"></i>
-            </div>
-            <div class="flex-fill ml-3">
-              <p class="mb-0">{{message.text}}</p>
-            </div>
-          </b-alert>
-        </div>
-      </b-col>
+      <BaseMessage
+          v-for="item in messages_data.messages"
+          :key="item.text"
+          :message_data="{type: messages_data.type, item: item, visibility: true}"
+      />
     </div>
 
 
@@ -81,7 +49,7 @@
               </b-td>
               <b-td class="text-center">
                 <b-button :to="{ path: `/view-server/${server.id}/`}" size="sm" variant="light">
-                  <i class="fa fa-fw fa-info-circle" ></i> Узнать больше
+                  <i class="fa fa-fw fa-info-circle"></i> Узнать больше
                 </b-button>
               </b-td>
               <b-td>
@@ -93,7 +61,8 @@
           </b-tbody>
         </b-table-simple>
       </base-block>
-      <b-button v-if="isLoadMore === true" class="btn btn-outline-info mb-3 mb-3" @click="loadMore" size="sm" variant="light">
+      <b-button v-if="isLoadMore === true" class="btn btn-outline-info mb-3 mb-3" @click="loadMore" size="sm"
+                variant="light">
         <i class="fa fa-fw fa-plus-circle"></i> Загрузить ещё
       </b-button>
     </div>
@@ -104,41 +73,39 @@
 </template>
 
 <script>
-import {mapActions, mapGetters} from "vuex";
+import BaseMessage from "@/layouts/partials/BaseMessage";
 
 export default {
   name: "v-show-servers",
 
-  computed: {
-    ...mapGetters(['USERNAME', 'IS_LOGGED_IN']),
+  components: {
+    BaseMessage
   },
 
   data() {
     return {
+      username: localStorage.getItem("username"),
       offset: 0,
       limit: 3,
-      messages: [],
+      messages_data: {type: "warning", messages: []},
       servers: [],
       isLoadMore: true
     }
   },
 
   created() {
-    if (this.$route.params.messages !== undefined) {
-      this.messages = this.$route.params.messages;
+    if (this.$route.params.messages_data !== undefined) {
+      this.messages_data = this.$route.params.messages_data;
     } else {
-      this.messages = []
+      this.messages_data = {type: "warning", messages: []};
     }
     this.$http
         .get(`show-servers-amount/${this.offset}/${this.limit}`)
         .then(res => {
-          if (!res.data.isLoggedIn) {
+          if (res.data.isLoggedIn !== undefined && !res.data.isLoggedIn) {
             localStorage.removeItem("isLoggedIn");
             localStorage.removeItem("username");
             localStorage.removeItem("id");
-            this.SET_LOGGED_IN("out");
-            this.SET_USERNAME("");
-            this.SET_USER_ID(0);
             this.$router.push(
                 {
                   name: 'login',
@@ -155,7 +122,7 @@ export default {
           } else {
             this.servers = res.data.servers.rows;
             this.offset += res.data.servers.rows.length;
-            if (res.data.servers.count === this.offset){
+            if (res.data.servers.count === this.offset) {
               this.isLoadMore = false;
             }
           }
@@ -164,7 +131,6 @@ export default {
   },
 
   methods: {
-    ...mapActions(['SET_USERNAME', 'SET_USER_ID', 'SET_LOGGED_IN']),
     deleteServer(serverId) {
       if (this.messages.length !== 0) {
         this.messages = [];
@@ -176,9 +142,6 @@ export default {
               localStorage.removeItem("isLoggedIn");
               localStorage.removeItem("username");
               localStorage.removeItem("id");
-              this.SET_LOGGED_IN("out");
-              this.SET_USERNAME("");
-              this.SET_USER_ID(0);
               this.$router.push(
                   {
                     name: 'login',
@@ -192,17 +155,15 @@ export default {
                     }
                   }
               );
-            }
-            else{
-              if (res.data.status === "danger"){
+            } else {
+              if (res.data.status === "danger") {
                 this.messages.push(
                     {
                       type: "error",
                       text: res.data.message
                     }
                 );
-              }
-              else{
+              } else {
                 this.messages.push(
                     {
                       type: 'success',
@@ -244,7 +205,7 @@ export default {
             } else {
               this.servers = [...this.servers, ...res.data.servers.rows];
               this.offset += res.data.servers.rows.length;
-              if (res.data.servers.count === this.offset){
+              if (res.data.servers.count === this.offset) {
                 this.isLoadMore = false;
               }
             }

@@ -6,7 +6,7 @@
         <b-row class="justify-content-center">
           <b-col md="8" lg="6" xl="4">
             <!-- Sign In Block -->
-            <base-block rounded themed header-class="bg-primary-dark" class="mb-0" title="Sign In">
+            <base-block rounded themed header-class="bg-primary-dark" class="mb-0" title="Форма входа">
               <template #options>
                 <router-link :to="{ name: 'register'}" class="btn-block-option"
                              v-b-tooltip.hover.nofade.left="'Зарегистрироваться!'">
@@ -14,53 +14,51 @@
                 </router-link>
               </template>
               <div class="p-sm-3 px-lg-4 py-lg-5">
-                <h1 class="h2 mb-1">Мониторинг серверов</h1>
-                <p class="text-muted">
-                  Форма входа
-                </p>
+                <h1 class="h2 mb-5">Мониторинг серверов</h1>
 
-                <div v-for="message in messages" :key="message.message">
-
-                  <b-alert v-if="message.type === 'error'" variant="warning"
-                           show class="d-flex align-items-center justify-content-between">
-                    <div class="flex-00-auto">
-                      <i class="fa fa-fw fa-exclamation-circle"></i>
-                    </div>
-                    <div class="flex-fill mr-3">
-                      <p class="mb-0">{{message.text}}</p>
-                    </div>
-                  </b-alert>
-
-                  <b-alert v-else-if="message.type === 'success'" variant="success"
-                           show class="d-flex align-items-center">
-                    <div class="flex-00-auto">
-                      <i class="fa fa-fw fa-check"></i>
-                    </div>
-                    <div class="flex-fill ml-3">
-                      <p class="mb-0">{{message.text}}</p>
-                    </div>
-                  </b-alert>
-                </div>
+                <BaseMessage
+                    v-for="item in messages_data.messages"
+                    :key="item.text"
+                    :message_data="{type: messages_data.type, item: item}"
+                />
 
                 <!-- Sign In Form -->
                 <b-form @submit.prevent="login">
                   <div class="py-3">
                     <div class="form-group">
-                      <b-form-input size="lg" class="form-control-alt" id="username" name="username"
-                                    placeholder="Никнейм" aria-describedby="username-feedback"
-                                    v-model="username">
+                      <label class="form-check-label mb-2">Никнейм</label>
+                      <b-form-input size="lg"
+                                    class="form-control-alt"
+                                    id="username"
+                                    name="username"
+                                    placeholder="Никнейм"
+                                    aria-describedby="username-feedback"
+                                    v-model="username"
+                      >
                       </b-form-input>
                     </div>
                     <div class="form-group">
-                      <b-form-input type="password" size="lg" class="form-control-alt" id="password" name="password"
-                                    placeholder="Пароль" aria-describedby="password"
-                                    v-model="password" required></b-form-input>
+                      <label class="form-check-label mb-2">Пароль</label>
+                      <b-form-input type="password"
+                                    size="lg"
+                                    class="form-control-alt"
+                                    id="password"
+                                    name="password"
+                                    placeholder="Пароль"
+                                    aria-describedby="password"
+                                    v-model="password"
+                                    required
+                      >
+                      </b-form-input>
                     </div>
                   </div>
                   <b-row class="form-group">
                     <b-col md="6" xl="5">
-                      <b-button type="submit" variant="alt-primary" block>
-                        <i class="fa fa-fw fa-sign-in-alt mr-1"></i> Sign In
+                      <b-button type="submit"
+                                variant="alt-primary"
+                                block
+                      >
+                        <i class="fa fa-fw fa-sign-in-alt mr-1"></i> Войти
                       </b-button>
                     </b-col>
                   </b-row>
@@ -80,57 +78,58 @@
 </template>
 
 <script>
-import {mapActions} from "vuex";
+import BaseMessage from "@/layouts/partials/BaseMessage";
 
 export default {
   name: "v-login",
 
+  components: {
+    BaseMessage
+  },
+
   data() {
     return {
-      messages: [],
+      messages_data: {type: "warning", messages: []},
       username: "",
       password: ""
     }
   },
 
   created() {
-    if (this.$route.params.messages !== undefined) {
-      this.messages = this.$route.params.messages;
+    if (this.$route.params.messages_data !== undefined) {
+      this.messages_data = this.$route.params.messages_data;
     } else {
-      this.messages = []
+      this.messages_data = {type: "warning", messages: []};
     }
     if (this.$route.params.username !== undefined) {
       this.username = this.$route.params.username;
     } else {
-      this.username = ''
+      this.username = '';
     }
   },
 
   methods: {
-    ...mapActions(['SET_USERNAME', 'SET_LOGGED_IN', 'SET_USER_ID']),
     login() {
-      if (this.messages.length !== 0) {
-        this.messages = [];
+      if (this.messages_data.messages.length !== 0) {
+        this.messages_data = {type: "warning", messages: []};
       }
       if (!this.username) {
-        this.messages.push(
+        this.messages_data.messages.push(
             {
-              type: "error",
               text: "Поле никнейма обязательно для заполнения!"
             }
         );
       }
       if (!this.password) {
-        this.messages.push(
+        this.messages_data.messages.push(
             {
-              type: "error",
               text: "Поле пароля обязательно для заполнения!"
             }
         );
       }
-      if (this.messages.length === 0) {
+      if (this.messages_data.messages.length === 0) {
         this.$http
-            .post("login", {
+            .post("/auth/login/", {
               username: this.username,
               password: this.password
             })
@@ -139,17 +138,10 @@ export default {
                 localStorage.setItem("isLoggedIn", "in");
                 localStorage.setItem("id", String(res.data.id));
                 localStorage.setItem("username", res.data.username);
-                this.SET_USERNAME(res.data.username);
-                this.SET_LOGGED_IN("in");
-                this.SET_USER_ID(res.data.id);
-                this.$router.push(
-                    {
-                      name: 'showServers',
+                this.$router.push({
+                      name: 'retrieveProjects',
                       params: {
-                        messages: [{
-                          type: 'success',
-                          text: "Успешная авторизация"
-                        }]
+                        messages_data: {type: res.data.status, messages: [{ text: "Успешная авторизация!"}]}
                       }
                     }
                 );
@@ -157,9 +149,8 @@ export default {
             })
             .catch(error => {
               console.error(error);
-              this.messages.push(
+              this.messages_data.messages.push(
                   {
-                    type: "error",
                     text: "Неправильный логин или пароль!"
                   }
               );
