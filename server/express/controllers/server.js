@@ -1,10 +1,10 @@
 const {models} = require("../../sequelize");
+const {ServerNotUpdatedError, ServerNotFoundError} = require("../../sequelize/errors/server/serverException");
 
 const create_server = async (req, res) => {
     const {hostname, ip, projectId, projectName} = req.body;
-    const userId = req.user.id;
     try {
-        const createdServer = await models.server.createServer({projectId, projectName, userId, hostname, ip});
+        const createdServer = await models.server.createServer({projectId, projectName, hostname, ip});
         res.send({
             status: "success",
             messages: [{
@@ -47,10 +47,10 @@ const retrieve_server_by_tag = async (req, res) => {
 const retrieve_server_in_project = async (req, res) => {
     const [serverId, projectId] = [req.params.serverId, req.params.projectId];
     try {
-        const server = models.server.retrieveProjectServer({serverId, projectId});
+        const projectServer = await models.server.retrieveProjectServer({serverId, projectId});
         res.send({
             status: "success",
-            server: server
+            projectServer: projectServer
         })
     } catch (e) {
         res.send({
@@ -62,21 +62,38 @@ const retrieve_server_in_project = async (req, res) => {
 
 const update_server = async (req, res) => {
     const [serverId, projectId] = [req.params.serverId, req.params.projectId];
-    const {hostname, ip} = req.body;
+    const {hostname, ip, newProjectName} = req.body;
+    let editedServer = "";
     try {
-
-        const editedServer = await models.server.editServer({projectId, serverId, hostname, ip});
+        if (!newProjectName || newProjectName === "Не выбрано") {
+            [, editedServer] = await models.server.editServer({projectId, serverId, hostname, ip});
+        } else {
+            [, editedServer] = await models.server.editServer({projectId, serverId, newProjectName, hostname, ip});
+        }
         res.send({
             status: "success",
             messages: [{
-               text: `Сервер ${editedServer.hostname} успешно изменен!`
-            }]
+                text: `Сервер ${editedServer.hostname} успешно изменен!`
+            }],
+            server: editedServer
         });
     } catch (e) {
-        res.send({
-            status: "warning",
-            messages: e.messages
-        });
+        if (e instanceof ServerNotUpdatedError) {
+            res.send({
+                status: "info",
+                messages: e.messages
+            });
+        } else if (e instanceof ServerNotFoundError) {
+            res.send({
+                status: "not found",
+                messages: e.messages
+            });
+        } else {
+            res.send({
+                status: "warning",
+                messages: e.messages
+            });
+        }
     }
 }
 
@@ -103,7 +120,7 @@ const show_servers_amount = async (req, res) => {
         where: {
             userId: req.user.id
         },
-        order: [ ['createdAt', 'DESC'] ],
+        order: [['createdAt', 'DESC']],
         offset: req.params.offset,
         limit: req.params.limit
     });

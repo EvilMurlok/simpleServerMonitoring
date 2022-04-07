@@ -27,51 +27,45 @@ module.exports = (models) => {
             }, {
                 modelName: 'project',
                 tableName: 'Project',
-                paranoid: false,
+                paranoid: true,
                 timestamps: true,
                 createdAt: 'created',
                 updatedAt: 'updated',
+                deletedAt: 'deleted',
                 sequelize: sequelize,
             });
         };
 
         static createProject = async ({userId = 0, projectName = ""}) => {
-            const currentUser = models.user.findByPk(userId);
-            if (currentUser) {
-                try {
-                    await validateProjectData({projectName});
-                    const bindValidateSameProjectData = validateSameProjectData.bind(this);
-                    await bindValidateSameProjectData({userId, projectName});
-                } catch (e) {
-                    throw e;
-                }
-                return await this.create({
-                    userId: userId,
-                    name: projectName
-                });
+            try {
+                await validateProjectData({projectName});
+                await validateSameProjectData.bind(this)({projectName});
+            } catch (e) {
+                throw e;
             }
-
-            throw new ProjectCommonError("Cannot create the project", [{
-                text: "Невозможно создать проект!"
-            }]);
+            return await this.create({
+                userId: userId,
+                name: projectName
+            });
         }
 
-        static editProject = async ({userId = 0, projectId = 0, projectName = ""}) => {
+        static editProject = async ({projectId = 0, projectName = ""}) => {
             const currentProject = await this.findOne({
                 where: {
                     [Op.and]: [
                         {
-                            userId: userId
+                            id: projectId
                         },
                         {
-                            id: projectId
+                            deleted: {
+                                [Op.is]: null
+                            }
                         }
                     ]
                 }
             });
             if (currentProject) {
                 const projectNameUser = currentProject.name;
-                console.log(projectNameUser, projectName);
                 if (projectNameUser === projectName) {
                     throw new ProjectNotUpdatedDataError("Data was not changed", [{
                         text: `Данные о проекте ${projectName} изменены не были!`
@@ -79,27 +73,18 @@ module.exports = (models) => {
                 } else {
                     try {
                         await validateProjectData({projectName});
-                        const bindValidateSameProjectData = validateSameProjectData.bind(this);
-                        await bindValidateSameProjectData({userId, projectName, projectNameUser}, true);
+                        await validateSameProjectData.bind(this)({projectName, projectNameUser}, true);
                     } catch (e) {
                         throw e;
                     }
                 }
-                return await this.update({
-                    userId: userId,
+                return [await this.update({
                     name: projectName
                 }, {
                     where: {
-                        [Op.and]: [
-                            {
-                                userId: userId,
-                            },
-                            {
-                                id: projectId
-                            }
-                        ]
+                        id: projectId
                     }
-                });
+                }), {projectName}];
             }
             throw new ProjectNotFoundError("Such project not found", [{
                 text: "Такого проекта у Вас нет!"
@@ -111,7 +96,16 @@ module.exports = (models) => {
             if (currentUser) {
                 return await this.findAndCountAll({
                     where: {
-                        userId: userId
+                        [Op.and]: [
+                            {
+                                userId: userId
+                            },
+                            {
+                                deleted: {
+                                    [Op.is]: null
+                                }
+                            }
+                        ]
                     },
                     order: [['created', 'DESC']],
                     offset: offset,
@@ -123,12 +117,76 @@ module.exports = (models) => {
             }]);
         }
 
+        static retrieveAllProjectsWithServers = async ({userId, offset, limit}) => {
+            const currentUser = await models.user.findByPk(userId);
+            if (currentUser) {
+                return [
+                    await this.findAll({
+                        include: {
+                            model: models.server,
+                            required: true,
+                            order: [['created', 'ASC']],
+                            where: {
+                                deleted: {
+                                    [Op.is]: null
+                                }
+                            }
+                        },
+                        where: {
+                            [Op.and]: [
+                                {
+                                    userId: userId
+                                },
+                                {
+                                    deleted: {
+                                        [Op.is]: null
+                                    }
+                                }
+                            ]
+                        },
+                        order: [['created', 'DESC']],
+                        offset: offset,
+                        limit: limit
+                    }), (await this.findAll({
+                        include: {
+                            model: models.server,
+                            required: true,
+                        },
+                        where: {
+                            [Op.and]: [
+                                {
+                                    userId: userId
+                                },
+                                {
+                                    deleted: {
+                                        [Op.is]: null
+                                    }
+                                }
+                            ]
+                        },
+                    })).length
+                ];
+            }
+            throw new ProjectCommonError("Cannot retrieve user projects", [{
+                text: "Невозможно получить список проектов!"
+            }]);
+        }
+
         static retrieveAllUserProjects = async ({userId = 0}) => {
             const currentUser = await models.user.findByPk(userId);
             if (currentUser) {
                 return await this.findAll({
                     where: {
-                        userId: userId
+                        [Op.and]: [
+                            {
+                                userId: userId
+                            },
+                            {
+                                deleted: {
+                                    [Op.is]: null
+                                }
+                            }
+                        ]
                     },
                     order: [['created', 'DESC']],
                 });
@@ -138,7 +196,7 @@ module.exports = (models) => {
             }]);
         }
 
-        static retrieveProject = async ({projectId, userId}) => {
+        static retrieveProject = async ({projectId}) => {
             const currentProject = await this.findOne({
                 where: {
                     [Op.and]: [
@@ -146,7 +204,9 @@ module.exports = (models) => {
                             id: projectId
                         },
                         {
-                            userId: userId
+                            deleted: {
+                                [Op.is]: null
+                            }
                         }
                     ]
                 }
@@ -159,25 +219,24 @@ module.exports = (models) => {
             }]);
         }
 
-        static deleteProject = async ({userId = 0, projectId = 0}) => {
-            if (userId && projectId) {
-                const currentUser = await models.user.findByPk(userId);
-                if (currentUser) {
-                    const deletedProjects = await this.destroy({
-                        where: {
-                            [Op.and]: [
-                                {
-                                    id: projectId
-                                },
-                                {
-                                    userId: userId
+        static deleteProject = async ({projectId = 0}) => {
+            if (projectId) {
+                const deletedProjects = await this.destroy({
+                    where: {
+                        [Op.and]: [
+                            {
+                                id: projectId
+                            },
+                            {
+                                deleted: {
+                                    [Op.is]: null
                                 }
-                            ]
-                        }
-                    });
-                    if (deletedProjects > 0) {
-                        return deletedProjects;
+                            }
+                        ]
                     }
+                });
+                if (deletedProjects > 0) {
+                    return deletedProjects;
                 }
             }
             throw new ProjectDeletionError("Cannot delete the project", [{

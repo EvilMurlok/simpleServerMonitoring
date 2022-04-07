@@ -3,8 +3,9 @@ const {models} = require("../../sequelize");
 const {ProjectNotUpdatedDataError, ProjectNotFoundError} = require("../../sequelize/errors/project/projectException");
 
 const create_project = async (req, res) => {
-    const userId = req.user.id;
     const {projectName} = req.body;
+    const userId = req.user.id;
+    console.log(userId);
     try {
         const createdProject = await models.project.createProject({userId, projectName});
         res.send({
@@ -23,11 +24,10 @@ const create_project = async (req, res) => {
 }
 
 const edit_project = async (req, res) => {
-    const userId = req.user.id;
     const projectId = req.params.projectId;
     const {projectName} = req.body;
     try {
-        const updatedProject = await models.project.editProject({userId, projectId, projectName});
+        const [,updatedProject] = await models.project.editProject({projectId, projectName});
         res.send({
             status: "success",
             messages: [{
@@ -71,6 +71,23 @@ const retrieve_user_projects = async (req, res) => {
     }
 }
 
+const retrieve_all_user_projects_servers = async (req, res) => {
+  const [userId, offset, limit] = [req.user.id, req.params.offset, req.params.limit];
+  try {
+      const [userProjectsServers, projectCount] = await models.project.retrieveAllProjectsWithServers({userId, offset, limit});
+      res.send({
+          status: "success",
+          userProjectsServers: userProjectsServers,
+          projectCount: projectCount
+      });
+  } catch (e) {
+      res.send({
+          status: "warning",
+          messages: e.messages
+      });
+  }
+}
+
 const retrieve_all_user_projects = async (req, res) => {
     const userId = req.user.id;
     try {
@@ -88,10 +105,9 @@ const retrieve_all_user_projects = async (req, res) => {
 }
 
 const retrieve_project = async (req, res) => {
-    const [userId, projectId] = [req.user.id, req.params.projectId];
+    const projectId = req.params.projectId;
     try {
-        console.log(userId, projectId);
-        const project = await models.project.retrieveProject({projectId, userId});
+        const project = await models.project.retrieveProject({projectId});
         res.send({
             status: "success",
             project: project
@@ -105,10 +121,9 @@ const retrieve_project = async (req, res) => {
 }
 
 const delete_project = async (req, res) => {
-    const userId = req.user.id;
     const projectId = req.params.projectId;
     try {
-        const numberOfDeletedProjects = await models.project.deleteProject({userId, projectId});
+        const numberOfDeletedProjects = await models.project.deleteProject({projectId});
         res.send({
             status: "success",
             messages: [{
@@ -129,6 +144,7 @@ module.exports = {
     edit_project,
     retrieve_user_projects,
     retrieve_all_user_projects,
+    retrieve_all_user_projects_servers,
     retrieve_project,
     delete_project
 };

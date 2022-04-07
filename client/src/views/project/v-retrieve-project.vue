@@ -1,12 +1,9 @@
 <template>
-  <div class="v-retrieve-server">
+  <div class="v-retrieve-project">
     <div class="content">
       <div
           class="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center py-2 text-center text-sm-left">
         <div class="flex-sm-fill">
-          <h1 class="h3 font-w700 mb-2">
-            Проект: {{ name }}
-          </h1>
           <h2 class="h6 font-w500 text-muted mb-0">
             На этой странице можно посмотреть информацию о проекте и изменить её
           </h2>
@@ -49,7 +46,7 @@
                         variant="alt-info"
                         class="mr-1 mb-3"
               >
-                <i class="si si-check mr-2"></i> Обновить данные
+                <i class="si si-refresh mr-2"></i> Обновить данные
               </b-button>
             </b-col>
           </b-row>
@@ -73,7 +70,6 @@ export default {
   data() {
     return {
       messages_data: {type: "warning", messages: []},
-      name: this.$route.params.name,
       project: {
         id: 0,
         name: ""
@@ -139,10 +135,11 @@ export default {
               if (res.data.status === "warning"){
                 this.messages_data.messages = res.data.messages;
               } else {
+                const types = {"not found": "warning", "info": "info", "success": "success"};
                 this.$router.push({
                       name: "retrieveProjects",
                       params: {
-                        messages_data: {type: res.data.status, messages: res.data.messages}
+                        messages_data: {type: types[res.data.status], messages: res.data.messages}
                       }
                 });
               }

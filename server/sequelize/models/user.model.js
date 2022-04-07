@@ -3,7 +3,11 @@ const bcrypt = require("bcrypt");
 
 const {validateUserData} = require("../utils/user/validationUserData");
 const {validateSameUserData} = require("../utils/user/validationSameUserData");
-const {UserNotUpdatedDataError, UserNotFoundError, UserDeletionError, UserCommonError} = require("../errors/user/userExceptions");
+const {validateNewPasswordData} = require("../utils/user/validationChangePassword");
+const {
+    UserNotUpdatedDataError, UserNotFoundError,
+    UserDeletionError, UserCredentialsError
+} = require("../errors/user/userExceptions");
 
 module.exports = (models) => {
     class User extends Model {
@@ -16,8 +20,8 @@ module.exports = (models) => {
                 },
                 username: {
                     type: DataTypes.STRING(70),
-                    unique: true,
                     allowNull: false,
+                    unique: true,
                     is: /^[a-zA-Z0-9_]{3,70}$/
                 },
                 password: {
@@ -28,36 +32,35 @@ module.exports = (models) => {
                 phone: {
                     type: DataTypes.STRING,
                     allowNull: false,
-                    unique: true,
                     is: /^[+]*[0-9]{0,3}[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/
                 },
                 email: {
                     type: DataTypes.STRING,
                     allowNull: false,
-                    unique: true,
                     is: /^(([^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*)|(".+"))@(([^<>()[\].,;:\s@"]+\.)+[^<>()[\].,;:\s@"]{2,})$/i
                 },
                 grafana_username: {
                     type: DataTypes.STRING,
-                    unique: true,
                     is: /^[a-zA-Z0-9_]{5,255}$/
                 }
             }, {
                 modelName: 'user',
                 tableName: 'User',
-                paranoid: false,
+                paranoid: true,
                 timestamps: true,
                 createdAt: 'created',
                 updatedAt: 'updated',
+                deletedAt: 'deleted',
                 sequelize: sequelize,
             });
-        };v
+        };
 
-        static registerUser = async ({username = "", phone = "", email = "", password = "", confirm_password =""}) => {
+        v
+
+        static registerUser = async ({username = "", phone = "", email = "", password = "", confirm_password = ""}) => {
             try {
                 await validateUserData({username, phone, email, password, confirm_password});
-                const bindValidateSameUserData = validateSameUserData.bind(this);
-                await bindValidateSameUserData({username, phone, email});
+                await validateSameUserData.bind(this)({username, phone, email});
             } catch (e) {
                 throw e;
             }
@@ -80,13 +83,19 @@ module.exports = (models) => {
                 } else {
                     try {
                         await validateUserData({username, phone, email}, true);
-                        const bindValidateSameUserData = validateSameUserData.bind(this);
-                        await bindValidateSameUserData({username, phone, email, usernameUser, phoneUser, emailUser}, true);
+                        await validateSameUserData.bind(this)({
+                            username,
+                            phone,
+                            email,
+                            usernameUser,
+                            phoneUser,
+                            emailUser
+                        }, true);
                     } catch (e) {
                         throw e;
                     }
                 }
-                return await this.update({
+                return [await this.update({
                     username: username,
                     phone: phone,
                     email: email
@@ -94,9 +103,34 @@ module.exports = (models) => {
                     where: {
                         id: userId
                     }
-                });
+                }), {username, phone, email}];
             }
+        }
 
+        static changePassword = async ({userId, currentPassword, newPassword, confirmNewPassword}) => {
+            const currentUser = await this.findByPk(userId);
+            let message = "";
+            if (currentUser) {
+                try {
+                    await validateNewPasswordData({currentPassword, newPassword, confirmNewPassword});
+                } catch (e) {
+                    throw e;
+                }
+                const bool = await bcrypt.compare(currentPassword, currentUser.password);
+                if (!bool) {
+                    throw new UserCredentialsError("Wrong current password", [{text: "Неверный текущий пароль!"}]);
+                } else {
+                    let hashedPassword = await bcrypt.hash(newPassword, 10);
+                    return await this.update({
+                        password: hashedPassword
+                    }, {
+                        where: {
+                            id: userId
+                        }
+                    });
+                }
+            }
+            throw new UserNotFoundError("Fail to update password", [{text: "Пароль изменить не удалось!"}]);
         }
 
         static retrieveUser = async ({userId = 0, username = "", phone = "", email = ""}) => {
@@ -132,6 +166,7 @@ module.exports = (models) => {
                     id: userId
                 }
             });
+            console.log(deletedUserNumber);
             if (deletedUserNumber) {
                 return deletedUserNumber;
             } else {

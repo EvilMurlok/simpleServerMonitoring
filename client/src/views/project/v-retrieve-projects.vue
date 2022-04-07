@@ -12,12 +12,12 @@
           </h2>
         </div>
         <div class="mt-3 mt-sm-0 ml-sm-3">
-          <b-button variant="alt-primary"
+          <b-button variant="alt-info"
                     class="mr-1"
                     to="/create-project/"
                     v-click-ripple
           >
-            <i class="fa fa-plus-square opacity-50 mr-1"></i> Добавить проект
+            <i class="fa fa-fw fa-plus mr-1"></i> Добавить проект
           </b-button>
         </div>
       </div>
@@ -38,8 +38,6 @@
     >
       <base-block v-for="userProject in userProjects"
                   :key="userProject.id"
-                  :title=userProject.name
-                  header-bg
                   content-full
                   rounded
       >
@@ -61,14 +59,22 @@
               </b-td>
               <b-td class="d-none d-sm-table-cell">
 
-                <b-badge variant="primary">{{ userProject.created }}</b-badge>
+                <b-badge variant="primary">{{ new Date(userProject.created).toLocaleString() }}</b-badge>
               </b-td>
               <b-td class="text-center">
                 <b-button @click="viewProject(userProject)"
                           size="sm"
-                          variant="light"
+                          variant="alt-info"
+                          class="mr-3"
                 >
-                  <i class="fa fa-fw fa-info-circle"></i> Узнать больше
+                  <i class="fa fa-fw fa-info-circle"></i>
+                </b-button>
+                <b-button @click="deleteProject(userProject)"
+                          size="sm"
+                          variant="alt-danger"
+                          class="mr-3"
+                >
+                  <i class="fa fa-trash mr-1"></i>
                 </b-button>
               </b-td>
             </b-tr>
@@ -78,10 +84,10 @@
       <b-button v-if="isLoadMore === true"
                 class="btn btn-outline-info mb-3 mb-3"
                 @click="loadMore"
-                ize="sm"
-                variant="light"
+                size="sm"
+                variant="alt-info"
       >
-        <i class="fa fa-fw fa-plus-circle"></i> Загрузить ещё
+        <i class="fa fa-fw fa-plus mr-1"></i> Загрузить ещё
       </b-button>
     </div>
     <div v-else class="content">
@@ -123,14 +129,12 @@ export default {
         .then(res => {
           if (res.data.isLoggedIn === false) {
             breakAuth();
-            this.$router.push(
-                {
+            this.$router.push({
                   name: 'login',
                   params: {
                     messages_data: {type: res.data.status, messages: res.data.messages}
                   }
-                }
-            );
+            });
           } else {
             this.userProjects = res.data.userProjects.rows;
             this.offset += res.data.userProjects.rows.length;
@@ -145,7 +149,7 @@ export default {
   methods: {
     viewProject(userProject) {
       this.$router.push({
-        name: 'retrieveProject',
+        path: `/retrieve-project/${userProject.id}/`,
         params: {
           projectId: userProject.id,
           name: userProject.name

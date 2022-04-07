@@ -2,7 +2,7 @@ const {Op} = require("sequelize");
 
 const {ProjectSameCredentialsError} = require("../../errors/project/projectException");
 
-async function validateSameProjectData({userId, projectName, projectNameUser}, isEdition = false) {
+async function validateSameProjectData({projectName, projectNameUser}, isEdition = false) {
     let messages = [];
     let sameProject = "";
     if (isEdition) {
@@ -10,14 +10,16 @@ async function validateSameProjectData({userId, projectName, projectNameUser}, i
             where: {
                 [Op.and]: [
                     {
-                        userId: userId
-                    },
-                    {
                         name: projectName
                     },
                     {
                         name: {
                             [Op.ne]: projectNameUser
+                        }
+                    },
+                    {
+                        deleted: {
+                            [Op.is]: null
                         }
                     }
                 ]
@@ -28,10 +30,12 @@ async function validateSameProjectData({userId, projectName, projectNameUser}, i
             where: {
                 [Op.and]: [
                     {
-                        userId: userId
+                        name: projectName
                     },
                     {
-                        name: projectName
+                        deleted: {
+                            [Op.is]: null
+                        }
                     }
                 ]
             }
@@ -39,7 +43,7 @@ async function validateSameProjectData({userId, projectName, projectNameUser}, i
     }
     if (sameProject) {
         messages.push({
-            text: "Проект с таким названием у Вас уже есть!"
+            text: "Проект с таким названием у Вас в команде уже есть!"
         });
     }
     if (messages.length > 0) {

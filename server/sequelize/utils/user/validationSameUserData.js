@@ -16,6 +16,11 @@ async function validateSameUserData({username, phone, email, usernameUser, phone
                         username: {
                             [Op.ne]: usernameUser
                         }
+                    },
+                    {
+                        deleted: {
+                            [Op.is]: null,
+                        }
                     }
                 ]
             }
@@ -29,6 +34,11 @@ async function validateSameUserData({username, phone, email, usernameUser, phone
                     {
                         email: {
                             [Op.ne]: emailUser
+                        }
+                    },
+                    {
+                        deleted: {
+                            [Op.is]: null,
                         }
                     }
                 ]
@@ -44,6 +54,11 @@ async function validateSameUserData({username, phone, email, usernameUser, phone
                         phone: {
                             [Op.ne]: phoneUser
                         }
+                    },
+                    {
+                        deleted: {
+                            [Op.is]: null,
+                        }
                     }
                 ]
             }
@@ -51,20 +66,43 @@ async function validateSameUserData({username, phone, email, usernameUser, phone
     } else {
         userUsername = await this.findOne({
             where: {
-                username: username
+                [Op.and]: [
+                    {
+                        username: username
+                    },
+                ]
             }
         });
         userEmail = await this.findOne({
             where: {
-                email: email
+                [Op.and]: [
+                    {
+                        email: email
+                    },
+                    {
+                        deleted: {
+                            [Op.is]: null,
+                        }
+                    }
+                ]
             }
         });
         userPhone = await this.findOne({
             where: {
-                phone: phone
+                [Op.and]: [
+                    {
+                        phone: phone
+                    },
+                    {
+                        deleted: {
+                            [Op.is]: null,
+                        }
+                    }
+                ]
             }
         });
     }
+    console.log(userPhone, userEmail, userUsername);
     if (userUsername) {
         messages.push(
             {

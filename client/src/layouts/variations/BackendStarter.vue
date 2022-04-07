@@ -47,14 +47,10 @@
                 to: '/retrieve-user/',
                 icon: 'si si-info'
               },
+
               {
                 name: 'Проекты',
                 heading: true
-              },
-              {
-                name: 'Добавить',
-                to: '/create-project/',
-                icon: 'si si-plus'
               },
               {
                 name: 'Мои поекты',
@@ -62,17 +58,33 @@
                 icon: 'fa fa-clipboard-list'
               },
               {
-                name: 'Сервера',
+                name: 'Доступные мне (в разработке)',
+                // to: '/retrieve-servers/',
+                icon: 'fa fa-clipboard-list'
+              },
+
+              {
+                name: 'Права',
                 heading: true
               },
               {
-                name: 'Добавить',
-                to: '/create-server/',
+                name: 'Мои правав (в разработке)',
+                // to:,
                 icon: 'si si-plus'
               },
+
               {
-                name: 'Мои сервера',
+                name: 'Серверы',
+                heading: true
+              },
+              {
+                name: 'Мои серверы',
                 to: '/retrieve-servers/',
+                icon: 'fa fa-server'
+              },
+              {
+                name: 'Доступные мне (в разработке)',
+                // to: '/retrieve-servers/',
                 icon: 'fa fa-server'
               },
 
@@ -81,7 +93,7 @@
                 heading: true
               },
               {
-                name: 'Мои доски',
+                name: 'Мои доски (в разработке)',
                 // to: '/backend/dashboard',
                 icon: 'si si-speedometer'
               },
@@ -211,7 +223,6 @@ export default {
   },
   methods: {
     logout() {
-      const type = {"danger": "warning", "success": "success"};
       this.$http
           .get("/auth/logout/")
           .then(res => {
@@ -219,7 +230,7 @@ export default {
             this.$router.push({
               name: "login",
               params: {
-                messages_data: {type: type[res.data.status], messages: res.data.messages}
+                messages_data: {type: res.data.status, messages: res.data.messages}
               }
             });
           })

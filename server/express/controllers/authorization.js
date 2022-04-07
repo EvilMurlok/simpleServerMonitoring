@@ -25,7 +25,8 @@ const user_edition = async (req, res) => {
     let {username, phone, email} = req.body;
     const userId = req.user.id;
     try {
-        const updatedUser = await models.user.editUser({username, phone, email, userId});
+        const [,updatedUser] = await models.user.editUser({username, phone, email, userId});
+        console.log(updatedUser);
         res.send({
             status: "success",
             user: updatedUser,
@@ -45,6 +46,26 @@ const user_edition = async (req, res) => {
                 messages: e.messages
             });
         }
+    }
+}
+
+const user_change_password = async (req, res) => {
+    const userId = req.user.id;
+    const {currentPassword, newPassword, confirmNewPassword} = req.body;
+    try {
+        const updatedUser = await models.user.changePassword({userId, currentPassword, newPassword, confirmNewPassword});
+        res.send({
+            updatedUser: updatedUser,
+            status: "success",
+            messages: [{
+                text: "Пароль успешно изменен!"
+            }]
+        });
+    } catch (e) {
+        res.send({
+            status: "warning",
+            messages: e.messages
+        });
     }
 }
 
@@ -95,6 +116,7 @@ const user_logout = async (req, res) => {
 module.exports = {
     user_register_post,
     user_edition,
+    user_change_password,
     user_logout,
     user_retrieve,
     user_deletion

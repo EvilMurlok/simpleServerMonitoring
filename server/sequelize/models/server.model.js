@@ -31,26 +31,20 @@ module.exports = (models) => {
             }, {
                 modelName: 'server',
                 tableName: 'Server',
-                paranoid: false,
+                paranoid: true,
                 timestamps: true,
                 createdAt: 'created',
                 updatedAt: 'updated',
+                deletedAt: 'deleted',
                 sequelize: sequelize,
             });
         };
 
-        static createServer = async ({projectId = 0, projectName = "", userId = 0, hostname = "", ip = ""}) => {
+        static createServer = async ({projectId = 0, projectName = "", hostname = "", ip = ""}) => {
             const currentProjectById = await models.project.findByPk(projectId);
             const currentProjectByName = await models.project.findOne({
                 where: {
-                    [Op.and]: [
-                        {
-                            name: projectName
-                        },
-                        {
-                            userId: userId
-                        }
-                    ]
+                    name: projectName
                 }
             });
             if (currentProjectByName || currentProjectById) {
@@ -72,7 +66,7 @@ module.exports = (models) => {
             }]);
         };
 
-        static editServer = async ({projectId = 0, serverId = 0, hostname = "", ip = ""}) => {
+        static editServer = async ({projectId = 0, serverId = 0, newProjectName = "", hostname = "", ip = ""}) => {
             const currentProject = await models.project.findByPk(projectId);
             if (currentProject) {
                 const currentServer = await this.findOne({
@@ -83,33 +77,56 @@ module.exports = (models) => {
                             },
                             {
                                 projectId: projectId
+                            },
+                            {
+                                deleted: {
+                                    [Op.is]: null
+                                }
                             }
                         ]
                     }
                 });
                 if (currentServer) {
                     const [hostnameUser, ipUser] = [currentServer.hostname, currentServer.ip];
-                    if (hostname === hostnameUser && ip === ipUser) {
+                    if (hostname === hostnameUser && ip === ipUser && (currentProject.name === newProjectName || !newProjectName || newProjectName === "Не выбрано")) {
                         throw new ServerNotUpdatedError("The server was not updated", [{
                             text: "Данные о сервере изменены не были!"
                         }]);
                     }
                     try {
                         await validateServerData({hostname, ip});
-                        const bindValidateSameServerData = validateSameServerData.bind(this);
-                        await bindValidateSameServerData({projectId, hostname, ip, hostnameUser, ipUser}, true);
+                        await validateSameServerData.bind(this)({projectId, hostname, ip, hostnameUser, ipUser}, true);
                     } catch (e) {
                         throw e;
                     }
-
-                    return await this.update({
+                    newProjectName = newProjectName || currentProject.name;
+                    const newProjectByName = await models.project.findOne({
+                        where: {
+                            [Op.and]: [
+                                {
+                                    name:  newProjectName
+                                },
+                                {
+                                    deleted: {
+                                        [Op.is]: null
+                                    }
+                                }
+                            ]
+                        }
+                    });
+                    return [await this.update({
                         hostname: hostname,
-                        ip: ip
+                        ip: ip,
+                        projectId: newProjectByName.id
                     }, {
                         where: {
                             id: serverId
                         }
-                    });
+                    }), {hostname, ip, newProjectName}];
+                } else {
+                    throw new ServerNotFoundError("Such server not found", [{
+                        text: "Такой сервер не найден!"
+                    }]);
                 }
             }
             throw new ServerCommonError("Fail to edit server", [{
@@ -122,7 +139,16 @@ module.exports = (models) => {
             if (currentProject) {
                 return await this.findAll({
                     where: {
-                        projectId: projectId
+                        [Op.and]: [
+                            {
+                                projectId: projectId
+                            },
+                            {
+                                deleted: {
+                                    [Op.is]: null
+                                }
+                            }
+                        ]
                     }
                 });
             }
@@ -132,6 +158,46 @@ module.exports = (models) => {
         }
 
         static retrieveProjectServer = async ({serverId = 0, projectId = 0}) => {
+            const currentServer = await models.project.findOne({
+                attributes: ["name"],
+                include: {
+                    model: models.server,
+                    required: true,
+                    where: {
+                        [Op.and]: [
+                            {
+                                id: serverId
+                            },
+                            {
+                                deleted: {
+                                    [Op.is]: null
+                                }
+                            }
+                        ]
+                    }
+                },
+                where: {
+                    [Op.and]: [
+                        {
+                            id: projectId
+                        },
+                        {
+                            deleted: {
+                                [Op.is]: null
+                            }
+                        }
+                    ]
+                }
+            });
+            if (currentServer) {
+                return currentServer;
+            }
+            throw new ServerNotFoundError("Such server not found!", [{
+                text: "В данном проекте такого сервера не найдено!"
+            }])
+        }
+
+        static retrieveProjectServerByHostname = async ({hostname = "", projectId = 0}) => {
             const currentServer = await this.findOne({
                 where: {
                     [Op.and]: [
@@ -139,7 +205,12 @@ module.exports = (models) => {
                             projectId: projectId
                         },
                         {
-                            id: serverId
+                            hostname: hostname
+                        },
+                        {
+                            deleted: {
+                                [Op.is]: null
+                            }
                         }
                     ]
                 }
@@ -166,6 +237,11 @@ module.exports = (models) => {
                         },
                         {
                             projectId: projectId
+                        },
+                        {
+                            deleted: {
+                                [Op.is]: null
+                            }
                         }
                     ]
                 }

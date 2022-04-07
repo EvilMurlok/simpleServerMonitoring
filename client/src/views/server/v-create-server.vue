@@ -63,8 +63,9 @@
               <b-button type="submit"
                         variant="alt-success"
                         block
+                        :disabled="!projects.length"
               >
-                <i class="fa fa-plus mr-1"></i> Добавить сервер
+                <i class="fa fa-plus mr-1" ></i> Добавить сервер
               </b-button>
             </b-col>
           </b-row>
@@ -91,7 +92,7 @@ export default {
       projectName: '',
       hostname: '',
       ip: '',
-      projects: []
+      projects: [],
     }
   },
 
@@ -121,6 +122,11 @@ export default {
                 }
               });
             } else {
+              if (res.data.userProjects.length === 0){
+                this.messages_data.messages.push({
+                  text: "У вас нет ни одного доступного проекта!"
+                });
+              }
               for (let project of res.data.userProjects) {
                 this.projects.push({
                   value: project.name,

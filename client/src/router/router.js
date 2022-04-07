@@ -12,6 +12,8 @@ import vCreateServer from '@/views/server/v-create-server';
 import vRetrieveServer from '@/views/server/v-retrieve-server';
 import vRetrieveServers from '@/views/server/v-retrieve-servers';
 
+import vRetrieveUser from "@/views/user/v-user-info";
+
 import LayoutSimple from '@/layouts/variations/Simple';
 import LayoutBackend from '@/layouts/variations/BackendStarter';
 import TestMetric from "@/views/test_views/TestMetric";
@@ -87,14 +89,14 @@ let router = new Router({
             ]
         },
         {
-            path: '/retrieve-project/',
+            path: '/retrieve-project/:projectId/',
             component: LayoutBackend,
             meta: {
                 requiresAuth: true
             },
             children: [
                 {
-                    path: '/retrieve-project/',
+                    path: '/retrieve-project/:projectId/',
                     name: 'retrieveProject',
                     component: vRetrieveProject
                 }
@@ -131,20 +133,36 @@ let router = new Router({
             ]
         },
         {
-            path: '/retrieve-server/',
+            path: '/retrieve-server/:projectId/:serverId/',
             component: LayoutBackend,
             meta: {
                 requiresAuth: true
             },
             children: [
                 {
-                    path: '/retrieve-server/',
+                    path: '/retrieve-server/:projectId/:serverId/',
                     name: 'retrieveServer',
                     component: vRetrieveServer
                 }
             ]
         },
 
+
+        //user
+        {
+            path: '/retrieve-user/',
+            component: LayoutBackend,
+            meta: {
+                requiresAuth: true
+            },
+            children: [
+                {
+                    path: '/retrieve-user/',
+                    name: 'retrieveUser',
+                    component: vRetrieveUser
+                }
+            ]
+        },
         {
             path: '/button',
             redirect: '/button',
