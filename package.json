@@ -6,9 +6,13 @@
   "scripts": {
     "start": "node index.js",
     "migrate": "node server/bin/migrate.js",
+    "insert_abilities": "node server/bin/insertion.js",
     "test_user_db": "node server/test/testUsersMethods.js",
     "test_project_db": "node server/test/testProjectMethods.js",
-    "test_server_db": "node server/test/testServerMethods.js"
+    "test_server_db": "node server/test/testServerMethods.js",
+    "test_tag_db": "node server/test/testTagMethods.js",
+    "test_permission_db": "node server/test/testPermissionMethods.js",
+    "test_ability_db": "node server/test/testAbilityMethods.js"
   },
   "repository": {
     "type": "git",

@@ -2,7 +2,7 @@ class PermissionCommonError extends Error {
     constructor (message, messages) {
         super(message);
         this.messages = messages;
-        this.name = "TagCommonError";
+        this.name = "PermissionCommonError";
     }
 }
 
@@ -20,7 +20,16 @@ class PermissionSameCredentialsError extends PermissionCommonError {
     }
 }
 
+class PermissionInheritanceError extends PermissionCommonError {
+    constructor (message, messages) {
+        super(message, messages);
+        this.name = "PermissionInheritanceError";
+    }
+}
+
 module.exports = {
+    PermissionCommonError,
     PermissionCredentialsError,
-    PermissionSameCredentialsError
+    PermissionSameCredentialsError,
+    PermissionInheritanceError
 }

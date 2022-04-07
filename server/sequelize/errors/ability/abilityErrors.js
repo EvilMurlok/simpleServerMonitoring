@@ -2,7 +2,7 @@ class AbilityCommonError extends Error {
     constructor (message, messages) {
         super(message);
         this.messages = messages;
-        this.name = "TagCommonError";
+        this.name = "AbilityCommonError";
     }
 }
 

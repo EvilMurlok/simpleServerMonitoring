@@ -1,0 +1,140 @@
+{
+  "abilities": [
+    {
+      "entity": "Dashboard",
+      "action": "Create"
+    },
+    {
+      "entity": "Dashboard",
+      "action": "Retrieve"
+    },
+    {
+      "entity": "Dashboard",
+      "action": "Update"
+    },
+    {
+      "entity": "Dashboard",
+      "action": "Delete"
+    },
+    {
+      "entity": "Permission",
+      "action": "Create"
+    },
+    {
+      "entity": "Permission",
+      "action": "Retrieve"
+    },
+    {
+      "entity": "Permission",
+      "action": "Update"
+    },
+    {
+      "entity": "Permission",
+      "action": "Delete"
+    },
+    {
+      "entity": "Project",
+      "action": "Create"
+    },
+    {
+      "entity": "Project",
+      "action": "Retrieve"
+    },
+    {
+      "entity": "Project",
+      "action": "Update"
+    },
+    {
+      "entity": "Project",
+      "action": "Delete"
+    },
+    {
+      "entity": "Server",
+      "action": "Create"
+    },
+    {
+      "entity": "Server",
+      "action": "Retrieve"
+    },
+    {
+      "entity": "Server",
+      "action": "Update"
+    },
+    {
+      "entity": "Server",
+      "action": "Delete"
+    },
+    {
+      "entity": "Tag",
+      "action": "Create"
+    },
+    {
+      "entity": "Tag",
+      "action": "Retrieve"
+    },
+    {
+      "entity": "Tag",
+      "action": "Update"
+    },
+    {
+      "entity": "Tag",
+      "action": "Delete"
+    },
+    {
+      "entity": "User",
+      "action": "Create"
+    },
+    {
+      "entity": "User",
+      "action": "Retrieve"
+    },
+    {
+      "entity": "User",
+      "action": "Update"
+    },
+    {
+      "entity": "User",
+      "action": "Delete"
+    },
+    {
+      "entity": "Metric",
+      "action": "Create",
+      "detail": "Hardware"
+    },
+    {
+      "entity": "Metric",
+      "action": "Create",
+      "detail": "Application"
+    },
+    {
+      "entity": "Metric",
+      "action": "Retrieve",
+      "detail": "Hardware"
+    },
+    {
+      "entity": "Metric",
+      "action": "Retrieve",
+      "detail": "Application"
+    },
+    {
+      "entity": "Metric",
+      "action": "Update",
+      "detail": "Hardware"
+    },
+    {
+      "entity": "Metric",
+      "action": "Update",
+      "detail": "Application"
+    },
+    {
+      "entity": "Metric",
+      "action": "Delete",
+      "detail": "Hardware"
+    },
+    {
+      "entity": "Metric",
+      "action": "Delete",
+      "detail": "Application"
+    }
+  ]
+}

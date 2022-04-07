@@ -9,8 +9,8 @@ module.exports = function (sequelize) {
 
     project.hasMany(server);
     server.belongsTo(project);
-    project.belongsToMany(permission, {through: "ProjectPermission"});
-    permission.belongsToMany(project, {through: "ProjectPermission"});
+    project.hasMany(permission);
+    permission.belongsTo(project);
 
     server.belongsToMany(permission, {through: 'ServerPermission'});
     permission.belongsToMany(server, {through: 'ServerPermission'});
