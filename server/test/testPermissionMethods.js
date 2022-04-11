@@ -241,7 +241,17 @@ const testPermissionMethods = async () => {
     });
 
     console.log(observerPermission);
-
 }
 
-testPermissionMethods().then();
+const testGetSub = async () => {
+    const permissionId = 49;
+    try {
+        const children = await models.permission.getSubPermissionsRecursive({permissionId: permissionId});
+        console.log(children);
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+
+testGetSub().then();

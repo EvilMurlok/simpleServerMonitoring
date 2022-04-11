@@ -223,9 +223,19 @@ module.exports = (models) => {
             }])
         }
 
-        static retrieveServersByTags = async ({tagId = 0}) => {
-            const currentTag = await models.tag.findByPk(tagId);
-            return await currentTag.getServers();
+        static retrieveServersByTags = async ({tagIds = []}) => {
+            const tags = await models.tag.findAll({
+                where: {
+                    id: tagIds
+                }
+            })
+
+            let servers = [];
+            for (let tag of tags) {
+                servers.push(...await tag.getServers());
+            }
+
+            return servers;
         }
 
         static deletionServer = async ({serverId = 0, projectId = 0}) => {

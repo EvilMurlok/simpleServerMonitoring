@@ -20,6 +20,7 @@ const create_server = async (req, res) => {
     }
 }
 
+
 const retrieve_project_servers = async (req, res) => {
     const projectId = req.params.projectId;
     try {
@@ -36,10 +37,10 @@ const retrieve_project_servers = async (req, res) => {
     }
 }
 
-const retrieve_server_by_tag = async (req, res) => {
-    const tagId = req.params.tagId;
+const retrieve_server_by_tags = async (req, res) => {
+    const tagIds = req.body.tagIds;
     res.send({
-        servers: await models.server.retrieveServersByTags({tagId}),
+        servers: await models.server.retrieveServersByTags({tagIds: tagIds}),
         status: "success",
     });
 }
@@ -134,7 +135,7 @@ module.exports = {
     create_server,
     retrieve_project_servers,
     retrieve_server_in_project,
-    retrieve_server_by_tag,
+    retrieve_server_by_tags,
     update_server,
     delete_server,
     // show_servers_amount,
