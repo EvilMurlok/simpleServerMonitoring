@@ -70,6 +70,7 @@
               <b-button type="submit"
                         variant="alt-info"
                         class="mr-1 mb-3"
+                        block
               >
                 <i class="si si-refresh mr-2"></i> Обновить данные
               </b-button>
@@ -77,7 +78,7 @@
           </b-row>
         </b-form>
 
-        <b-dropdown id="dropdown-form" text="Изменить пароль" ref="dropdown" class="m-2" menu-class="w-100" block>
+        <b-dropdown id="dropdown-form" text="Изменить пароль" ref="dropdown" class="m-2" menu-class="w-100" block  @show="messages_data = {type: 'warning', messages: []}">
           <b-dropdown-form @submit.prevent="updatePassword">
             <div v-if="isPassword === true">
               <BaseMessage
@@ -369,8 +370,10 @@ export default {
     },
 
     deleteUser() {
+      console.log(this.messages_data);
       if (this.messages_data.messages.length !== 0) {
         this.messages_data = {type: "warning", messages: []};
+        console.log(this.messages_data);
       }
       const username = prompt("Введите ваш никнейм", "");
       if (username === localStorage.getItem("username")) {

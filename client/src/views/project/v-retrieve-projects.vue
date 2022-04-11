@@ -7,9 +7,6 @@
           <h1 class="h3 font-w700 mb-2">
             Мои проекты
           </h1>
-          <h2 class="h6 font-w500 text-muted mb-0">
-            Приветствуем, <b>{{ username }}</b>. Список Ваших проектов
-          </h2>
         </div>
         <div class="mt-3 mt-sm-0 ml-sm-3">
           <b-button variant="alt-info"
@@ -33,62 +30,126 @@
 
 
     <!-- Page Content -->
-    <div v-if="userProjects.length > 0"
+    <div v-if="userProjectsServers.length > 0"
          class="content"
     >
-      <base-block v-for="userProject in userProjects"
-                  :key="userProject.id"
-                  content-full
-                  rounded
-      >
-        <b-table-simple class="table-vcenter font-size-sm mb-0"
-                        striped
-                        hover
-                        borderless
-        >
-          <b-thead>
-            <b-tr>
-              <b-th>Название проекта</b-th>
-              <b-th>Время создания</b-th>
-            </b-tr>
-          </b-thead>
-          <b-tbody>
-            <b-tr>
-              <b-td>
-                <b class="ml-3">{{ userProject.name }}</b>
-              </b-td>
-              <b-td class="d-none d-sm-table-cell">
 
-                <b-badge variant="primary">{{ new Date(userProject.created).toLocaleString() }}</b-badge>
-              </b-td>
-              <b-td class="text-center">
-                <b-button @click="viewProject(userProject)"
-                          size="sm"
-                          variant="alt-info"
-                          class="mr-3"
-                >
-                  <i class="fa fa-fw fa-info-circle"></i>
-                </b-button>
-                <b-button @click="deleteProject(userProject)"
-                          size="sm"
-                          variant="alt-danger"
-                          class="mr-3"
-                >
-                  <i class="fa fa-trash mr-1"></i>
-                </b-button>
-              </b-td>
-            </b-tr>
-          </b-tbody>
-        </b-table-simple>
-      </base-block>
-      <b-button v-if="isLoadMore === true"
-                class="btn btn-outline-info mb-3 mb-3"
-                @click="loadMore"
-                size="sm"
-                variant="alt-info"
+      <b-table-simple class="table-vcenter font-size-sm mb-0"
+                      fixed
+                      striped
+                      hover
       >
-        <i class="fa fa-fw fa-plus mr-1"></i> Загрузить ещё
-      </b-button>
+        <b-thead head-variant="dark">
+          <b-tr>
+            <b-th>
+              <span style="cursor: pointer"
+                    @click="sortField({sortedField: 'name'})"
+              >
+                Название проекта
+                <i class="si si-arrow-up m-2"
+                   v-if="sortData.sortTypeName === 'ASC'">
+                </i>
+                <i class="si si-arrow-down m-2"
+                   v-else-if="sortData.sortTypeName === 'DESC'">
+                </i>
+              </span>
+            </b-th>
+            <b-th>
+              <span style="cursor: pointer"
+                    @click="sortField({sortedField: 'created'})"
+              >
+                Время создания
+                <i class="si si-arrow-up m-2"
+                   v-if="sortData.sortTypeCreated === 'ASC'">
+                </i>
+                <i class="si si-arrow-down m-2"
+                   v-else-if="sortData.sortTypeCreated === 'DESC'">
+                </i>
+              </span>
+            </b-th>
+            <b-th class="text-center">Опции</b-th>
+          </b-tr>
+        </b-thead>
+        <b-tbody v-for="(project, projectIndex) in userProjectsServers"
+                 :key="project.id">
+          <b-tr content-full
+                rounded>
+            <b-td>
+              <b class="ml-3">{{ project.name }}</b>
+            </b-td>
+            <b-td class="d-none d-sm-table-cell">
+              <b-badge variant="primary" class="ml-3">{{ new Date(project.created).toLocaleString() }}</b-badge>
+            </b-td>
+            <b-td class="text-center">
+              <b-button @click="viewProject(project)"
+                        size="sm"
+                        variant="alt-info"
+                        class="mr-3"
+              >
+                <i class="fa fa-fw fa-info-circle"></i>
+              </b-button>
+              <b-button @click="deleteProject(project)"
+                        size="sm"
+                        variant="alt-danger"
+                        class="mr-3"
+              >
+                <i class="fa fa-trash mr-1"></i>
+              </b-button>
+              <b-button v-b-toggle="serversInProjects[projectIndex]"
+                        variant="dark"
+                        size="sm"
+                        v-if="project.servers.length"
+                        class="mr-3"
+              >
+                <i class="fa fa-fw fa-server"></i>
+              </b-button>
+              <b-button @click="createServer(project.name)"
+                        variant="alt-success"
+                        size="sm"
+                        class="mr-3"
+              >
+                <i class="fa fa-plus opacity-50 mr-1"></i>
+              </b-button>
+            </b-td>
+          </b-tr>
+          <b-td colspan="3">
+            <b-collapse v-for="(server, serverIndex) in project.servers"
+                        :key="server.ip"
+                        :id="serversInProjects[projectIndex][serverIndex]"
+                        class="mt-2"
+            >
+              <b-card border-variant="light">
+                <div class="d-flex justify-content-between">
+                  <b-card-text>
+                    Сервер <b>{{ server.hostname }}</b> принадлежит проекту <code>{{ project.name }}</code>
+                  </b-card-text>
+                  <div>
+                    <b>Время создания:</b>&nbsp; &nbsp;
+                    <b-badge variant="primary">{{ new Date(server.created).toLocaleString() }}</b-badge>
+                  </div>
+                  <b-button @click="retrieveServer(server.id, project.id)"
+                            variant="alt-info"
+                            size="sm"
+                  >
+                    <i class="fa fa-fw fa-info-circle"></i> Узнать больше
+                  </b-button>
+                </div>
+              </b-card>
+            </b-collapse>
+          </b-td>
+
+        </b-tbody>
+        <b-tfoot class="">
+          <b-button v-if="isLoadMore === true"
+                    class="btn btn-outline-info mb-3"
+                    @click="loadMore"
+                    size="sm"
+                    variant="alt-info"
+          >
+            <i class="fa fa-fw fa-plus mr-1"></i> Загрузить ещё
+          </b-button>
+        </b-tfoot>
+      </b-table-simple>
     </div>
     <div v-else class="content">
       Вы ещё не добавили ни одного проекта!
@@ -109,11 +170,18 @@ export default {
 
   data() {
     return {
-      username: localStorage.getItem("username") || "",
       offset: 0,
-      limit: 3,
+      limit: 10,
+      sortData: {
+        sortChangeType: {"DESC": "ASC", "ASC": "DESC", "": "ASC"},
+        sortedField: "created",
+        sortTypeCreated: "DESC",
+        sortTypeName: "",
+        sortedLimit: this.limit
+      },
       messages_data: {type: "warning", messages: []},
-      userProjects: [],
+      userProjectsServers: [],
+      serversInProjects: [],
       isLoadMore: true
     }
   },
@@ -125,20 +193,25 @@ export default {
       this.messages_data = {type: "warning", messages: []};
     }
     this.$http
-        .get(`/project/retrieve-user-projects/${this.offset}/${this.limit}/`)
+        .get(`/project/retrieve-user-projects-servers/${this.sortData.sortedField}/${this.sortData.sortTypeCreated}/${this.offset}/${this.limit}/`)
         .then(res => {
           if (res.data.isLoggedIn === false) {
             breakAuth();
-            this.$router.push({
-                  name: 'login',
+            this.$router.push(
+                {
+                  name: "login",
                   params: {
                     messages_data: {type: res.data.status, messages: res.data.messages}
                   }
-            });
+                }
+            );
           } else {
-            this.userProjects = res.data.userProjects.rows;
-            this.offset += res.data.userProjects.rows.length;
-            if (res.data.userProjects.count === this.offset) {
+            this.userProjectsServers = res.data.userProjectsServers;
+            for (let project of this.userProjectsServers) {
+              this.serversInProjects.push(project.servers.map(server => server.hostname));
+            }
+            this.offset += res.data.userProjectsServers.length;
+            if (res.data.projectCount === this.offset) {
               this.isLoadMore = false;
             }
           }
@@ -157,9 +230,93 @@ export default {
       });
     },
 
+    retrieveServer(serverId, projectId) {
+      this.$router.push({
+        path: `/retrieve-server/${projectId}/${serverId}/`,
+        params: {
+          projectId: projectId,
+          serverId: serverId
+        }
+      });
+    },
+
+    createServer(projectName) {
+      this.$router.push({
+        name: "createServer",
+        params: {
+          projectName
+        }
+      });
+    },
+
+    sortField({sortedField = "created"}) {
+      let sortedType = "DESC";
+      this.sortData.sortedField = sortedField;
+      if (sortedField === "created") {
+        sortedType = this.sortData.sortTypeCreated = this.sortData.sortChangeType[this.sortData.sortTypeCreated];
+        this.sortData.sortTypeName = "";
+      } else {
+        sortedType = this.sortData.sortTypeName = this.sortData.sortChangeType[this.sortData.sortTypeName];
+        this.sortData.sortTypeCreated = "";
+      }
+      if (this.isLoadMore) {
+        this.sortData.sortedLimit = this.offset;
+        this.offset = 0;
+        this.$http
+            .get(`/project/retrieve-user-projects-servers/${sortedField}/${sortedType}/${this.offset}/${this.sortData.sortedLimit}/`)
+            .then(res => {
+              if (res.data.isLoggedIn === false) {
+                breakAuth();
+                this.$router.push(
+                    {
+                      name: "login",
+                      params: {
+                        messages_data: {type: res.data.status, messages: res.data.messages}
+                      }
+                    }
+                );
+              } else {
+                this.userProjectsServers = res.data.userProjectsServers;
+                this.offset += res.data.userProjectsServers.length;
+                if (res.data.projectCount === this.offset) {
+                  this.isLoadMore = false;
+                }
+              }
+            })
+            .catch(err => console.error(err));
+      } else {
+        if (sortedType === "DESC") {
+          this.userProjectsServers.sort((projectA, projectB) => {
+            if (projectA[this.sortData.sortedField] > projectB[this.sortData.sortedField]) {
+              return -1;
+            }
+            if (projectA[this.sortData.sortedField] < projectB[this.sortData.sortedField]) {
+              return 1;
+            }
+            return 0;
+          });
+        } else {
+          this.userProjectsServers.sort((projectA, projectB) => {
+            if (projectA[this.sortData.sortedField] > projectB[this.sortData.sortedField]) {
+              return 1;
+            }
+            if (projectA[this.sortData.sortedField] < projectB[this.sortData.sortedField]) {
+              return -1;
+            }
+            return 0;
+          });
+        }
+      }
+      this.serversInProjects = [];
+      for (let project of this.userProjectsServers) {
+        this.serversInProjects.push(project.servers.map(server => server.hostname));
+      }
+    },
+
     loadMore() {
+      const requiredSortType = this.sortData.sortTypeName || this.sortData.sortTypeCreated;
       this.$http
-          .get(`/project/retrieve-user-projects/${this.offset}/${this.limit}`)
+          .get(`/project/retrieve-user-projects-servers/${this.sortData.sortedField}/${requiredSortType}/${this.offset}/${this.limit}/`)
           .then(res => {
             if (res.data.isLoggedIn === false) {
               breakAuth();
@@ -172,14 +329,21 @@ export default {
                   }
               );
             } else {
-              this.userProjects = [...this.userProjects, ...res.data.userProjects.rows];
-              this.offset += res.data.userProjects.rows.length;
-              if (res.data.userProjects.count === this.offset) {
+              this.userProjectsServers = [...this.userProjectsServers, ...res.data.userProjectsServers];
+              for (let project of res.data.userProjectsServers) {
+                this.serversInProjects.push(project.servers.map(server => server.hostname));
+              }
+              this.offset += res.data.userProjectsServers.length;
+              if (res.data.projectCount === this.offset) {
                 this.isLoadMore = false;
               }
             }
           })
           .catch(err => console.error(err));
+    },
+
+    deleteProject(userProject) {
+      console.log(userProject);
     }
   },
 }

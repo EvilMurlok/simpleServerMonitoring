@@ -20,6 +20,66 @@ const create_server = async (req, res) => {
     }
 }
 
+const retrieve_user_servers = async (req, res) => {
+    const [
+        userId,
+        name,
+        ip,
+        hostname,
+        createdMin,
+        createdMax
+    ] = [
+        req.user.id,
+        req.query.name,
+        req.query.ip,
+        req.query.hostname,
+        req.query.createdMin,
+        req.query.createdMax
+    ];
+    try {
+        const userServers = await models.server.retrieveUserServers({
+            userId,
+            name,
+            ip,
+            hostname,
+            createdMin,
+            createdMax
+        });
+        res.send({
+            status: "success",
+            userServers: userServers
+        })
+    } catch (e) {
+        res.send({
+            status: "warning",
+            messages: e.messages
+        })
+    }
+}
+
+const retrieve_user_sorted_servers = async (req, res) => {
+    const [
+        userId,
+        sortField,
+        sortType,
+    ] = [
+        req.user.id,
+        req.params.sortField,
+        req.params.sortType,
+    ]
+    try {
+        const userServers = await models.server.retrieveUserSortedServers({userId, sortField, sortType});
+        res.send({
+            status: "success",
+            userServers: userServers,
+        });
+    } catch (e) {
+        res.send({
+            status: "warning",
+            messages: e.messages
+        });
+    }
+}
 
 const retrieve_project_servers = async (req, res) => {
     const projectId = req.params.projectId;
@@ -116,27 +176,13 @@ const delete_server = async (req, res) => {
     }
 }
 
-const show_servers_amount = async (req, res) => {
-    const servers = await models.server.findAndCountAll({
-        where: {
-            userId: req.user.id
-        },
-        order: [['createdAt', 'DESC']],
-        offset: req.params.offset,
-        limit: req.params.limit
-    });
-    res.send({
-        servers: servers,
-        isLoggedIn: req.isAuthenticated()
-    });
-}
-
 module.exports = {
     create_server,
     retrieve_project_servers,
+    retrieve_user_servers,
+    retrieve_user_sorted_servers,
     retrieve_server_in_project,
     retrieve_server_by_tags,
     update_server,
     delete_server,
-    // show_servers_amount,
 }

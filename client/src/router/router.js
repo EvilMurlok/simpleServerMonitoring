@@ -196,7 +196,7 @@ router.beforeEach((to, from, next) => {
         if (localStorage.getItem('isLoggedIn') == null) {
             next()
         } else {
-            next({ name: 'showServers' })
+            next({ name: 'retrieveProjects' })
         }
     } else {
         next()

@@ -14,81 +14,252 @@
       </div>
     </div>
     <!-- END Hero -->
-    <div v-if="userProjectsServers.some(project => project.servers.length !== 0)"
-         class="content"
-    >
+
+    <div class="content mb-2 mt-3">
       <BaseMessage
           v-for="item in messages_data.messages"
           :key="item.text"
           :message_data="{type: messages_data.type, item: item}"
       />
-      <base-block v-for="(project, projectIndex) in userProjectsServers"
-                  :key="project.id"
-                  content-full
-                  rounded
-      >
-        <b-table-simple class="table-vcenter font-size-sm mb-0"
-                        striped
-                        hover
-                        borderless
-        >
-          <b-thead>
-            <b-tr>
-              <b-th>Название проекта</b-th>
-              <b-th>Время создания</b-th>
-            </b-tr>
-          </b-thead>
-          <b-tbody>
-            <b-tr>
-              <b-td>
-                <b class="ml-3">{{ project.name }}</b>
-              </b-td>
-              <b-td class="d-none d-sm-table-cell">
-                <b-badge variant="primary">{{ new Date(project.created).toLocaleString() }}</b-badge>
-              </b-td>
-              <b-td class="text-center">
-                <b-button v-b-toggle="serversInProjects[projectIndex]"
-                          variant="dark"
-                >
-                  <i class="fa fa-fw fa-server"></i> Серверы проекта
-                </b-button>
-              </b-td>
-            </b-tr>
-          </b-tbody>
-        </b-table-simple>
-        <b-collapse v-for="(server, serverIndex) in project.servers"
-                    :key="server.ip"
-                    :id="serversInProjects[projectIndex][serverIndex]"
-                    class="mt-2">
-          <b-card border-variant="light">
-            <div class="d-flex justify-content-between">
-              <b-card-text>
-                Сервер <b>{{ server.hostname }}</b> принадлежит проекту <code>{{ project.name }}</code>
-              </b-card-text>
-              <div>
-                <b>Время создания:</b>&nbsp; &nbsp;
-                <b-badge variant="primary">{{ new Date(server.created).toLocaleString()  }}</b-badge>
-              </div>
-              <b-button @click="retrieveServer(server.id, project.id)"
-                        variant="alt-info"
-                        size="sm"
+
+      <b-form @submit.prevent="filterServers">
+        <b-row class="my-3 m-3">
+          <b-col sm="1">
+            <label class="form-check-label">Название хоста</label>
+          </b-col>
+          <b-col sm="3 mr-3">
+            <b-form-input id="filterHostname"
+                          name="filterHostname"
+                          placeholder="Имя хоста"
+                          aria-describedby="filterHostname-feedback"
+                          type="text"
+                          v-model="filterData.filterHostname"
+            >
+            </b-form-input>
+          </b-col>
+          <b-col sm="1">
+            <label class="form-check-label">Назваение проекта</label>
+          </b-col>
+          <b-col sm="3 mr-3">
+            <b-form-input id="filterProjectName"
+                          name="filterProjectName"
+                          placeholder="Имя проекта"
+                          aria-describedby="filterProjectName-feedback"
+                          type="text"
+                          v-model="filterData.filterProjectName"
+            >
+            </b-form-input>
+          </b-col>
+          <b-col sm="1">
+            <label class="form-check-label">IP сервера</label>
+          </b-col>
+          <b-col sm="2 mr-3">
+            <b-form-input id="filterIP"
+                          name="filterIP"
+                          placeholder="IP"
+                          aria-describedby="filterIP-feedback"
+                          type="text"
+                          v-model="filterData.filterIp"
+            >
+            </b-form-input>
+          </b-col>
+        </b-row>
+        <b-row class="my-1 m-3">
+          <b-col sm="2">
+            <label class="form-check-label">Дата создания (min)</label>
+          </b-col>
+          <b-col sm="3 mr-3">
+            <b-form-input id="filterMinCreationDate"
+                          name="filterMinCreationDate"
+                          aria-describedby="filterMinCreationDate-feedback"
+                          type="date"
+                          v-model="filterData.filterMinCreationDate"
+            >
+            </b-form-input>
+          </b-col>
+          <b-col sm="3">
+            <label class="form-check-label">Время создания (min)</label>
+          </b-col>
+          <b-col sm="2 mr-3">
+            <b-form-input id="filterMinCreationTime"
+                          name="filterMinCreationTime"
+                          aria-describedby="filterMinCreationTime-feedback"
+                          type="time"
+                          v-model="filterData.filterMinCreationTime"
+            >
+            </b-form-input>
+          </b-col>
+        </b-row>
+        <b-row class="my-1 m-3">
+          <b-col sm="2">
+            <label class="form-check-label">Дата создания (max)</label>
+          </b-col>
+          <b-col sm="3 mr-3">
+            <b-form-input id="filterMaxCreationDate"
+                          name="filterMaxCreationDate"
+                          aria-describedby="filterMaxCreationDate-feedback"
+                          type="date"
+                          v-model="filterData.filterMaxCreationDate"
+            >
+            </b-form-input>
+          </b-col>
+          <b-col sm="3">
+            <label class="form-check-label">Время создания (max)</label>
+          </b-col>
+          <b-col sm="2 mr-3">
+            <b-form-input id="filterMaxCreationTime"
+                          name="filterMaxCreationTime"
+                          aria-describedby="filterMaxCreationTime-feedback"
+                          type="time"
+                          v-model="filterData.filterMaxCreationTime"
+            >
+            </b-form-input>
+          </b-col>
+        </b-row>
+        <div class="d-flex justify-content-around">
+          <b-button type="submit"
+                    variant="alt-info"
+                    size="sm"
+          >
+            <i class="fa fa-info-circle m-1"></i> Показать сервера
+          </b-button>
+          <div>
+            <b-dropdown id="dropdown-1" :text="pagination.chosenVariant" class="m-md-2">
+              <b-dropdown-item v-for="dropdownVariant in pagination.dropdownVariants"
+                               :key="dropdownVariant.text"
+                               @click="changePagination(dropdownVariant)"
               >
-                <i class="fa fa-fw fa-info-circle"></i> Узнать больше
-              </b-button>
-            </div>
-          </b-card>
-        </b-collapse>
-      </base-block>
-      <b-button v-if="isLoadMore === true"
-                class="btn btn-outline-info mb-3 mb-3"
-                @click="loadMore"
-                size="sm"
-                variant="alt-info"
-      >
-        <i class="fa fa-fw fa-plus mr-1"></i> Загрузить ещё
-      </b-button>
+                {{ dropdownVariant.text }}
+              </b-dropdown-item>
+            </b-dropdown>
+          </div>
+        </div>
+      </b-form>
     </div>
-    <div v-else class="content">В имеющиеся у Вас проекты пока что не добавлено ни одного сервера!</div>
+
+    <div v-if="userServersAll.length > 0"
+         class="content"
+    >
+      <b-table-simple class="table-vcenter font-size-sm mb-3"
+                      fixed
+                      striped
+                      hover
+                      sticky-header="100%"
+      >
+        <b-thead head-variant="dark">
+          <b-tr>
+            <b-th>
+              <span class="ml-5"
+                    style="cursor: pointer"
+                    @click="sortField({sortedField: 'hostname'})"
+              >
+                Хост
+                <i class="si si-arrow-up m-2"
+                   v-if="sortData.sortTypeHostname === 'ASC'">
+                </i>
+                <i class="si si-arrow-down m-2"
+                   v-else-if="sortData.sortTypeHostname === 'DESC'">
+                </i>
+              </span>
+            </b-th>
+            <b-th>
+              <span class="ml-5"
+                    style="cursor: pointer"
+                    @click="sortField({sortedField: 'ip'})"
+              >
+                IP
+                <i class="si si-arrow-up m-2"
+                   v-if="sortData.sortTypeIp === 'ASC'">
+                </i>
+                <i class="si si-arrow-down m-2"
+                   v-else-if="sortData.sortTypeIp === 'DESC'">
+                </i>
+              </span>
+            </b-th>
+            <b-th>
+              <span class="ml-2"
+                    style="cursor: pointer"
+                    @click="sortField({sortedField: 'created'})"
+              >
+                Время создания
+                <i class="si si-arrow-up m-2"
+                   v-if="sortData.sortTypeCreated === 'ASC'">
+                </i>
+                <i class="si si-arrow-down m-2"
+                   v-else-if="sortData.sortTypeCreated === 'DESC'">
+                </i>
+              </span>
+            </b-th>
+            <b-th>
+              <span class="ml-4"
+                    style="cursor: pointer"
+                    @click="sortField({sortedField: 'projectName'})"
+              >
+                Проект
+                <i class="si si-arrow-up m-2"
+                   v-if="sortData.sortTypeName === 'ASC'">
+                </i>
+                <i class="si si-arrow-down m-2"
+                   v-else-if="sortData.sortTypeName === 'DESC'">
+                </i>
+              </span>
+            </b-th>
+            <b-th class="text-center">Опции</b-th>
+          </b-tr>
+        </b-thead>
+        <b-tbody v-for="server in userServersPart"
+                 :key="server.id">
+          <b-tr content-full
+                rounded>
+            <b-td>
+              <b class="ml-3">{{ server.hostname }}</b>
+            </b-td>
+            <b-td>
+              <b class="ml-3">{{ server.ip }}</b>
+            </b-td>
+            <b-td class="d-none d-sm-table-cell">
+              <b-badge variant="primary" class="ml-3">{{ new Date(server.created).toLocaleString() }}</b-badge>
+            </b-td>
+            <b-td>
+              <b class="ml-3">{{ server.projectName }}</b>
+            </b-td>
+            <b-td class="text-right">
+              <b-button @click="retrieveServer(server.serverId, server.projectId)"
+                        size="sm"
+                        variant="alt-info"
+                        class="mr-3"
+              >
+                <i class="fa fa-fw fa-info-circle"></i>
+              </b-button>
+              <b-button @click="deleteServer(server.serverId, server.projectId)"
+                        size="sm"
+                        variant="alt-danger"
+                        class="mr-3"
+              >
+                <i class="fa fa-trash mr-1"></i>
+              </b-button>
+            </b-td>
+          </b-tr>
+        </b-tbody>
+      </b-table-simple>
+<!--      <b-button v-if="pagination.isShowMore === true"-->
+<!--                class="btn btn-outline-info mt-3 mb-3"-->
+<!--                @click="showMore(false)"-->
+<!--                variant="alt-info"-->
+<!--                block-->
+<!--      >-->
+<!--        <i class="fa fa-fw fa-plus m-1"></i> Загрузить ещё-->
+<!--      </b-button>-->
+      <ul class="pagination mt-3">
+        <li class="page-item"
+            v-for="number in pagination.pagesNumbers"
+            :key="number"
+        >
+          <a class="page-link" @click="showCurrentPage(number)">{{ number }}</a>
+        </li>
+      </ul>
+    </div>
+    <div v-else class="content">По данному фильтру не найдено ни одного сервера!</div>
   </div>
 </template>
 
@@ -105,13 +276,41 @@ export default {
 
   data() {
     return {
-      username: localStorage.getItem("username"),
-      offset: 0,
-      limit: 3,
+      sortData: {
+        sortChangeType: {"DESC": "ASC", "ASC": "DESC", "": "ASC"},
+        sortedField: "name",
+        sortTypeCreated: "",
+        sortTypeHostname: "",
+        sortTypeIp: "",
+        sortTypeName: "DESC",
+      },
+      filterData: {
+        filterMinCreationDate: "",
+        filterMaxCreationDate: "",
+        filterMinCreationTime: "",
+        filterMaxCreationTime: "",
+        filterProjectName: "",
+        filterIp: "",
+        filterHostname: ""
+      },
       messages_data: {type: "warning", messages: []},
-      userProjectsServers: [],
-      serversInProjects: [],
-      isLoadMore: true
+      userServersAll: [],
+      userServersPart: [],
+      pagination: {
+        dropdownVariants: [
+          {text: "Показать 5", limit: 5},
+          {text: "Показать 10", limit: 10},
+          {text: "Показать 20", limit: 20},
+          {text: "Показать 30", limit: 30},
+          {text: "Показать все", limit: 0}
+        ],
+        pagesNumbers: [],
+        currentPage: 1,
+        chosenVariant: "Показать 10",
+        limit: 10,
+        offset: 0,
+        isShowMore: true,
+      }
     }
   },
 
@@ -122,7 +321,15 @@ export default {
       this.messages_data = {type: "warning", messages: []};
     }
     this.$http
-        .get(`/project/retrieve-user-projects-servers/${this.offset}/${this.limit}/`)
+        .get(`/server/retrieve-user-servers/`, {
+          params: {
+            name: (this.$route.query.name === undefined || this.$route.query.name === "all") ? "%" : this.$route.query.name,
+            ip: (this.$route.query.ip === undefined || this.$route.query.ip === "all") ? "%" : this.$route.query.ip,
+            hostname: (this.$route.query.hostname === undefined || this.$route.query.hostname === "all") ? "%" : this.$route.query.hostname,
+            createdMin: this.$route.query.createdMin || "1970-01-01T00:00:00.000Z",
+            createdMax: this.$route.query.createdMax || new Date(new Date().setHours(new Date().getHours() + 3)).toISOString()
+          }
+        })
         .then(res => {
           if (res.data.isLoggedIn === false) {
             breakAuth();
@@ -133,14 +340,50 @@ export default {
               }
             });
           } else {
-            this.userProjectsServers = res.data.userProjectsServers;
-            for (let project of this.userProjectsServers) {
-              this.serversInProjects.push(project.servers.map(server => server.hostname));
+            let [currentMinDateTime, currentMaxDateTime] = ["", ""];
+            if (this.$route.query.createdMin) {
+              const temp = new Date(this.$route.query.createdMin);
+              currentMinDateTime = new Date(temp.setHours(temp.getHours() + 3)).toISOString();
+            } else {
+              currentMinDateTime = "1970-01-01T00:00:00.000Z";
             }
-            this.offset += res.data.userProjectsServers.length;
-            console.log(res.data.projectCount, this.offset)
-            if (res.data.projectCount === this.offset) {
-              this.isLoadMore = false;
+
+            if (this.$route.query.createdMax) {
+              const temp = new Date(this.$route.query.createdMax);
+              currentMaxDateTime = new Date(temp.setHours(temp.getHours() + 3)).toISOString();
+            } else {
+              currentMaxDateTime = new Date(new Date().setHours(new Date().getHours() + 3)).toISOString();
+            }
+            this.filterData.filterProjectName = this.$route.query.name || "all";
+            this.filterData.filterHostname = this.$route.query.hostname || "all";
+            this.filterData.filterIp = this.$route.query.ip || "all";
+            this.filterData.filterMinCreationDate = currentMinDateTime.slice(0, 10);
+            this.filterData.filterMinCreationTime = currentMinDateTime.slice(11, 16);
+            this.filterData.filterMaxCreationDate = currentMaxDateTime.slice(0, 10);
+            this.filterData.filterMaxCreationTime = currentMaxDateTime.slice(11, 16);
+            if (res.data.userServers[0]) {
+              for (let project of res.data.userServers[0].projects) {
+                for (let server of project.servers) {
+                  this.userServersAll.push({
+                    serverId: server.id,
+                    projectId: project.id,
+                    created: server.created,
+                    hostname: server.hostname,
+                    ip: server.ip,
+                    projectName: project.name
+                  });
+                }
+              }
+              this.pagination.dropdownVariants[this.pagination.dropdownVariants.length - 1].limit = this.userServersAll.length;
+              if (this.userServersAll.length <= this.pagination.limit) {
+                this.pagination.pagesNumbers = [1,];
+              } else {
+                for (let i = 1; i <= (this.userServersAll.length / this.pagination.limit >> 0); ++i) {
+                  this.pagination.pagesNumbers.push(i);
+                }
+              }
+              this.showCurrentPage(1);
+              // this.showMore(true);
             }
           }
         })
@@ -150,39 +393,145 @@ export default {
   methods: {
     retrieveServer(serverId, projectId) {
       this.$router.push({
-        path: `/retrieve-server/${projectId}/${serverId}/`,
+        name: 'retrieveServer',
         params: {
+          serverId: serverId,
           projectId: projectId,
-          serverId: serverId
         }
       });
     },
 
-    loadMore() {
-      this.$http
-          .get(`/project/retrieve-user-projects-servers/${this.offset}/${this.limit}/`)
-          .then(res => {
-            if (res.data.isLoggedIn === false) {
-              breakAuth();
-              this.$router.push({
-                name: 'login',
-                params: {
-                  messages_data: {type: res.data.status, messages: res.data.messages}
-                }
-              });
-            } else {
-              this.userProjectsServers = [...this.userProjectsServers, ...res.data.userProjectsServers];
-              for (let project of res.data.userProjectsServers) {
-                this.serversInProjects.push(project.servers.map(server => server.hostname));
-              }
-              this.offset += res.data.userProjectsServers.length;
-              if (res.data.projectCount === this.offset) {
-                this.isLoadMore = false;
-              }
-            }
-          })
-          .catch(err => console.error(err))
-    }
+    deleteServer(serverId, projectId) {
+      if (this.messages_data.messages.length !== 0) {
+        this.messages_data = {type: "warning", messages: []};
+      }
+      console.log(serverId, projectId);
+    },
+
+    changePagination(dropdownVariant) {
+      this.pagination.chosenVariant = dropdownVariant.text;
+      this.pagination.limit = dropdownVariant.limit;
+      this.pagination.pagesNumbers = [];
+      if (this.userServersAll.length <= this.pagination.limit) {
+        this.pagination.pagesNumbers = [1,];
+      } else {
+        if (this.userServersAll.length % this.pagination.limit) {
+          for (let i = 1; i <= (this.userServersAll.length / this.pagination.limit >> 0) + 1; ++i) {
+            this.pagination.pagesNumbers.push(i);
+          }
+        } else {
+          for (let i = 1; i <= (this.userServersAll.length / this.pagination.limit >> 0); ++i) {
+            this.pagination.pagesNumbers.push(i);
+          }
+        }
+
+      }
+      this.showCurrentPage(1);
+      // this.pagination.offset = 0;
+      // this.showMore(true);
+    },
+
+    // showMore(isStart) {
+    //   if (isStart) {
+    //     this.userServersPart = [];
+    //   }
+    //   this.userServersPart = [...this.userServersPart, ...(this.userServersAll.slice(this.pagination.offset, this.pagination.offset + this.pagination.limit))];
+    //   this.pagination.offset += this.pagination.limit;
+    //   if (this.pagination.offset >= this.userServersAll.length) {
+    //     this.pagination.isShowMore = false;
+    //     this.pagination.offset = this.userServersAll.length;
+    //   } else {
+    //     this.pagination.isShowMore = true;
+    //   }
+    // },
+
+    showCurrentPage(pageNumber) {
+      this.pagination.currentPage = pageNumber;
+      const serverStartIndex = this.pagination.limit * (pageNumber - 1);
+      const serverEndIndex = this.pagination.limit + serverStartIndex;
+      this.userServersPart = this.userServersAll.slice(serverStartIndex, serverEndIndex);
+    },
+
+    filterServers() {
+      if (this.messages_data.messages.length !== 0) {
+        this.messages_data = {type: "warning", messages: []};
+      }
+      const minDate = this.filterData.filterMinCreationDate || "1970-01-01";
+      const maxDate = this.filterData.filterMaxCreationDate || new Date(new Date().setHours(new Date().getHours() + 3)).toISOString().slice(0, 10);
+      const minTime = this.filterData.filterMinCreationTime || "00:00";
+      const maxTime = this.filterData.filterMaxCreationTime || new Date(new Date().setHours(new Date().getHours() + 3)).toISOString().slice(11, 16);
+      let [
+        minDateString,
+        maxDateString
+      ] = [
+        new Date(minDate + "T" + minTime + ":00.000Z"),
+        new Date(maxDate + "T" + maxTime + ":00.000Z"),
+      ];
+      minDateString = new Date(minDateString.setHours(minDateString.getHours() - 3));
+      maxDateString = new Date(maxDateString.setHours(maxDateString.getHours() - 3));
+      if (minDateString <= maxDateString) {
+        minDateString = minDateString.toISOString();
+        maxDateString = maxDateString.toISOString();
+        this.$router.push({
+          name: "retrieveServers",
+          query: {
+            name: this.filterData.filterProjectName || "all",
+            hostname: this.filterData.filterHostname || "all",
+            ip: this.filterData.filterIp || "all",
+            createdMin: minDateString,
+            createdMax: maxDateString
+          }
+        });
+        this.$router.go(0);
+      } else {
+        this.messages_data.messages.push({
+          text: "Минимальная дата не может быть меньше максимальной!"
+        });
+      }
+    },
+
+    sortField({sortedField = "name"}) {
+      let sortedType = "DESC";
+      this.sortData.sortedField = sortedField;
+      if (sortedField === "created") {
+        sortedType = this.sortData.sortTypeCreated = this.sortData.sortChangeType[this.sortData.sortTypeCreated];
+        [this.sortData.sortTypeName, this.sortData.sortTypeIp, this.sortData.sortTypeHostname] = ["", "", ""];
+      } else if (sortedField === "hostname") {
+        sortedType = this.sortData.sortTypeHostname = this.sortData.sortChangeType[this.sortData.sortTypeHostname];
+        [this.sortData.sortTypeName, this.sortData.sortTypeCreated, this.sortData.sortTypeIp] = ["", "", ""];
+      } else if (sortedField === "ip") {
+        sortedType = this.sortData.sortTypeIp = this.sortData.sortChangeType[this.sortData.sortTypeIp];
+        [this.sortData.sortTypeName, this.sortData.sortTypeCreated, this.sortData.sortTypeHostname] = ["", "", ""];
+      } else {
+        sortedType = this.sortData.sortTypeName = this.sortData.sortChangeType[this.sortData.sortTypeName];
+        [this.sortData.sortTypeCreated, this.sortData.sortTypeIp, this.sortData.sortTypeHostname] = ["", "", ""];
+      }
+
+      if (sortedType === "DESC") {
+        this.userServersAll.sort((serverA, serverB) => {
+          if (serverA[this.sortData.sortedField] > serverB[this.sortData.sortedField]) {
+            return -1;
+          }
+          if (serverA[this.sortData.sortedField] < serverB[this.sortData.sortedField]) {
+            return 1;
+          }
+          return 0;
+        });
+      } else {
+        this.userServersAll.sort((serverA, serverB) => {
+          if (serverA[this.sortData.sortedField] > serverB[this.sortData.sortedField]) {
+            return 1;
+          }
+          if (serverA[this.sortData.sortedField] < serverB[this.sortData.sortedField]) {
+            return -1;
+          }
+          return 0;
+        });
+      }
+      this.showCurrentPage(this.pagination.currentPage);
+      // this.userServersPart = this.userServersAll.slice(0, this.pagination.offset);
+
+    },
   },
 }
 </script>

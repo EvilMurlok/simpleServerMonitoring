@@ -117,20 +117,19 @@ module.exports = (models) => {
             }]);
         }
 
-        static retrieveAllProjectsWithServers = async ({userId, offset, limit}) => {
+        static retrieveUserSortedProjectsWithServers = async ({userId, sortField, sortType, offset, limit}) => {
             const currentUser = await models.user.findByPk(userId);
             if (currentUser) {
                 return [
                     await this.findAll({
                         include: {
                             model: models.server,
-                            required: true,
-                            order: [['created', 'ASC']],
                             where: {
                                 deleted: {
                                     [Op.is]: null
                                 }
-                            }
+                            },
+                            required: false
                         },
                         where: {
                             [Op.and]: [
@@ -144,14 +143,10 @@ module.exports = (models) => {
                                 }
                             ]
                         },
-                        order: [['created', 'DESC']],
+                        order: [[sortField, sortType]],
                         offset: offset,
                         limit: limit
                     }), (await this.findAll({
-                        include: {
-                            model: models.server,
-                            required: true,
-                        },
                         where: {
                             [Op.and]: [
                                 {

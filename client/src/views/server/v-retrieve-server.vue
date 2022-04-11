@@ -194,17 +194,9 @@ export default {
                 }
               });
             } else {
-              if (res.data.status === "warning"){
-                this.messages_data.messages = res.data.messages;
-              } else {
-                const types = {"not found": "warning", "info": "info", "success": "success"};
-                this.$router.push({
-                  name: "retrieveServers",
-                  params: {
-                    messages_data: {type: types[res.data.status], messages: res.data.messages}
-                  }
-                });
-              }
+              const types = {"not found": "warning", "info": "info", "success": "success", "warning": "warning"};
+              this.messages_data = {type: types[res.data.status], messages: res.data.messages}
+              console.log(this.messages_data);
             }
           })
           .catch(err => console.error(err));

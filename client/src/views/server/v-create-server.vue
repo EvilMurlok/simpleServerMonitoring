@@ -102,41 +102,49 @@ export default {
     } else {
       this.messages_data = {type: "warning", messages: []};
     }
-    this.$http
-        .get("/project/retrieve-all-user-projects/")
-        .then(res => {
-          if (res.data.isLoggedIn === false) {
-            breakAuth();
-            this.$router.push({
-              name: 'login',
-              params: {
-                messages_data: {type: res.data.status, messages: res.data.messages}
-              }
-            });
-          } else {
-            if (res.data.status === "warning") {
+    if (this.$route.params.projectName) {
+      this.projectName = this.$route.params.projectName;
+      this.projects.push({
+        value: this.$route.params.projectName,
+        text: this.$route.params.projectName
+      })
+    } else {
+      this.$http
+          .get("/project/retrieve-all-user-projects/")
+          .then(res => {
+            if (res.data.isLoggedIn === false) {
+              breakAuth();
               this.$router.push({
-                name: 'retrieveProjects',
+                name: 'login',
                 params: {
                   messages_data: {type: res.data.status, messages: res.data.messages}
                 }
               });
             } else {
-              if (res.data.userProjects.length === 0){
-                this.messages_data.messages.push({
-                  text: "У вас нет ни одного доступного проекта!"
+              if (res.data.status === "warning") {
+                this.$router.push({
+                  name: 'retrieveProjects',
+                  params: {
+                    messages_data: {type: res.data.status, messages: res.data.messages}
+                  }
                 });
-              }
-              for (let project of res.data.userProjects) {
-                this.projects.push({
-                  value: project.name,
-                  text: project.name
-                });
+              } else {
+                if (res.data.userProjects.length === 0){
+                  this.messages_data.messages.push({
+                    text: "У вас нет ни одного доступного проекта!"
+                  });
+                }
+                for (let project of res.data.userProjects) {
+                  this.projects.push({
+                    value: project.name,
+                    text: project.name
+                  });
+                }
               }
             }
-          }
-        })
-        .catch(err => console.error(err));
+          })
+          .catch(err => console.error(err));
+    }
   },
 
   methods: {

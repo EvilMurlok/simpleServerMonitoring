@@ -1,6 +1,6 @@
 const { Sequelize } = require('sequelize');
 
-const dbConfig = require('../config/config.db.local.js');
+const dbConfig = require('../config/config.db.js');
 
 const sequelize = new Sequelize(
     dbConfig.DB,

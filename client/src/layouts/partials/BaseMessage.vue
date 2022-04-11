@@ -1,9 +1,6 @@
 <template>
-  <div id="page-messages"
-       style="cursor: pointer"
-       @click="visibility = false"
-  >
-    <b-alert v-if="message_data.type === 'warning' && visibility === true"
+  <div id="page-messages">
+    <b-alert v-if="message_data.type === 'warning'"
              variant="warning"
              class="d-flex align-items-center justify-content-between"
              show
@@ -16,7 +13,7 @@
       </div>
     </b-alert>
 
-    <b-alert v-else-if="message_data.type === 'success' && visibility === true"
+    <b-alert v-else-if="message_data.type === 'success'"
              variant="success"
              class="d-flex align-items-center"
              show
@@ -29,7 +26,7 @@
       </div>
     </b-alert>
 
-    <b-alert v-else-if="message_data.type === 'info' && visibility === true"
+    <b-alert v-else-if="message_data.type === 'info'"
              variant="info"
              class="d-flex align-items-center"
              show
@@ -55,14 +52,5 @@ export default {
       }
     }
   },
-  data() {
-    return {
-      visibility: true
-    }
-  },
-
-  created() {
-    this.visibility = true;
-  }
 }
 </script>

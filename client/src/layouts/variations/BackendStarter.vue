@@ -79,7 +79,7 @@
               },
               {
                 name: 'Мои серверы',
-                to: '/retrieve-servers/',
+                to: `/retrieve-servers/`,
                 icon: 'fa fa-server'
               },
               {

@@ -71,21 +71,33 @@ const retrieve_user_projects = async (req, res) => {
     }
 }
 
-const retrieve_all_user_projects_servers = async (req, res) => {
-  const [userId, offset, limit] = [req.user.id, req.params.offset, req.params.limit];
-  try {
-      const [userProjectsServers, projectCount] = await models.project.retrieveAllProjectsWithServers({userId, offset, limit});
-      res.send({
-          status: "success",
-          userProjectsServers: userProjectsServers,
-          projectCount: projectCount
-      });
-  } catch (e) {
-      res.send({
-          status: "warning",
-          messages: e.messages
-      });
-  }
+const retrieve_sorted_user_projects_with_servers = async (req, res) => {
+    const [
+        userId,
+        sortField,
+        sortType,
+        offset,
+        limit
+    ] = [
+        req.user.id,
+        req.params.sortField,
+        req.params.sortType,
+        req.params.offset,
+        req.params.limit
+    ]
+    try {
+        const [userSortedProjects, projectCount] = await models.project.retrieveUserSortedProjectsWithServers({userId, sortField, sortType, offset, limit});
+        res.send({
+            status: "success",
+            userProjectsServers: userSortedProjects,
+            projectCount: projectCount
+        });
+    } catch (e) {
+        res.send({
+            status: "warning",
+            messages: e.messages
+        });
+    }
 }
 
 const retrieve_all_user_projects = async (req, res) => {
@@ -143,8 +155,8 @@ module.exports = {
     create_project,
     edit_project,
     retrieve_user_projects,
+    retrieve_sorted_user_projects_with_servers,
     retrieve_all_user_projects,
-    retrieve_all_user_projects_servers,
     retrieve_project,
     delete_project
 };

@@ -104,7 +104,7 @@ module.exports = (models) => {
                         where: {
                             [Op.and]: [
                                 {
-                                    name:  newProjectName
+                                    name: newProjectName
                                 },
                                 {
                                     deleted: {
@@ -132,6 +132,98 @@ module.exports = (models) => {
             throw new ServerCommonError("Fail to edit server", [{
                 text: "Невозможно обновить сервер!"
             }]);
+        }
+
+        static retrieveUserServers = async ({userId, name, ip, hostname, createdMin, createdMax}) => {
+            return await models.user.findAll({
+                where: {
+                    id: userId
+                },
+                include: {
+                    model: models.project,
+                    required: true,
+                    where: {
+                        [Op.and]: [
+                            {
+                                name: {
+                                    [Op.iLike]: `%${name}%`,
+                                }
+                            },
+                            {
+                                deleted: {
+                                    [Op.is]: null
+                                }
+                            }
+                        ]
+                    },
+                    include: {
+                        model: models.server,
+                        required: true,
+                        where: {
+                            [Op.and]: [
+                                {
+                                    hostname: {
+                                        [Op.iLike]: `%${hostname}%`
+                                    }
+                                },
+                                {
+                                    ip: {
+                                        [Op.iLike]: `%${ip}%`
+                                    }
+                                },
+                                {
+                                    created: {
+                                        [Op.gte]: createdMin
+                                    }
+                                },
+                                {
+                                    created: {
+                                        [Op.lte]: createdMax
+                                    }
+                                },
+                                {
+                                    deleted: {
+                                        [Op.is]: null
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                },
+                order: [[models.project, "name", "DESC"]]
+            })
+        }
+
+        static retrieveUserSortedServers = async ({
+                                                userId = 0,
+                                                sortField,
+                                                sortType,
+                                            }) => {
+            return await models.user.findAll({
+                where: {
+                    id: userId
+                },
+                include: {
+                    model: models.project,
+                    required: true,
+                    where: {
+                        deleted: {
+                            [Op.is]: null
+                        }
+                    },
+                    include: {
+                        model: models.server,
+                        required: true,
+                        where: {
+                            deleted: {
+                                [Op.is]: null
+                            }
+                        },
+                    },
+                },
+                order: [[models.project, sortField, sortType]]
+            });
+
         }
 
         static retrieveProjectServers = async ({projectId = 0}) => {
