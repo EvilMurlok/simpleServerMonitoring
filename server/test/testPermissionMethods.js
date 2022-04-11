@@ -241,7 +241,17 @@ const testPermissionMethods = async () => {
     });
 
     console.log(observerPermission);
-
 }
 
-testPermissionMethods().then();
+const testGetSub = async () => {
+    const permissionId = 49;
+    try {
+        let perm = await models.permission.findByPk(49);
+        let res = await perm.getSubPermissions();
+        console.log(res);
+    } catch (e) {
+    }
+}
+
+
+testGetSub().then();

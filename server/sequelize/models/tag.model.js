@@ -1,6 +1,7 @@
-const {Model, DataTypes, Op} = require("sequelize");
+const {Model, DataTypes} = require("sequelize");
 const generateColor = require("../utils/tags/generateColor")
 const {TagSameCredentialsError, TagCredentialsError} = require("../errors/tag/tagErrors");
+const {models} = require("../../sequelize");
 
 
 module.exports = (models) => {
@@ -34,11 +35,11 @@ module.exports = (models) => {
             });
         };
 
-        static #isNameVacant = async (name) => {
-            return !await Tag.findOneWithName(name);
+        static #isNameVacant = async ({name = ""}) => {
+            return !await Tag.findOneWithName({tagName: name});
         }
 
-        static #validateName = async (name) => {
+        static #validateName = async ({name = ""}) => {
             let messages = [];
             const rightName = /^[a-zA-Z0-9_]{3,255}$/;
 
@@ -59,7 +60,7 @@ module.exports = (models) => {
             return messages;
         }
 
-        static #validateColor = async (color) => {
+        static #validateColor = async ({color = null}) => {
             let messages = [];
             const rightTagColor = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
 
@@ -80,10 +81,10 @@ module.exports = (models) => {
             return messages;
         }
 
-        static #validateSameData = async (name) => {
+        static #validateSameData = async ({name = ""}) => {
             let messages = [];
 
-            if (!await Tag.#isNameVacant(name)) {
+            if (!await Tag.#isNameVacant({name: name})) {
                 messages.push({
                     text: `Тэг с названием ${name} уже существует!`
                 });
@@ -94,10 +95,10 @@ module.exports = (models) => {
             }
         }
 
-        static #validateData = async (name, color) => {
+        static #validateData = async ({name = "", color = null}) => {
             let messages = [
-                ...await Tag.#validateName(name),
-                ...await Tag.#validateColor(color)
+                ...await Tag.#validateName({name: name}),
+                ...await Tag.#validateColor({color: color})
             ]
 
             if (messages.length > 0) {
@@ -105,24 +106,37 @@ module.exports = (models) => {
             }
         }
 
-        static createWithName = async (tagName) => {
-
+        static createWithName = async ({tagName = "", serverIds = []}) => {
             const color = generateColor();
 
             try {
-                await Tag.#validateData(tagName, color);
-                await Tag.#validateSameData(tagName);
+                await Tag.#validateData({name: tagName, color: color});
+                await Tag.#validateSameData({name:tagName});
             } catch (e) {
                 throw e;
             }
 
-            return this.create({
+            const myTag = await this.create({
                 name: tagName,
                 color: color
             });
+
+            if (serverIds.length > 0) {
+                const serversToAdd = await models.server.findAll({
+                    where: {
+                        id: serverIds
+                    }
+                });
+
+                console.log(serversToAdd);
+
+                await myTag.addServers(serversToAdd);
+            }
+            console.log(myTag);
+            return myTag;
         }
 
-        static findOneWithName = async (tagName) => {
+        static findOneWithName = async ({tagName = ""}) => {
             try {
                 await Tag.#validateName(tagName)
             } catch (e) {
@@ -137,11 +151,11 @@ module.exports = (models) => {
             });
         }
 
-        static findOneOrCreateWithName = async (tagName) => {
+        static findOneOrCreateWithName = async ({tagName = ""}) => {
             const color = generateColor();
 
             try {
-                await Tag.#validateData(tagName, color);
+                await Tag.#validateData({name: tagName, color: color});
             } catch (e) {
                 throw e;
             }
@@ -162,10 +176,11 @@ module.exports = (models) => {
 
             return this.create({
                 name: tagName,
+                color: color
             });
         }
 
-        static retrieveAllProjectTags = async (project) => {
+        static retrieveAllProjectTags = async ({project = null}) => {
             const adminPerm = await models.permission.findByProjectAndName({
                 project: project,
                 name: 'admin'
@@ -174,7 +189,7 @@ module.exports = (models) => {
             return adminPerm.getTags();
         }
 
-        editWithValidation = async(tagName, color) => {
+        editWithValidation = async({tagName = "", color = null, serverIds = []}) => {
             try {
                 await Tag.#validateName(tagName);
                 if (color) {
@@ -185,9 +200,18 @@ module.exports = (models) => {
             } catch(e) {
                 throw e;
             }
+
+            if (serverIds.length > 0) {
+                const newServers = await models.server.findAll({
+                    where: {
+                        id: serverIds
+                    }
+                });
+                this.setServers(newServers);
+            }
         }
 
-        mergeWith = async (tag) => {
+        mergeWith = async ({tag = null}) => {
             tag.addServers(await this.getServers());
             // this.removeServers(servers)
             await this.destroy();
@@ -195,7 +219,7 @@ module.exports = (models) => {
             return tag;
         }
 
-        addToProjectServers = async (project) => {
+        addToProjectServers = async ({project = null}) => {
             return this.addServers(project.getServers())
         }
 

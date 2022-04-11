@@ -59,7 +59,7 @@ module.exports = (models) => {
             });
         };
 
-        static #validateEntity = async (entity) => {
+        static #validateEntity = async ({entity = null}) => {
             const validEntities = ['Dashboard', 'Permission', 'Project', 'Server', 'Tag', 'User', 'Metric'];
 
             let messages = [];
@@ -79,7 +79,7 @@ module.exports = (models) => {
             return messages;
         }
 
-        static #validateAction = async (action) => {
+        static #validateAction = async ({action = null}) => {
             const validActions = ['Create', 'Retrieve', 'Update', 'Delete', 'Share'];
 
             let messages = [];
@@ -99,7 +99,7 @@ module.exports = (models) => {
             return messages;
         }
 
-        static #validateDetail = async (detail) => {
+        static #validateDetail = async ({detail = null}) => {
             const validDetails = ['Hardware', 'Application'];
 
             let messages = [];
@@ -115,11 +115,11 @@ module.exports = (models) => {
             return messages;
         }
 
-        static #validateData = async (entity, action, detail) => {
+        static #validateData = async ({entity = null, action = null, detail = null}) => {
             let messages = [
-                ...await Ability.#validateEntity(entity),
-                ...await Ability.#validateAction(action),
-                ...await Ability.#validateDetail(detail)
+                ...await Ability.#validateEntity({entity: entity}),
+                ...await Ability.#validateAction({action: action}),
+                ...await Ability.#validateDetail({detail: detail})
             ]
 
             console.log(messages);
@@ -132,7 +132,7 @@ module.exports = (models) => {
             }
         }
 
-        static #validateSameData = async (entity, action, detail) => {
+        static #validateSameData = async ({entity = null, action = null, detail = null}) => {
             if (!detail) {
                 detail = null;
             }
@@ -156,10 +156,18 @@ module.exports = (models) => {
             }
         }
 
-        static createWithValidation = async (entity, action, detail) => {
+        static createWithValidation = async ({entity = null, action = null, detail = null}) => {
             try {
-                await Ability.#validateData(entity, action, detail);
-                await Ability.#validateSameData(place, entity, action, detail);
+                await Ability.#validateData({
+                        entity: entity,
+                        action: action,
+                        detail: detail
+                    });
+                await Ability.#validateSameData({
+                    entity: entity,
+                    action: action,
+                    detail: detail
+                });
             } catch(e) {
                 throw e;
             }
@@ -172,9 +180,9 @@ module.exports = (models) => {
             })
         }
 
-        static retrieveAllByEntity = async ({entity: entity}) => {
+        static retrieveAllByEntity = async ({entity = null}) => {
             let messages = [
-                ...await Ability.#validateEntity(entity),
+                ...await Ability.#validateEntity({entity: entity}),
             ];
 
             if (messages.length > 0) {
@@ -191,10 +199,10 @@ module.exports = (models) => {
             });
         }
 
-        static retrieveAllByEntityAction = async ({entity: entity, action: action}) => {
+        static retrieveAllByEntityAction = async ({entity = null, action = null}) => {
             let messages = [
-                ...await Ability.#validateEntity(entity),
-                ...await Ability.#validateAction(action),
+                ...await Ability.#validateEntity({entity: entity}),
+                ...await Ability.#validateAction({action: action}),
             ];
 
             if (messages.length > 0) {
@@ -212,10 +220,10 @@ module.exports = (models) => {
             });
         }
 
-        static retrieveAllByEntityDetail = async ({entity: entity, detail: detail}) => {
+        static retrieveAllByEntityDetail = async ({entity = null, detail = null}) => {
             let messages = [
-                ...await Ability.#validateEntity(entity),
-                ...await Ability.#validateDetail(detail),
+                ...await Ability.#validateEntity({entity: entity}),
+                ...await Ability.#validateDetail({detail: detail}),
             ];
 
             if (messages.length > 0) {
@@ -233,11 +241,11 @@ module.exports = (models) => {
             });
         }
 
-        static retrieveSpecificOne = async ({entity: entity, action: action, detail: detail}) => {
+        static retrieveSpecificOne = async ({entity = null, action= null, detail= null}) => {
             let messages = [
-                ...await Ability.#validateEntity(entity),
-                ...await Ability.#validateAction(action),
-                ...await Ability.#validateDetail(detail),
+                ...await Ability.#validateEntity({entity: entity}),
+                ...await Ability.#validateAction({action: action}),
+                ...await Ability.#validateDetail({detail: detail}),
             ];
 
             if (messages.length > 0) {
@@ -260,10 +268,18 @@ module.exports = (models) => {
             });
         }
 
-        editWithValidation = async ({entity: entity, action: action, detail: detail}) => {
+        editWithValidation = async ({entity = null, action= null, detail= null}) => {
             try {
-                await Ability.#validateData(entity, action, detail);
-                await Ability.#validateSameData(entity, action, detail);
+                await Ability.#validateData({
+                    entity: entity,
+                    action: action,
+                    detail: detail
+                });
+                await Ability.#validateSameData({
+                    entity: entity,
+                    action: action,
+                    detail: detail
+                });
             } catch (e) {
                 throw e;
             }

@@ -1,9 +1,9 @@
 const {Model, DataTypes, Op} = require("sequelize");
 const {
     PermissionCredentialsError,
-    PermissionSameCredentialsError,
-    PermissionInheritanceError
+    PermissionSameCredentialsError, PermissionNotFoundError, PermissionCommonError,
 } = require("../errors/permission/permissionErrors");
+const {ServerCommonError, ServerNotFoundError} = require("../errors/server/serverException");
 
 
 module.exports = (models) => {
@@ -36,7 +36,7 @@ module.exports = (models) => {
             });
         };
 
-        static #validateName = async (name) => {
+        static #validateName = async ({name = null}) => {
             let messages = [];
             const rightName = /^[a-zA-Z0-9_]{3,255}$/;
 
@@ -57,7 +57,7 @@ module.exports = (models) => {
             return messages;
         }
 
-        static #validateDate = async (date) => {
+        static #validateDate = async ({date = null}) => {
             let messages = [];
 
             if (date) {
@@ -70,10 +70,12 @@ module.exports = (models) => {
             return messages;
         }
 
-        static #validateData = async (name, date) => {
+        static #validateData = async ({name = "", date = null}) => {
+            console.log(name);
+            console.log(date);
             let messages = [
-                ...await Permission.#validateName(name),
-                ...await Permission.#validateDate(date)
+                ...await Permission.#validateName({name: name}),
+                ...await Permission.#validateDate({date: date})
             ]
 
             if (messages.length > 0) {
@@ -81,7 +83,7 @@ module.exports = (models) => {
             }
         }
 
-        static #validateSameData = async (name, project) => {
+        static #validateSameData = async ({name = "", project = null, selfId = null}) => {
             if (!project) {
                 throw new PermissionCredentialsError(
                     "Invalid credentials for Permission",
@@ -91,11 +93,25 @@ module.exports = (models) => {
                 );
             }
 
-            const sameNamePermission = await project.getPermissions({
-                where: {
-                    name: name
-                }
-            });
+            let sameNamePermission = null;
+
+            if (selfId != null) {
+                // If you call this method from instance and don't want to change name
+                sameNamePermission = await project.getPermissions({
+                    where: {
+                        name: name,
+                        id: {
+                            [Op.ne]: selfId
+                        }
+                    }
+                });
+            } else {
+                sameNamePermission = await project.getPermissions({
+                    where: {
+                        name: name
+                    }
+                });
+            }
 
             if (sameNamePermission.length > 0) {
                 throw new PermissionSameCredentialsError(
@@ -107,7 +123,7 @@ module.exports = (models) => {
             }
         }
 
-        static findByProjectAndName = async ({project: project, name: name}) => {
+        static findByProjectAndName = async ({project = null, name = ""}) => {
             try {
                 await Permission.#validateName(name);
             } catch (e) {
@@ -122,10 +138,44 @@ module.exports = (models) => {
             })
         }
 
+        //TODO move to project model
+        static #getTagsAndServersOfProject = async (servers) => {
+            let tagIds = new Set;
+            let resServers = [];
+            for (let server of servers) {
+
+                const serverTags = await server.getTags();
+
+                if (serverTags.length <= 0) {
+                    resServers.push(server);
+                } else {
+                    let ids = [];
+                    for (let server of serverTags) {
+                        ids.push(server.id);
+                    }
+
+                    tagIds.add(...ids);
+                }
+
+            }
+
+            const tags = await models.tag.findAll({
+                where: {
+                    id: Array.from(tagIds)
+                }
+            });
+
+            return {
+                tags: tags,
+                servers: resServers
+            };
+        }
+
         // can do anything in the project
         static createAdminPermission = async ({project = null}) => {
+            console.log(`\n\n\n\n${project.name}\n\n\n\n`);
             try {
-                await Permission.#validateSameData('admin', project);
+                await Permission.#validateSameData({name: 'admin', project: project});
             } catch (e) {
                 throw e;
             }
@@ -156,24 +206,20 @@ module.exports = (models) => {
                 ...await models.ability.retrieveAllByEntity({
                     entity: 'Metric'
                 }),
-            ]
+            ];
 
             await adminPermission.addAbilities(adminAbilities);
             await adminPermission.setProject(project);
+            const servers = await project.getServers();
 
-            const servers = await project.getServers()
+            const toAdd = await this.#getTagsAndServersOfProject(servers);
 
-            let tags = [];
-            for (let server of servers) {
-                const serverTags = server.getTags();
-                if (serverTags.length <= 0) {
-                    await adminPermission.addServer(server);
-                } else {
-                    tags.push(...serverTags);
-                }
+            if (toAdd.tags.length > 0) {
+                await adminPermission.addTags(toAdd.tags);
             }
-
-            await adminPermission.addTags(tags);
+            if (toAdd.servers.length > 0) {
+                await adminPermission.addServers(toAdd.servers);
+            }
             return adminPermission;
         }
 
@@ -185,46 +231,31 @@ module.exports = (models) => {
 
             const servers = await project.getServers();
 
-            let tags = [];
-            const serversToAdd = [];
-            for (let server of servers) {
-                const serverTags = await server.getTags();
-                if (serverTags.length <= 0) {
-                    serversToAdd.push(server);
-                } else {
-                    tags.push(...serverTags);
-                }
-            }
+            const toSet = await this.#getTagsAndServersOfProject(servers);
+            await adminPermission.setTags(toSet.tags);
+            await adminPermission.setServers(toSet.servers);
 
-            if (serversToAdd.length > 0) {
-                await adminPermission.setServers(serversToAdd);
-            }
-            if (tags.length > 0) {
-                await adminPermission.setTags(tags);
-            }
             return adminPermission;
         }
 
         static #credentialsValidation = async ({
-                                                   creator = null,
+                                                   selfId = null,
+                                                   user = null,
                                                    masterPermission = null,
                                                    name = "",
                                                    project = null,
-                                                   abilities = [],
-                                                   tags = [],
-                                                   servers = [],
-                                                   users = []
+                                                   abilities = []
                                                }) => {
             try {
-                await Permission.#validateData(name);
-                await Permission.#validateSameData(name, project);
+                await Permission.#validateData({name: name});
+                await Permission.#validateSameData({name: name, project: project, selfId: selfId});
             } catch (e) {
                 throw e;
             }
 
             let messages = [];
 
-            if (!creator) {
+            if (!user) {
                 messages.push({
                     text: "Нельзя создать Право без указания создателя!"
                 });
@@ -242,7 +273,7 @@ module.exports = (models) => {
                 });
             }
 
-            if (!await creator.hasPermission(masterPermission)) {
+            if (!await user.hasPermission(masterPermission)) {
                 messages.push({
                     text: "Создатель не имеет родительского Права!"
                 });
@@ -270,19 +301,17 @@ module.exports = (models) => {
                                                    servers = [],
                                                    users = []
                                                }) => {
+            console.log({creator, masterPermission, name, project, abilities, tags, servers, users})
             let messages = await this.#credentialsValidation({
-                creator: creator,
+                user: creator,
                 masterPermission: masterPermission,
                 name: name,
                 project: project,
-                abilities: abilities,
-                tags: tags,
-                servers: servers,
-                users: users
+                abilities: abilities
             });
 
             if (messages.length > 0) {
-                throw PermissionCredentialsError(
+                throw new PermissionCredentialsError(
                     "Invalid credentials for Permission creation",
                     messages
                 );
@@ -321,9 +350,9 @@ module.exports = (models) => {
                           servers = [],
                           users = []
                       }) => {
-
             let messages = await Permission.#credentialsValidation({
-                creator: editor,
+                selfId: this.id,
+                user: editor,
                 masterPermission: masterPermission,
                 name: name,
                 project: project,
@@ -334,12 +363,14 @@ module.exports = (models) => {
             });
 
             if (messages.length > 0) {
-                throw PermissionCredentialsError(
+                throw new PermissionCredentialsError(
                     "Invalid credentials for Permission creation",
                     messages
                 );
             }
 
+            this.setProject(project);
+            this.setPermission(masterPermission);
             this.name = name;
 
             await this.setAbilities(abilities);
@@ -359,8 +390,102 @@ module.exports = (models) => {
             return this;
         }
 
-        test = async () => {
-            return "test";
+        static retrieveProjectPermissions = async ({projectId = 0}) => {
+            const currentProject = await models.project.findByPk(projectId);
+            if (currentProject) {
+                return await this.findAll({
+                    where: {
+                        [Op.and]: [
+                            {
+                                projectId: projectId
+                            },
+                            // {
+                            //     deleted: {
+                            //         [Op.is]: null
+                            //     }
+                            // }
+                        ]
+                    }
+                });
+            }
+            throw new PermissionCommonError("Fail to get project permissions", [{
+                text: "Невозможно получить список Прав у Проекта!"
+            }]);
+        }
+
+        static retrieveProjectPermission = async ({permissionId = 0, projectId = 0}) => {
+            const permission = await this.findOne({
+                where: {
+                    id: permissionId,
+                    projectId: projectId
+                }
+            });
+            if (permission) {
+                return permission;
+            }
+            throw new PermissionNotFoundError("Such permission not found!", [{
+                text: "В данном Проекте такого Права не найдено!"
+            }]);
+        }
+
+        static retrieveProjectPermissionByName = async ({name = "", projectId = 0}) => {
+            const permission = await this.findOne({
+                where: {
+                    name: name,
+                    projectId: projectId
+                }
+            });
+            if (permission) {
+                return permission;
+            }
+            throw new PermissionNotFoundError("Such permission not found!", [{
+                text: "В данном Проекте такого Права не найдено!"
+            }]);
+        }
+
+        getSubPermissions = async() => {
+            let res = await this.getLinkedPermissionsRecursive();
+            res.splice(0,1);
+            return res;
+        }
+
+        getLinkedPermissionsRecursive = async () => {
+            let sub = [];
+
+            let children = await models.permission.findAll({
+                where: {
+                    permissionId: this.id
+                },
+            });
+
+            if (children.length > 0) {
+                sub.push(this);
+                for (let child of children) {
+                    sub.push(...await child.getLinkedPermissionsRecursive());
+                }
+            } else {
+                sub.push(this);
+            }
+            return sub;
+        };
+
+        deletePermission = async ({cascade = false}) => {
+            if (this.name === "admin") {
+                throw new PermissionCommonError(
+                    "You can't delete admin permission",
+                    [{
+                        text: "Вы не можете удалить Право администратора"
+                    }]
+                );
+            }
+            if (cascade) {
+                let children = this.getSubPermissions();
+                (await children).forEach(child => {
+                    child.destroy();
+                });
+            }
+
+            await this.destroy();
         }
     }
 
