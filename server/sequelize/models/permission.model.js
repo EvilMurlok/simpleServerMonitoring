@@ -1,7 +1,7 @@
 const {Model, DataTypes, Op} = require("sequelize");
 const {
     PermissionCredentialsError,
-    PermissionSameCredentialsError, PermissionNotFoundError,
+    PermissionSameCredentialsError, PermissionNotFoundError, PermissionCommonError,
 } = require("../errors/permission/permissionErrors");
 const {ServerCommonError, ServerNotFoundError} = require("../errors/server/serverException");
 
@@ -443,32 +443,30 @@ module.exports = (models) => {
             }]);
         }
 
-        static getSubPermissionsRecursive = async ({permissionId = 0}) => {
-            let subPermissions = await models.permission.findAll({
+        getSubPermissions = async() => {
+            let res = await this.getLinkedPermissionsRecursive();
+            res.splice(0,1);
+            return res;
+        }
+
+        getLinkedPermissionsRecursive = async () => {
+            let sub = [];
+
+            let children = await models.permission.findAll({
                 where: {
-                    permissionId: permissionId
+                    permissionId: this.id
                 },
             });
 
-            let res = subPermissions;
-
-            if (subPermissions.length > 0) {
-                const promises = [];
-                subPermissions.forEach(permission => {
-                    promises.push(this.getSubPermissionsRecursive({permissionId: permission.id}));
-                });
-
-                const children = await Promise.all(promises);
-
-                children.forEach(child => {
-                    if (child) {
-                        res.push(child);
-                    }
-                });
-            } else{
-                return
+            if (children.length > 0) {
+                sub.push(this);
+                for (let child of children) {
+                    sub.push(...await child.getLinkedPermissionsRecursive());
+                }
+            } else {
+                sub.push(this);
             }
-            return res;
+            return sub;
         };
 
         deletePermission = async ({cascade = false}) => {
@@ -481,9 +479,9 @@ module.exports = (models) => {
                 );
             }
             if (cascade) {
-                let children = getSubPermissionsRecursive({permissionId: this.id});
-                (await children).forEach(permission => {
-                    permission.destroy();
+                let children = this.getSubPermissions();
+                (await children).forEach(child => {
+                    child.destroy();
                 });
             }
 

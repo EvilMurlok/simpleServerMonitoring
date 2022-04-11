@@ -218,7 +218,8 @@ const retrieve_server_in_project = async (req, res) => {
 const get_sub_permissions = async (req, res) => {
     const permissionId = req.params.permissionId;
     try {
-        const children = await models.permission.getSubPermissionsRecursive({permissionId: permissionId});
+        const permission = await models.permission.findByPk(permissionId);
+        const children = await permission.getSubPermissions();
         res.send({
             messages: [{
                 text: `Вот список дочерних Прав!`

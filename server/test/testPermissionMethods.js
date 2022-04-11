@@ -246,10 +246,10 @@ const testPermissionMethods = async () => {
 const testGetSub = async () => {
     const permissionId = 49;
     try {
-        const children = await models.permission.getSubPermissionsRecursive({permissionId: permissionId});
-        console.log(children);
+        let perm = await models.permission.findByPk(49);
+        let res = await perm.getSubPermissions();
+        console.log(res);
     } catch (e) {
-        console.log(e);
     }
 }
 
