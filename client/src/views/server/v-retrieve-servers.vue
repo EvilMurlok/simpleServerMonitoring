@@ -116,24 +116,14 @@
             </b-form-input>
           </b-col>
         </b-row>
-        <div class="d-flex justify-content-around">
+        <div class="d-flex justify-content-end">
           <b-button type="submit"
                     variant="alt-info"
                     size="sm"
           >
             <i class="fa fa-info-circle m-1"></i> Показать сервера
           </b-button>
-          <div>
-            <b-dropdown id="dropdown-1" :text="pagination.chosenVariant" class="m-md-2">
-              <b-dropdown-item v-for="dropdownVariant in pagination.dropdownVariants"
-                               :key="dropdownVariant.text"
-                               @click="changePagination(dropdownVariant)"
-              >
-                {{ dropdownVariant.text }}
-              </b-dropdown-item>
-            </b-dropdown>
-          </div>
-        </div>
+        </div >
       </b-form>
     </div>
 
@@ -204,6 +194,9 @@
                 </i>
               </span>
             </b-th>
+            <b-th>
+              <span class="ml-5">Теги</span>
+            </b-th>
             <b-th class="text-center">Опции</b-th>
           </b-tr>
         </b-thead>
@@ -222,6 +215,23 @@
             </b-td>
             <b-td>
               <b class="ml-3">{{ server.projectName }}</b>
+            </b-td>
+            <b-td>
+              <div class="d-flex flex-wrap ">
+                <span v-for="tag in server.tags"
+                      :key="tag.name"
+                      class="p-1"
+                      :style="{ 'cursor': 'pointer',
+                                'background-color': tag.color,
+                                'color': '#ffffff',
+                                'border-radius': '10px',
+                                'margin': '1px'
+                      }"
+                      @click="retrieveTag(tag.id, tag.name)"
+                >
+                  {{ tag.name }}
+                </span>
+              </div>
             </b-td>
             <b-td class="text-right">
               <b-button @click="retrieveServer(server.serverId, server.projectId)"
@@ -242,22 +252,34 @@
           </b-tr>
         </b-tbody>
       </b-table-simple>
-<!--      <b-button v-if="pagination.isShowMore === true"-->
-<!--                class="btn btn-outline-info mt-3 mb-3"-->
-<!--                @click="showMore(false)"-->
-<!--                variant="alt-info"-->
-<!--                block-->
-<!--      >-->
-<!--        <i class="fa fa-fw fa-plus m-1"></i> Загрузить ещё-->
-<!--      </b-button>-->
-      <ul class="pagination mt-3">
-        <li class="page-item"
-            v-for="number in pagination.pagesNumbers"
-            :key="number"
-        >
-          <a class="page-link" @click="showCurrentPage(number)">{{ number }}</a>
-        </li>
-      </ul>
+      <b-button v-if="pagination.isShowMore === true"
+                class="btn btn-outline-info mt-3 mb-3"
+                @click="showMore(false)"
+                variant="alt-info"
+                block
+      >
+        <i class="fa fa-fw fa-plus m-1"></i> Загрузить ещё
+      </b-button>
+      <div class="d-flex justify-content-between">
+        <ul class="pagination mt-3">
+          <li class="page-item"
+              v-for="number in pagination.pagesNumbers"
+              :key="number"
+          >
+            <a class="page-link" @click="showCurrentPage(number)">{{ number }}</a>
+          </li>
+        </ul>
+        <div>
+          <b-dropdown id="dropdown-1" :text="pagination.chosenVariant" class="m-md-2">
+            <b-dropdown-item v-for="dropdownVariant in pagination.dropdownVariants"
+                             :key="dropdownVariant.text"
+                             @click="changePagination(dropdownVariant)"
+            >
+              {{ dropdownVariant.text }}
+            </b-dropdown-item>
+          </b-dropdown>
+        </div>
+      </div>
     </div>
     <div v-else class="content">По данному фильтру не найдено ни одного сервера!</div>
   </div>
@@ -306,10 +328,12 @@ export default {
         ],
         pagesNumbers: [],
         currentPage: 1,
+        startPageServerIndex: 0,
         chosenVariant: "Показать 10",
         limit: 10,
         offset: 0,
         isShowMore: true,
+        isShowedMore: false
       }
     }
   },
@@ -370,13 +394,15 @@ export default {
                     created: server.created,
                     hostname: server.hostname,
                     ip: server.ip,
-                    projectName: project.name
+                    projectName: project.name,
+                    tags: server.tags
                   });
                 }
               }
               this.pagination.dropdownVariants[this.pagination.dropdownVariants.length - 1].limit = this.userServersAll.length;
               if (this.userServersAll.length <= this.pagination.limit) {
                 this.pagination.pagesNumbers = [1,];
+                this.pagination.isShowMore = true;
               } else {
                 for (let i = 1; i <= (this.userServersAll.length / this.pagination.limit >> 0); ++i) {
                   this.pagination.pagesNumbers.push(i);
@@ -401,6 +427,10 @@ export default {
       });
     },
 
+    retrieveTag(tagId, tagName) {
+      console.log(tagId, tagName);
+    },
+
     deleteServer(serverId, projectId) {
       if (this.messages_data.messages.length !== 0) {
         this.messages_data = {type: "warning", messages: []};
@@ -409,12 +439,15 @@ export default {
     },
 
     changePagination(dropdownVariant) {
+      this.pagination.isShowedMore = false;
       this.pagination.chosenVariant = dropdownVariant.text;
       this.pagination.limit = dropdownVariant.limit;
       this.pagination.pagesNumbers = [];
       if (this.userServersAll.length <= this.pagination.limit) {
         this.pagination.pagesNumbers = [1,];
+        this.pagination.isShowMore = false;
       } else {
+        this.pagination.isShowMore = true;
         if (this.userServersAll.length % this.pagination.limit) {
           for (let i = 1; i <= (this.userServersAll.length / this.pagination.limit >> 0) + 1; ++i) {
             this.pagination.pagesNumbers.push(i);
@@ -424,32 +457,33 @@ export default {
             this.pagination.pagesNumbers.push(i);
           }
         }
-
       }
       this.showCurrentPage(1);
-      // this.pagination.offset = 0;
       // this.showMore(true);
     },
 
-    // showMore(isStart) {
-    //   if (isStart) {
-    //     this.userServersPart = [];
-    //   }
-    //   this.userServersPart = [...this.userServersPart, ...(this.userServersAll.slice(this.pagination.offset, this.pagination.offset + this.pagination.limit))];
-    //   this.pagination.offset += this.pagination.limit;
-    //   if (this.pagination.offset >= this.userServersAll.length) {
-    //     this.pagination.isShowMore = false;
-    //     this.pagination.offset = this.userServersAll.length;
-    //   } else {
-    //     this.pagination.isShowMore = true;
-    //   }
-    // },
+    showMore(isStart) {
+      this.pagination.isShowedMore = true;
+      if (isStart) {
+        this.userServersPart = [];
+      }
+      this.userServersPart = [...this.userServersPart, ...(this.userServersAll.slice(this.pagination.offset, this.pagination.offset + this.pagination.limit))];
+      this.pagination.offset += this.pagination.limit;
+      if (this.pagination.offset >= this.userServersAll.length) {
+        this.pagination.isShowMore = false;
+        this.pagination.offset = this.userServersAll.length;
+      } else {
+        this.pagination.isShowMore = true;
+      }
+    },
 
     showCurrentPage(pageNumber) {
+      this.pagination.isShowedMore = false;
       this.pagination.currentPage = pageNumber;
-      const serverStartIndex = this.pagination.limit * (pageNumber - 1);
-      const serverEndIndex = this.pagination.limit + serverStartIndex;
-      this.userServersPart = this.userServersAll.slice(serverStartIndex, serverEndIndex);
+      this.pagination.startPageServerIndex = this.pagination.limit * (pageNumber - 1);
+      const serverEndIndex = this.pagination.offset = this.pagination.startPageServerIndex + this.pagination.limit;
+      this.userServersPart = this.userServersAll.slice(this.pagination.startPageServerIndex, serverEndIndex);
+      this.pagination.isShowMore = pageNumber !== this.pagination.pagesNumbers[this.pagination.pagesNumbers.length - 1];
     },
 
     filterServers() {
@@ -528,9 +562,11 @@ export default {
           return 0;
         });
       }
-      this.showCurrentPage(this.pagination.currentPage);
-      // this.userServersPart = this.userServersAll.slice(0, this.pagination.offset);
-
+      if (this.pagination.isShowedMore) {
+        this.userServersPart = this.userServersAll.slice(this.pagination.startPageServerIndex, this.pagination.offset);
+      } else {
+        this.showCurrentPage(this.pagination.currentPage);
+      }
     },
   },
 }

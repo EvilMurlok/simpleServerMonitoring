@@ -1,4 +1,4 @@
-const {Model, DataTypes} = require("sequelize");
+const {Model, DataTypes, Op} = require("sequelize");
 const generateColor = require("../utils/tags/generateColor")
 const {TagSameCredentialsError, TagCredentialsError} = require("../errors/tag/tagErrors");
 const {models} = require("../../sequelize");
@@ -136,18 +136,27 @@ module.exports = (models) => {
             return myTag;
         }
 
-        static findOneWithName = async ({tagName = ""}) => {
-            try {
-                await Tag.#validateName(tagName)
-            } catch (e) {
-                throw e;
-            }
-
+        static findOneWithName = async ({tagId = 0, tagName = ""}) => {
             return this.findOne({
                 where: {
-                    name: tagName
+                    [Op.and]: [
+                        {
+                            [Op.or]: [
+                                {
+                                    name: tagName
+                                },
+                                {
+                                    id: tagId
+                                }
+                            ]
+                        },
+                        {
+                            deleted: {
+                                [Op.is]: null
+                            }
+                        }
+                    ]
                 },
-                paranoid: false
             });
         }
 

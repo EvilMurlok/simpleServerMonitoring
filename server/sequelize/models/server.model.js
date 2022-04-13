@@ -187,6 +187,15 @@ module.exports = (models) => {
                                     }
                                 }
                             ]
+                        },
+                        include: {
+                            model: models.tag,
+                            required: false,
+                            where: {
+                                deleted: {
+                                    [Op.is]: null
+                                }
+                            }
                         }
                     }
                 },
@@ -312,7 +321,7 @@ module.exports = (models) => {
             }
             throw new ServerNotFoundError("Such server not found!", [{
                 text: "В данном проекте такого сервера не найдено!"
-            }])
+            }]);
         }
 
         static retrieveServersByTags = async ({tagIds = []}) => {
@@ -326,8 +335,17 @@ module.exports = (models) => {
             for (let tag of tags) {
                 servers.push(...await tag.getServers());
             }
-
             return servers;
+        }
+
+        static retrieveAllServerTags = async ({serverId = 0}) => {
+            const currentServer = await models.server.findByPk(serverId);
+            if (currentServer) {
+                return await currentServer.getTags();
+            }
+            throw new ServerNotFoundError("Such server not found!", [{
+                text: "В данном проекте такого сервера не найдено!"
+            }]);
         }
 
         static deletionServer = async ({serverId = 0, projectId = 0}) => {

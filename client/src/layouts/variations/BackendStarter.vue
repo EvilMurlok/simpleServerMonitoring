@@ -89,6 +89,16 @@
               },
 
               {
+                name: 'Теги',
+                heading: true
+              },
+              {
+                name: 'Добавить тег',
+                to: `/create-tag/`,
+                icon: 'fa fa-tag'
+              },
+
+              {
                 name: 'Dashboards',
                 heading: true
               },

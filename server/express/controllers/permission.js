@@ -64,13 +64,13 @@ const getAllCredentials = async ({
         }
     });
 
-    // Getting all tags
+    // Getting all tag
     const tagsOfCustomPermission = await models.tag.findAll({
         where: {
             id: tagIds
         }
     });
-    // Getting servers that don't overlap with tags
+    // Getting servers that don't overlap with tag
     const serversOfCustomPermission = await models.server.findAll({
         where: {
             id: serverIds,

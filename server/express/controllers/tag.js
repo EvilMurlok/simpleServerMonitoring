@@ -47,7 +47,23 @@ const edit_tag = async (req, res) => {
     }
 }
 
-const addServers = async (req, res) => {
+const retrieveTagByIdName = async (req, res) => {
+    const {tagId, tagName} = req.body;
+    try {
+        const tag = await models.tag.findOneWithName({tagId: tagId, tagName: tagName});
+        res.send({
+           status: "success",
+           tag: tag
+        });
+    } catch (e) {
+        res.send({
+           status: "warning",
+           messages: e.messages
+        });
+    }
+}
+
+const setServers = async (req, res) => {
     const tagId = req.params.tagId;
     const serverIds = req.body.serverIds;
     try {
@@ -57,7 +73,7 @@ const addServers = async (req, res) => {
                 id: serverIds
             }
         });
-        tag.addServers(newServers);
+        tag.setServers(newServers);
         res.send({
             status: "success",
             messages: [{
@@ -93,7 +109,8 @@ const delete_tag = async (req, res) => {
 
 module.exports = {
     create_tag,
+    retrieveTagByIdName,
     edit_tag,
-    addServers,
+    setServers,
     delete_tag
 }
