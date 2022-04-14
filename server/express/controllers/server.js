@@ -21,11 +21,21 @@ const create_server = async (req, res) => {
 }
 
 const retrieve_user_servers = async (req, res) => {
+    const userId = req.user.id;
+    const userServers = await models.server.retrieveUserServers({userId});
+    res.send({
+        status: "success",
+        userServers: userServers
+    });
+}
+
+const retrieve_filtered_user_servers = async (req, res) => {
     const [
         userId,
         name,
         ip,
         hostname,
+        tagName,
         createdMin,
         createdMax
     ] = [
@@ -33,18 +43,20 @@ const retrieve_user_servers = async (req, res) => {
         req.query.name,
         req.query.ip,
         req.query.hostname,
+        req.query.tag,
         req.query.createdMin,
         req.query.createdMax
     ];
     try {
-        const userServers = await models.server.retrieveUserServers({
+        const userServers = await models.server.retrieveFilteredUserServers({
             userId,
             name,
             ip,
             hostname,
+            tagName,
             createdMin,
             createdMax
-        });
+        }, tagName !== "%");
         res.send({
             status: "success",
             userServers: userServers
@@ -180,6 +192,7 @@ module.exports = {
     create_server,
     retrieve_project_servers,
     retrieve_user_servers,
+    retrieve_filtered_user_servers,
     retrieve_user_sorted_servers,
     retrieve_server_in_project,
     retrieve_server_by_tags,

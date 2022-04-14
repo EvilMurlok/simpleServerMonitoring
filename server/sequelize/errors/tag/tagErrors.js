@@ -22,7 +22,15 @@ class TagSameCredentialsError extends TagCommonError {
     }
 }
 
+class TagNotUpdatedError extends TagCommonError {
+    constructor(message, messages) {
+        super(message, messages);
+        this.name = "TagNotUpdatedError";
+    }
+}
+
 module.exports = {
     TagCredentialsError,
-    TagSameCredentialsError
+    TagSameCredentialsError,
+    TagNotUpdatedError
 }

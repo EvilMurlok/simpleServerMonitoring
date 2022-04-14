@@ -27,7 +27,7 @@
           <b-col sm="1">
             <label class="form-check-label">Название хоста</label>
           </b-col>
-          <b-col sm="3 mr-3">
+          <b-col sm="2" class="mr-3">
             <b-form-input id="filterHostname"
                           name="filterHostname"
                           placeholder="Имя хоста"
@@ -40,7 +40,7 @@
           <b-col sm="1">
             <label class="form-check-label">Назваение проекта</label>
           </b-col>
-          <b-col sm="3 mr-3">
+          <b-col sm="1" class="mr-3">
             <b-form-input id="filterProjectName"
                           name="filterProjectName"
                           placeholder="Имя проекта"
@@ -53,13 +53,26 @@
           <b-col sm="1">
             <label class="form-check-label">IP сервера</label>
           </b-col>
-          <b-col sm="2 mr-3">
+          <b-col sm="2" class="mr-3">
             <b-form-input id="filterIP"
                           name="filterIP"
                           placeholder="IP"
                           aria-describedby="filterIP-feedback"
                           type="text"
                           v-model="filterData.filterIp"
+            >
+            </b-form-input>
+          </b-col>
+          <b-col sm="1">
+            <label class="form-check-label">Тег</label>
+          </b-col>
+          <b-col sm="2" class="mr-3">
+            <b-form-input id="filterTag"
+                          name="filterTag"
+                          placeholder="Tag"
+                          aria-describedby="filterTag-feedback"
+                          type="text"
+                          v-model="filterData.filterTag"
             >
             </b-form-input>
           </b-col>
@@ -227,7 +240,7 @@
                                 'border-radius': '10px',
                                 'margin': '1px'
                       }"
-                      @click="retrieveTag(tag.id, tag.name)"
+                      @click="retrieveTag(tag.id)"
                 >
                   {{ tag.name }}
                 </span>
@@ -313,7 +326,8 @@ export default {
         filterMaxCreationTime: "",
         filterProjectName: "",
         filterIp: "",
-        filterHostname: ""
+        filterHostname: "",
+        filterTag: "",
       },
       messages_data: {type: "warning", messages: []},
       userServersAll: [],
@@ -345,11 +359,12 @@ export default {
       this.messages_data = {type: "warning", messages: []};
     }
     this.$http
-        .get(`/server/retrieve-user-servers/`, {
+        .get(`/server/retrieve-filtered-user-servers/`, {
           params: {
             name: (this.$route.query.name === undefined || this.$route.query.name === "all") ? "%" : this.$route.query.name,
             ip: (this.$route.query.ip === undefined || this.$route.query.ip === "all") ? "%" : this.$route.query.ip,
             hostname: (this.$route.query.hostname === undefined || this.$route.query.hostname === "all") ? "%" : this.$route.query.hostname,
+            tag: (this.$route.query.tag === undefined || this.$route.query.tag === "all") ? "%" : this.$route.query.tag,
             createdMin: this.$route.query.createdMin || "1970-01-01T00:00:00.000Z",
             createdMax: this.$route.query.createdMax || new Date(new Date().setHours(new Date().getHours() + 3)).toISOString()
           }
@@ -381,6 +396,7 @@ export default {
             this.filterData.filterProjectName = this.$route.query.name || "all";
             this.filterData.filterHostname = this.$route.query.hostname || "all";
             this.filterData.filterIp = this.$route.query.ip || "all";
+            this.filterData.filterTag = this.$route.query.tag || "all";
             this.filterData.filterMinCreationDate = currentMinDateTime.slice(0, 10);
             this.filterData.filterMinCreationTime = currentMinDateTime.slice(11, 16);
             this.filterData.filterMaxCreationDate = currentMaxDateTime.slice(0, 10);
@@ -402,14 +418,19 @@ export default {
               this.pagination.dropdownVariants[this.pagination.dropdownVariants.length - 1].limit = this.userServersAll.length;
               if (this.userServersAll.length <= this.pagination.limit) {
                 this.pagination.pagesNumbers = [1,];
-                this.pagination.isShowMore = true;
+                this.pagination.isShowMore = false;
               } else {
-                for (let i = 1; i <= (this.userServersAll.length / this.pagination.limit >> 0); ++i) {
-                  this.pagination.pagesNumbers.push(i);
+                if (this.userServersAll.length % this.pagination.limit) {
+                  for (let i = 1; i <= (this.userServersAll.length / this.pagination.limit >> 0) + 1; ++i) {
+                    this.pagination.pagesNumbers.push(i);
+                  }
+                } else {
+                  for (let i = 1; i <= (this.userServersAll.length / this.pagination.limit >> 0); ++i) {
+                    this.pagination.pagesNumbers.push(i);
+                  }
                 }
               }
               this.showCurrentPage(1);
-              // this.showMore(true);
             }
           }
         })
@@ -427,8 +448,13 @@ export default {
       });
     },
 
-    retrieveTag(tagId, tagName) {
-      console.log(tagId, tagName);
+    retrieveTag(tagId) {
+      this.$router.push({
+        name: 'retrieveTag',
+        params: {
+          tagId: tagId,
+        }
+      });
     },
 
     deleteServer(serverId, projectId) {
@@ -459,7 +485,6 @@ export default {
         }
       }
       this.showCurrentPage(1);
-      // this.showMore(true);
     },
 
     showMore(isStart) {
@@ -512,6 +537,7 @@ export default {
             name: this.filterData.filterProjectName || "all",
             hostname: this.filterData.filterHostname || "all",
             ip: this.filterData.filterIp || "all",
+            tag: this.filterData.filterTag || "all",
             createdMin: minDateString,
             createdMax: maxDateString
           }

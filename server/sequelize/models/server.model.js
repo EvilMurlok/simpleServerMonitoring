@@ -134,7 +134,51 @@ module.exports = (models) => {
             }]);
         }
 
-        static retrieveUserServers = async ({userId, name, ip, hostname, createdMin, createdMax}) => {
+        static retrieveUserServers = async ({userId = 0}) => {
+            return await models.user.findAll({
+                where: {
+                    id: userId
+                },
+                include: {
+                    model: models.project,
+                    required: true,
+                    where: {
+                        deleted: {
+                            [Op.is]: null
+                        }
+                    },
+                    include: {
+                        model: models.server,
+                        required: true,
+                        where: {
+                            deleted: {
+                                [Op.is]: null
+                            }
+                        },
+                        include: {
+                            model: models.tag,
+                            required: false,
+                            where: {
+                                deleted: {
+                                    [Op.is]: null
+                                }
+                            }
+                        }
+                    }
+                },
+                order: [[models.project, "name", "DESC"], [models.project, models.server, "hostname", "ASC"]]
+            });
+        }
+
+        static retrieveFilteredUserServers = async ({
+                                                        userId,
+                                                        name,
+                                                        ip,
+                                                        hostname,
+                                                        tagName,
+                                                        createdMin,
+                                                        createdMax
+                                                    }, isFilterTag = false) => {
             return await models.user.findAll({
                 where: {
                     id: userId
@@ -190,24 +234,33 @@ module.exports = (models) => {
                         },
                         include: {
                             model: models.tag,
-                            required: false,
+                            required: isFilterTag,
                             where: {
-                                deleted: {
-                                    [Op.is]: null
-                                }
+                                [Op.and]: [
+                                    {
+                                        deleted: {
+                                            [Op.is]: null
+                                        }
+                                    },
+                                    {
+                                        name: {
+                                            [Op.iLike]: `%${tagName}%`
+                                        }
+                                    }
+                                ]
                             }
                         }
                     }
                 },
                 order: [[models.project, "name", "DESC"]]
-            })
+            });
         }
 
         static retrieveUserSortedServers = async ({
-                                                userId = 0,
-                                                sortField,
-                                                sortType,
-                                            }) => {
+                                                      userId = 0,
+                                                      sortField,
+                                                      sortType,
+                                                  }) => {
             return await models.user.findAll({
                 where: {
                     id: userId

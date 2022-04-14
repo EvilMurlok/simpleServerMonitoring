@@ -13,6 +13,7 @@ import vRetrieveServer from '@/views/server/v-retrieve-server';
 import vRetrieveServers from '@/views/server/v-retrieve-servers';
 
 import vCreateTag from '@/views/tag/v-create-tag';
+import vRetrieveTag from '@/views/tag/v-retrieve-tag';
 
 import vRetrieveUser from "@/views/user/v-user-info";
 
@@ -161,6 +162,20 @@ let router = new Router({
                     path: '/create-tag/',
                     name: 'createTag',
                     component: vCreateTag
+                }
+            ]
+        },
+        {
+            path: '/retrieve-tag/:tagId/',
+            component: LayoutBackend,
+            meta: {
+                requiresAuth: true
+            },
+            children: [
+                {
+                    path: '/retrieve-tag/:tagId/',
+                    name: 'retrieveTag',
+                    component: vRetrieveTag
                 }
             ]
         },

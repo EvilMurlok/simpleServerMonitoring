@@ -1,4 +1,5 @@
 const {models} = require("../../sequelize");
+const {TagNotUpdatedError} = require("../../sequelize/errors/tag/tagErrors");
 
 const create_tag = async (req, res) => {
     const {tagName, serverIds} = req.body;
@@ -25,13 +26,10 @@ const create_tag = async (req, res) => {
 
 const edit_tag = async (req, res) => {
     const {name, color, serverIds} = req.body;
-    console.log(name, color, serverIds);
     const tagId = req.params.tagId;
-    console.log(tagId);
-
     try {
         let tagToEdit = await models.tag.findByPk(tagId);
-        await tagToEdit.editWithValidation({tagName: name, color: color, serverIds: serverIds});
+        await tagToEdit.editTag({tagId, name, color, serverIds});
         res.send({
             status: "success",
             messages: [{
@@ -40,17 +38,24 @@ const edit_tag = async (req, res) => {
             tag: tagToEdit
         });
     } catch (e) {
-        res.send({
-            status: "warning",
-            messages: e.messages
-        });
+        if (e instanceof TagNotUpdatedError){
+            res.send({
+                status: "info",
+                messages: e.messages
+            });
+        } else {
+            res.send({
+                status: "warning",
+                messages: e.messages
+            });
+        }
     }
 }
 
-const retrieveTagByIdName = async (req, res) => {
-    const {tagId, tagName} = req.body;
+const retrieveTagById = async (req, res) => {
+    const tagId = req.params.tagId;
     try {
-        const tag = await models.tag.findOneWithName({tagId: tagId, tagName: tagName});
+        const tag = await models.tag.retrieveTag({tagId: tagId});
         res.send({
            status: "success",
            tag: tag
@@ -109,7 +114,7 @@ const delete_tag = async (req, res) => {
 
 module.exports = {
     create_tag,
-    retrieveTagByIdName,
+    retrieveTagById,
     edit_tag,
     setServers,
     delete_tag

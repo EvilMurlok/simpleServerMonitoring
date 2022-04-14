@@ -196,7 +196,6 @@ export default {
             } else {
               const types = {"not found": "warning", "info": "info", "success": "success", "warning": "warning"};
               this.messages_data = {type: types[res.data.status], messages: res.data.messages}
-              console.log(this.messages_data);
             }
           })
           .catch(err => console.error(err));

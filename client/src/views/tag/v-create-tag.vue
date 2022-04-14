@@ -95,15 +95,7 @@ export default {
       this.messages_data = {type: "warning", messages: []};
     }
     this.$http
-        .get(`/server/retrieve-user-servers/`, {
-          params: {
-            name: "%",
-            ip: "%",
-            hostname: "%",
-            createdMin: "1970-01-01T00:00:00.000Z",
-            createdMax: new Date(new Date().setHours(new Date().getHours() + 3)).toISOString()
-          }
-        })
+        .get(`/server/retrieve-user-servers/`)
         .then(res => {
           if (res.data.isLoggedIn === false) {
             breakAuth();

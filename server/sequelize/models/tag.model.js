@@ -1,6 +1,6 @@
 const {Model, DataTypes, Op} = require("sequelize");
 const generateColor = require("../utils/tags/generateColor")
-const {TagSameCredentialsError, TagCredentialsError} = require("../errors/tag/tagErrors");
+const {TagSameCredentialsError, TagCredentialsError, TagNotUpdatedError} = require("../errors/tag/tagErrors");
 const {models} = require("../../sequelize");
 
 
@@ -34,10 +34,6 @@ module.exports = (models) => {
                 sequelize: sequelize,
             });
         };
-
-        static #isNameVacant = async ({name = ""}) => {
-            return !await Tag.findOneWithName({tagName: name});
-        }
 
         static #validateName = async ({name = ""}) => {
             let messages = [];
@@ -81,10 +77,47 @@ module.exports = (models) => {
             return messages;
         }
 
-        static #validateSameData = async ({name = ""}) => {
-            let messages = [];
+        static #validateSameData = async ({name = "", currentName = ""}, isEdition = false) => {
+            const messages = [];
+            let sameTag = "";
+            if (isEdition) {
+                sameTag = await Tag.findOne({
+                    where: {
+                        [Op.and]: [
+                            {
+                                name: name
+                            },
+                            {
+                                name: {
+                                    [Op.ne]: currentName
+                                }
+                            },
+                            {
+                                deleted: {
+                                    [Op.is]: null
+                                }
+                            }
+                        ]
+                    }
+                });
+            } else {
+                sameTag = await Tag.findOne({
+                    where: {
+                        [Op.and]: [
+                            {
+                                name: name
+                            },
+                            {
+                                deleted: {
+                                    [Op.is]: null
+                                }
+                            }
+                        ]
+                    }
+                });
+            }
 
-            if (!await Tag.#isNameVacant({name: name})) {
+            if (sameTag) {
                 messages.push({
                     text: `Тэг с названием ${name} уже существует!`
                 });
@@ -111,7 +144,7 @@ module.exports = (models) => {
 
             try {
                 await Tag.#validateData({name: tagName, color: color});
-                await Tag.#validateSameData({name:tagName});
+                await Tag.#validateSameData({name: tagName});
             } catch (e) {
                 throw e;
             }
@@ -128,15 +161,12 @@ module.exports = (models) => {
                     }
                 });
 
-                console.log(serversToAdd);
-
                 await myTag.addServers(serversToAdd);
             }
-            console.log(myTag);
             return myTag;
         }
 
-        static findOneWithName = async ({tagId = 0, tagName = ""}) => {
+        static retrieveTag = async ({tagId = 0, tagName = ""}) => {
             return this.findOne({
                 where: {
                     [Op.and]: [
@@ -157,12 +187,20 @@ module.exports = (models) => {
                         }
                     ]
                 },
+                include: {
+                    model: models.server,
+                    required: true,
+                    where: {
+                        deleted: {
+                            [Op.is]: null
+                        }
+                    }
+                }
             });
         }
 
         static findOneOrCreateWithName = async ({tagName = ""}) => {
             const color = generateColor();
-
             try {
                 await Tag.#validateData({name: tagName, color: color});
             } catch (e) {
@@ -198,26 +236,35 @@ module.exports = (models) => {
             return adminPerm.getTags();
         }
 
-        editWithValidation = async({tagName = "", color = null, serverIds = []}) => {
+        editTag = async ({name = "", color = "", serverIds = []}) => {
+            let isSameTagData = false;
             try {
-                await Tag.#validateName(tagName);
+                await Tag.#validateName({name});
+                await Tag.#validateSameData({name, currentName: this.name}, true);
                 if (color) {
-                    await Tag.#validateColor(color);
+                    await Tag.#validateColor({color});
+                    isSameTagData = this.name === name && this.color === color;
                     this.color = color;
                 }
-                this.name = tagName;
-            } catch(e) {
+                this.name = name;
+                await this.save();
+            } catch (e) {
                 throw e;
             }
-
-            if (serverIds.length > 0) {
-                const newServers = await models.server.findAll({
-                    where: {
-                        id: serverIds
-                    }
-                });
-                this.setServers(newServers);
+            if (isSameTagData) {
+                throw new TagNotUpdatedError("The tag data was not updated", [{
+                    text: "Информация о теге изменена не была"
+                }]);
             }
+            // if (serverIds.length > 0) {
+            //     const newServers = await models.server.findAll({
+            //         where: {
+            //             id: serverIds
+            //         }
+            //     });
+            //     this.setServers(newServers);
+            // }
+            return this;
         }
 
         mergeWith = async ({tag = null}) => {
