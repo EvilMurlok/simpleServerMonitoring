@@ -66,7 +66,7 @@ module.exports = (models) => {
             }]);
         };
 
-        static editServer = async ({projectId = 0, serverId = 0, newProjectName = "", hostname = "", ip = ""}) => {
+        static editServer = async ({projectId = 0, serverId = 0, newProjectName = "", hostname = "", ip = "", tagIds = []}) => {
             const currentProject = await models.project.findByPk(projectId);
             if (currentProject) {
                 const currentServer = await this.findOne({
@@ -77,18 +77,24 @@ module.exports = (models) => {
                             },
                             {
                                 projectId: projectId
-                            },
-                            {
-                                deleted: {
-                                    [Op.is]: null
-                                }
                             }
                         ]
                     }
                 });
                 if (currentServer) {
+                    const currentServerTags = await currentServer.getTags();
+                    const currentServerTagsIds = currentServerTags.map(tag => tag.id);
+                    let isSameTags = currentServerTagsIds.length === tagIds.length;
+                    if (isSameTags) {
+                        for (let tagIdIndex in tagIds) {
+                            if (tagIds[tagIdIndex] !== currentServerTagsIds[tagIdIndex]){
+                                isSameTags = false;
+                                break;
+                            }
+                        }
+                    }
                     const [hostnameUser, ipUser] = [currentServer.hostname, currentServer.ip];
-                    if (hostname === hostnameUser && ip === ipUser && (currentProject.name === newProjectName || !newProjectName || newProjectName === "Не выбрано")) {
+                    if (hostname === hostnameUser && ip === ipUser && (currentProject.name === newProjectName || !newProjectName || newProjectName === "Не выбрано") && isSameTags) {
                         throw new ServerNotUpdatedError("The server was not updated", [{
                             text: "Данные о сервере изменены не были!"
                         }]);
@@ -101,19 +107,12 @@ module.exports = (models) => {
                     }
                     newProjectName = newProjectName || currentProject.name;
                     const newProjectByName = await models.project.findOne({
-                        where: {
-                            [Op.and]: [
-                                {
-                                    name: newProjectName
-                                },
-                                {
-                                    deleted: {
-                                        [Op.is]: null
-                                    }
-                                }
-                            ]
-                        }
+                        where: {name: newProjectName}
                     });
+                    const chosenTags = await models.tag.findAll({
+                        where: {id: tagIds}
+                    });
+                    currentServer.setTags(chosenTags);
                     return [await this.update({
                         hostname: hostname,
                         ip: ip,
@@ -142,27 +141,12 @@ module.exports = (models) => {
                 include: {
                     model: models.project,
                     required: true,
-                    where: {
-                        deleted: {
-                            [Op.is]: null
-                        }
-                    },
                     include: {
                         model: models.server,
                         required: true,
-                        where: {
-                            deleted: {
-                                [Op.is]: null
-                            }
-                        },
                         include: {
                             model: models.tag,
                             required: false,
-                            where: {
-                                deleted: {
-                                    [Op.is]: null
-                                }
-                            }
                         }
                     }
                 },
@@ -187,18 +171,9 @@ module.exports = (models) => {
                     model: models.project,
                     required: true,
                     where: {
-                        [Op.and]: [
-                            {
-                                name: {
-                                    [Op.iLike]: `%${name}%`,
-                                }
-                            },
-                            {
-                                deleted: {
-                                    [Op.is]: null
-                                }
-                            }
-                        ]
+                        name: {
+                            [Op.iLike]: `%${name}%`,
+                        }
                     },
                     include: {
                         model: models.server,
@@ -224,11 +199,6 @@ module.exports = (models) => {
                                     created: {
                                         [Op.lte]: createdMax
                                     }
-                                },
-                                {
-                                    deleted: {
-                                        [Op.is]: null
-                                    }
                                 }
                             ]
                         },
@@ -236,18 +206,9 @@ module.exports = (models) => {
                             model: models.tag,
                             required: isFilterTag,
                             where: {
-                                [Op.and]: [
-                                    {
-                                        deleted: {
-                                            [Op.is]: null
-                                        }
-                                    },
-                                    {
-                                        name: {
-                                            [Op.iLike]: `%${tagName}%`
-                                        }
-                                    }
-                                ]
+                                name: {
+                                    [Op.iLike]: `%${tagName}%`
+                                }
                             }
                         }
                     }
@@ -268,19 +229,9 @@ module.exports = (models) => {
                 include: {
                     model: models.project,
                     required: true,
-                    where: {
-                        deleted: {
-                            [Op.is]: null
-                        }
-                    },
                     include: {
                         model: models.server,
                         required: true,
-                        where: {
-                            deleted: {
-                                [Op.is]: null
-                            }
-                        },
                     },
                 },
                 order: [[models.project, sortField, sortType]]
@@ -292,18 +243,7 @@ module.exports = (models) => {
             const currentProject = await models.project.findByPk(projectId);
             if (currentProject) {
                 return await this.findAll({
-                    where: {
-                        [Op.and]: [
-                            {
-                                projectId: projectId
-                            },
-                            {
-                                deleted: {
-                                    [Op.is]: null
-                                }
-                            }
-                        ]
-                    }
+                    where: {projectId: projectId}
                 });
             }
             throw new ServerCommonError("Fail to get project servers", [{
@@ -314,34 +254,16 @@ module.exports = (models) => {
         static retrieveProjectServer = async ({serverId = 0, projectId = 0}) => {
             const currentServer = await models.project.findOne({
                 attributes: ["name"],
+                where: {id: projectId},
                 include: {
                     model: models.server,
                     required: true,
-                    where: {
-                        [Op.and]: [
-                            {
-                                id: serverId
-                            },
-                            {
-                                deleted: {
-                                    [Op.is]: null
-                                }
-                            }
-                        ]
+                    where: {id: serverId},
+                    include: {
+                        model: models.tag,
+                        required: false,
                     }
                 },
-                where: {
-                    [Op.and]: [
-                        {
-                            id: projectId
-                        },
-                        {
-                            deleted: {
-                                [Op.is]: null
-                            }
-                        }
-                    ]
-                }
             });
             if (currentServer) {
                 return currentServer;
@@ -360,11 +282,6 @@ module.exports = (models) => {
                         },
                         {
                             hostname: hostname
-                        },
-                        {
-                            deleted: {
-                                [Op.is]: null
-                            }
                         }
                     ]
                 }
@@ -410,11 +327,6 @@ module.exports = (models) => {
                         },
                         {
                             projectId: projectId
-                        },
-                        {
-                            deleted: {
-                                [Op.is]: null
-                            }
                         }
                     ]
                 }

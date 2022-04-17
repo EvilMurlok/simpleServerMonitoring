@@ -50,20 +50,7 @@ module.exports = (models) => {
         }
 
         static editProject = async ({projectId = 0, projectName = ""}) => {
-            const currentProject = await this.findOne({
-                where: {
-                    [Op.and]: [
-                        {
-                            id: projectId
-                        },
-                        {
-                            deleted: {
-                                [Op.is]: null
-                            }
-                        }
-                    ]
-                }
-            });
+            const currentProject = await this.findByPk(projectId);
             if (currentProject) {
                 const projectNameUser = currentProject.name;
                 if (projectNameUser === projectName) {
@@ -95,18 +82,7 @@ module.exports = (models) => {
             const currentUser = await models.user.findByPk(userId);
             if (currentUser) {
                 return await this.findAndCountAll({
-                    where: {
-                        [Op.and]: [
-                            {
-                                userId: userId
-                            },
-                            {
-                                deleted: {
-                                    [Op.is]: null
-                                }
-                            }
-                        ]
-                    },
+                    where: {userId: userId},
                     order: [['created', 'DESC']],
                     offset: offset,
                     limit: limit
@@ -124,41 +100,18 @@ module.exports = (models) => {
                     await this.findAll({
                         include: {
                             model: models.server,
-                            where: {
-                                deleted: {
-                                    [Op.is]: null
-                                }
-                            },
-                            required: false
+                            required: false,
+                            include: {
+                                model: models.tag,
+                                required: false,
+                            }
                         },
-                        where: {
-                            [Op.and]: [
-                                {
-                                    userId: userId
-                                },
-                                {
-                                    deleted: {
-                                        [Op.is]: null
-                                    }
-                                }
-                            ]
-                        },
+                        where: {userId: userId},
                         order: [[sortField, sortType]],
                         offset: offset,
                         limit: limit
                     }), (await this.findAll({
-                        where: {
-                            [Op.and]: [
-                                {
-                                    userId: userId
-                                },
-                                {
-                                    deleted: {
-                                        [Op.is]: null
-                                    }
-                                }
-                            ]
-                        },
+                        where: {userId: userId},
                     })).length
                 ];
             }
@@ -171,18 +124,7 @@ module.exports = (models) => {
             const currentUser = await models.user.findByPk(userId);
             if (currentUser) {
                 return await this.findAll({
-                    where: {
-                        [Op.and]: [
-                            {
-                                userId: userId
-                            },
-                            {
-                                deleted: {
-                                    [Op.is]: null
-                                }
-                            }
-                        ]
-                    },
+                    where: {userId: userId},
                     order: [['created', 'DESC']],
                 });
             }
@@ -192,20 +134,7 @@ module.exports = (models) => {
         }
 
         static retrieveProject = async ({projectId}) => {
-            const currentProject = await this.findOne({
-                where: {
-                    [Op.and]: [
-                        {
-                            id: projectId
-                        },
-                        {
-                            deleted: {
-                                [Op.is]: null
-                            }
-                        }
-                    ]
-                }
-            });
+            const currentProject = await this.findByPk(projectId);
             if (currentProject) {
                 return currentProject;
             }
@@ -217,18 +146,7 @@ module.exports = (models) => {
         static deleteProject = async ({projectId = 0}) => {
             if (projectId) {
                 const deletedProjects = await this.destroy({
-                    where: {
-                        [Op.and]: [
-                            {
-                                id: projectId
-                            },
-                            {
-                                deleted: {
-                                    [Op.is]: null
-                                }
-                            }
-                        ]
-                    }
+                    where: {id: projectId}
                 });
                 if (deletedProjects > 0) {
                     return deletedProjects;

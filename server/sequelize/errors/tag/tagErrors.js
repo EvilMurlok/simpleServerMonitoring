@@ -29,8 +29,16 @@ class TagNotUpdatedError extends TagCommonError {
     }
 }
 
+class TagDeletionError extends TagCommonError {
+    constructor(message, messages) {
+        super(message, messages);
+        this.name = "TagDeletionError";
+    }
+}
+
 module.exports = {
     TagCredentialsError,
     TagSameCredentialsError,
-    TagNotUpdatedError
+    TagNotUpdatedError,
+    TagDeletionError
 }

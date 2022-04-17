@@ -157,8 +157,7 @@
                     @click="logout"
                     v-click-ripple
           >
-            <i class="fa fa-window-close opacity-50 mr-1"></i>
-            Выйти
+            <i class="si si-logout opacity-50 mr-1"></i> Выйти
           </b-button>
           <!--           END Toggle Side Overlay-->
         </div>
@@ -194,10 +193,10 @@
 
 <script>
 import BaseLayout from '../Base'
+import {mapActions} from "vuex";
 
 // SimpleBar, for more info and examples you can check out https://github.com/Grsmto/simplebar/tree/master/packages/simplebar-vue
 import simplebar from 'simplebar-vue'
-import {breakAuth} from "@/utils/authorization";
 
 export default {
   name: 'LayoutBackend',
@@ -232,14 +231,16 @@ export default {
     this.$store.commit('mainContent', {mode: 'full'})
   },
   methods: {
+    ...mapActions(["SET_USER"]),
     logout() {
       this.$http
           .get("/auth/logout/")
           .then(res => {
-            breakAuth();
+            this.SET_USER({username: "", phone: "", email: ""});
             this.$router.push({
               name: "login",
               params: {
+                username: res.data.username,
                 messages_data: {type: res.data.status, messages: res.data.messages}
               }
             });

@@ -1,14 +1,33 @@
-const {models} = require("../../sequelize");
 const {Op} = require("sequelize");
+const {models} = require("../../sequelize");
+const {PermissionAccessDeniedError} = require("../../sequelize/errors/permission/permissionErrors");
 
+// const create_admin_permission = async (req, res) => {
+//     const userId = req.user.id;
+//     const currentAdminUser = await models.user.findByPk(userId);
+//     if (currentAdminUser.username !== "admin") {
+//         res.send({
+//             status: "warning",
+//             messages: [{
+//                 text: "Доступ запрещен! Причина: У Вас аккаунт не администратора!"
+//             }]
+//         });
+//     } else {
+//         currentAdminUser.addPermission(await models.permission.createAdminPermission());
+//         res.send({
+//             status: "success",
+//             user: currentAdminUser
+//         });
+//     }
+// }
 
-const create_admin_permission = async (req, res) => {
+const create_admin_permission_with_project = async (req, res) => {
     const currentUserId = req.user.id;
     const projectId = req.params.projectId;
     try {
         const currentUser = await models.user.findByPk(currentUserId);
         const noAdminProject = await models.project.findByPk(projectId);
-        const adminPermission = await models.permission.createAdminPermission({project: noAdminProject});
+        const adminPermission = await models.permission.createAdminPermissionWithProject({project: noAdminProject});
 
         currentUser.addPermission(adminPermission);
         res.send({
@@ -26,7 +45,7 @@ const create_admin_permission = async (req, res) => {
     }
 }
 
-const update_admin_permission = async (req, res) => {
+const update_admin_permission_with_project = async (req, res) => {
     const projectId = req.params.projectId;
     try {
         const currentProject = await models.project.findByPk(projectId);
@@ -52,7 +71,7 @@ const getAllCredentials = async ({
                                      masterPermissionId = null,
                                      abilityIds = [],
                                      tagIds = [],
-                                     serverIds =[],
+                                     serverIds = [],
                                      userIds = []
                                  }) => {
     const currentUser = await models.user.findByPk(currentUserId);
@@ -199,28 +218,13 @@ const retrieve_project_permissions = async (req, res) => {
     }
 }
 
-const retrieve_server_in_project = async (req, res) => {
-    const [permissionId, projectId] = [req.params.permissionId, req.params.projectId];
-    try {
-        const projectPermission = await models.permission.retrieveProjectPermission({permissionId, projectId});
-        res.send({
-            status: "success",
-            projectServer: projectPermission
-        })
-    } catch (e) {
-        res.send({
-            status: "warning",
-            messages: e.messages
-        });
-    }
-}
-
 const get_sub_permissions = async (req, res) => {
     const permissionId = req.params.permissionId;
     try {
         const permission = await models.permission.findByPk(permissionId);
         const children = await permission.getSubPermissions();
         res.send({
+            status: "success",
             messages: [{
                 text: `Вот список дочерних Прав!`
             }],
@@ -263,8 +267,8 @@ const delete_permission = async (req, res) => {
 }
 
 module.exports = {
-    create_admin_permission,
-    update_admin_permission,
+    create_admin_permission_with_project,
+    update_admin_permission_with_project,
     create_custom_permission,
     edit_custom_permission,
     get_sub_permissions,

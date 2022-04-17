@@ -1,23 +1,28 @@
 const LocalStrategy = require("passport-local").Strategy;
 const bcrypt = require("bcrypt");
-const { Op } = require("sequelize");
+const {Op} = require("sequelize");
 
-const { models } = require("../sequelize");
+const {models} = require("../sequelize");
 
 function initialize(passport) {
     const authenticateUser = (username, password, done) => {
         models.user.findOne({
-            where: {
-                username: {
-                    [Op.eq]: username
+            where: {username: username},
+            include: {
+                model: models.permission,
+                required: false,
+                attributes: ["id", "name"],
+                through: {attributes: []},
+                include: {
+                    model: models.ability,
+                    required: true,
+                    attributes: ["id", "entity", "action", "detail"],
+                    through: {attributes: []}
                 }
             }
-        }).then(function(user)
-            {
+        }).then(function (user) {
                 if (!user) {
-                    return done(null, false, {
-                        message: 'Пользователя с таким никнеймом не существует!'
-                    });
+                    return done(null, false, {message: 'Пользователя с таким никнеймом не существует!'});
                 } else {
                     bcrypt.compare(password, user.password, (err, isMatch) => {
                         if (err) {
@@ -36,7 +41,7 @@ function initialize(passport) {
 
     passport.use("local",
         new LocalStrategy(
-            { usernameField: "username", passwordField: "password" },
+            {usernameField: "username", passwordField: "password"},
             authenticateUser
         )
     );
@@ -46,13 +51,28 @@ function initialize(passport) {
         done(null, user.id);
     });
 
-    passport.deserializeUser( (id, done) => {
-        models.user.findByPk(id).then(function(user) {
+    passport.deserializeUser((id, done) => {
+        models.user.findOne({
+            where: {id: id},
+            attributes: ["id", "username", "phone", "email"],
+            include: {
+                model: models.permission,
+                required: false,
+                attributes: ["id", "name"],
+                through: {attributes: []},
+                include: {
+                    model: models.ability,
+                    required: true,
+                    attributes: ["id", "entity", "action", "detail"],
+                    through: {attributes: []}
+                }
+            }
+        }).then(function (user) {
             if (user) {
                 console.log("deserializeUser");
                 done(null, user.get());
             } else {
-                done(user.errors, null);
+                done("No such user!", null);
             }
         });
     });

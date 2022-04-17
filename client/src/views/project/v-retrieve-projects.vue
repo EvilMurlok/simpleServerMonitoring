@@ -119,20 +119,36 @@
                         class="mt-2"
             >
               <b-card border-variant="light">
-                <div class="d-flex justify-content-between">
+                <span class="d-flex justify-content-between">
                   <b-card-text>
                     Сервер <b>{{ server.hostname }}</b> принадлежит проекту <code>{{ project.name }}</code>
                   </b-card-text>
-                  <div>
+                  <span>
                     <b>Время создания:</b>&nbsp; &nbsp;
                     <b-badge variant="primary">{{ new Date(server.created).toLocaleString() }}</b-badge>
-                  </div>
+                  </span>
                   <b-button @click="retrieveServer(server.id, project.id)"
                             variant="alt-info"
                             size="sm"
                   >
-                    <i class="fa fa-fw fa-info-circle"></i> Узнать больше
+                    <i class="fa fa-fw fa-info-circle m-1"></i>
                   </b-button>
+                </span>
+                <div class="d-flex flex-wrap" v-if="server.tags.length">
+                  <span class="mr-3"><b>Теги сервера:</b></span>
+                  <span v-for="tag in server.tags"
+                        :key="tag.name"
+                        class="m-1 p-2"
+                        :style="{ 'cursor': 'pointer',
+                                  'background-color': tag.color,
+                                  'color': '#ffffff',
+                                  'border-radius': '10px',
+                                  'margin': '3px'
+                        }"
+                        @click="retrieveTag(tag.id)"
+                  >
+                    {{ tag.name }}
+                  </span>
                 </div>
               </b-card>
             </b-collapse>
@@ -159,7 +175,7 @@
 
 <script>
 import BaseMessage from "@/layouts/partials/BaseMessage";
-import {breakAuth} from "@/utils/authorization";
+import breakAuth from "@/utils/authorization";
 
 export default {
   name: "v-retrieve-projects",
@@ -195,25 +211,13 @@ export default {
     this.$http
         .get(`/project/retrieve-user-projects-servers/${this.sortData.sortedField}/${this.sortData.sortTypeCreated}/${this.offset}/${this.limit}/`)
         .then(res => {
-          if (res.data.isLoggedIn === false) {
-            breakAuth();
-            this.$router.push(
-                {
-                  name: "login",
-                  params: {
-                    messages_data: {type: res.data.status, messages: res.data.messages}
-                  }
-                }
-            );
-          } else {
-            this.userProjectsServers = res.data.userProjectsServers;
-            for (let project of this.userProjectsServers) {
-              this.serversInProjects.push(project.servers.map(server => server.hostname));
-            }
-            this.offset += res.data.userProjectsServers.length;
-            if (res.data.projectCount === this.offset) {
-              this.isLoadMore = false;
-            }
+          this.userProjectsServers = res.data.userProjectsServers;
+          for (let project of this.userProjectsServers) {
+            this.serversInProjects.push(project.servers.map(server => server.hostname));
+          }
+          this.offset += res.data.userProjectsServers.length;
+          if (res.data.projectCount === this.offset) {
+            this.isLoadMore = false;
           }
         })
         .catch(err => console.error(err));
@@ -226,6 +230,15 @@ export default {
         params: {
           projectId: userProject.id,
           name: userProject.name
+        }
+      });
+    },
+
+    retrieveTag(tagId) {
+      this.$router.push({
+        name: 'retrieveTag',
+        params: {
+          tagId: tagId,
         }
       });
     },
@@ -266,15 +279,7 @@ export default {
             .get(`/project/retrieve-user-projects-servers/${sortedField}/${sortedType}/${this.offset}/${this.sortData.sortedLimit}/`)
             .then(res => {
               if (res.data.isLoggedIn === false) {
-                breakAuth();
-                this.$router.push(
-                    {
-                      name: "login",
-                      params: {
-                        messages_data: {type: res.data.status, messages: res.data.messages}
-                      }
-                    }
-                );
+                breakAuth.breakAuth(res);
               } else {
                 this.userProjectsServers = res.data.userProjectsServers;
                 this.offset += res.data.userProjectsServers.length;
@@ -319,15 +324,7 @@ export default {
           .get(`/project/retrieve-user-projects-servers/${this.sortData.sortedField}/${requiredSortType}/${this.offset}/${this.limit}/`)
           .then(res => {
             if (res.data.isLoggedIn === false) {
-              breakAuth();
-              this.$router.push(
-                  {
-                    name: 'login',
-                    params: {
-                      messages_data: {type: res.data.status, messages: res.data.messages}
-                    }
-                  }
-              );
+              breakAuth.breakAuth(res);
             } else {
               this.userProjectsServers = [...this.userProjectsServers, ...res.data.userProjectsServers];
               for (let project of res.data.userProjectsServers) {
@@ -342,9 +339,10 @@ export default {
           .catch(err => console.error(err));
     },
 
-    deleteProject(userProject) {
-      console.log(userProject);
+    deleteProject(project) {
+     console.log(project);
     }
-  },
+  }
 }
+
 </script>

@@ -1,6 +1,7 @@
 const {models} = require("../../sequelize");
 
 const {UserNotUpdatedDataError} = require("../../sequelize/errors/user/userExceptions");
+const {PermissionSameCredentialsError} = require("../../sequelize/errors/permission/permissionErrors");
 
 const user_register_post = async (req, res) => {
     let {username, phone, email, password, confirm_password} = req.body;
@@ -14,10 +15,20 @@ const user_register_post = async (req, res) => {
             }]
         });
     } catch (e) {
-        res.send({
-            status: "warning",
-            messages: e.messages
-        });
+        if (e instanceof PermissionSameCredentialsError) {
+            e.messages.push({
+                text: "Пользователь admin успешно зарегистрирован!"
+            });
+            res.send({
+               status: "success",
+               messages: e.messages
+            });
+        } else {
+            res.send({
+                status: "warning",
+                messages: e.messages
+            });
+        }
     }
 }
 
@@ -26,7 +37,6 @@ const user_edition = async (req, res) => {
     const userId = req.user.id;
     try {
         const [,updatedUser] = await models.user.editUser({username, phone, email, userId});
-        console.log(updatedUser);
         res.send({
             status: "success",
             user: updatedUser,
@@ -104,12 +114,14 @@ const user_deletion = async (req, res) => {
 }
 
 const user_logout = async (req, res) => {
+    const username = req.user.username;
     req.logout();
     res.send({
         status: "success",
         messages: [{
             text: "Вы успешно вышли из системы!"
         }],
+        username: username
     });
 }
 

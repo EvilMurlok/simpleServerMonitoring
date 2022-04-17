@@ -66,12 +66,27 @@ module.exports = (models) => {
             }
 
             let hashedPassword = await bcrypt.hash(password, 10);
-            return await this.create({
+            let createdUser = await this.create({
                 username: username,
                 password: hashedPassword,
                 phone: phone,
                 email: email
             });
+            if (createdUser.username === "admin") {
+                try {
+                    createdUser = await models.permission.createAdminPermission({currentAdmin: createdUser});
+                } catch (e) {
+                    createdUser.addPermission(await models.permission.findOne({
+                            where: {
+                                name: "admin"
+                            }
+                        })
+                    );
+                    e.messages[0].text += "\nОно было добавлено к Вашему аккаунту!";
+                    throw e;
+                }
+            }
+            return createdUser;
         };
 
         static editUser = async ({username = "", phone = "", email = "", userId = 0}) => {
@@ -166,7 +181,6 @@ module.exports = (models) => {
                     id: userId
                 }
             });
-            console.log(deletedUserNumber);
             if (deletedUserNumber) {
                 return deletedUserNumber;
             } else {

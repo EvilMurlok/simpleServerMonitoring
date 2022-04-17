@@ -34,10 +34,18 @@ class PermissionNotFoundError extends PermissionCommonError {
     }
 }
 
+class PermissionAccessDeniedError extends PermissionCommonError {
+    constructor (message, messages) {
+        super(message, messages);
+        this.name = "PermissionAccessDeniedError";
+    }
+}
+
 module.exports = {
     PermissionCommonError,
     PermissionCredentialsError,
     PermissionSameCredentialsError,
     PermissionInheritanceError,
-    PermissionNotFoundError
+    PermissionNotFoundError,
+    PermissionAccessDeniedError
 }

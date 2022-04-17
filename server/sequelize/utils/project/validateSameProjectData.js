@@ -16,29 +16,13 @@ async function validateSameProjectData({projectName, projectNameUser}, isEdition
                         name: {
                             [Op.ne]: projectNameUser
                         }
-                    },
-                    {
-                        deleted: {
-                            [Op.is]: null
-                        }
                     }
                 ]
             }
         });
     } else {
         sameProject = await this.findOne({
-            where: {
-                [Op.and]: [
-                    {
-                        name: projectName
-                    },
-                    {
-                        deleted: {
-                            [Op.is]: null
-                        }
-                    }
-                ]
-            }
+            where: {name: projectName}
         });
     }
     if (sameProject) {

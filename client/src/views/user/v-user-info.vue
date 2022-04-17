@@ -78,7 +78,8 @@
           </b-row>
         </b-form>
 
-        <b-dropdown id="dropdown-form" text="Изменить пароль" ref="dropdown" class="m-2" menu-class="w-100" block  @show="messages_data = {type: 'warning', messages: []}">
+        <b-dropdown id="dropdown-form" text="Изменить пароль" ref="dropdown" class="m-2" menu-class="w-100" block
+                    @show="messages_data = {type: 'warning', messages: []}">
           <b-dropdown-form @submit.prevent="updatePassword">
             <div v-if="isPassword === true">
               <BaseMessage
@@ -151,7 +152,9 @@
 
 <script>
 import BaseMessage from "@/layouts/partials/BaseMessage";
-import {breakAuth} from "@/utils/authorization";
+import breakAuth from "@/utils/authorization";
+import {mapGetters, mapActions} from "vuex";
+import store from "../../../vuex/store";
 
 export default {
   name: "v-user-info",
@@ -166,32 +169,24 @@ export default {
     } else {
       this.messages_data = {type: "warning", messages: []};
     }
+    this.user = store.getters.USER;
 
-    this.$http
-        .get("/user/retrieve-user/")
-        .then(res => {
-          if (res.data.isLoggedIn === false) {
-            breakAuth();
-            this.$router.push({
-              name: 'login',
-              params: {
-                messages_data: {type: res.data.status, messages: res.data.messages}
-              }
-            });
-          } else {
-            if (res.data.status === "warning") {
-              this.$router.push({
-                name: 'retrieveProjects',
-                params: {
-                  messages_data: {type: res.data.status, messages: res.data.messages}
-                }
-              });
-            } else {
-              this.user = res.data.user;
-            }
-          }
-        })
-        .catch(err => console.error(err));
+    // this.$http
+    //     .get("/user/retrieve-user/")
+    //     .then(res => {
+    //       if (res.data.status === "warning") {
+    //         this.$router.push({
+    //           name: 'retrieveProjects',
+    //           params: {
+    //             messages_data: {type: res.data.status, messages: res.data.messages}
+    //           }
+    //         });
+    //       } else {
+    //
+    //       }
+    //
+    //     })
+    //     .catch(err => console.error(err));
   },
 
   data() {
@@ -212,6 +207,8 @@ export default {
   },
 
   methods: {
+    ...mapActions(["SET_USER"]),
+
     updatePassword() {
       if (this.messages_data.messages.length !== 0) {
         this.messages_data = {type: "warning", messages: []};
@@ -271,13 +268,7 @@ export default {
             })
             .then(res => {
               if (res.data.isLoggedIn === false) {
-                breakAuth();
-                this.$router.push({
-                  name: 'login',
-                  params: {
-                    messages_data: {type: res.data.status, messages: res.data.messages}
-                  }
-                });
+                breakAuth.breakAuth(res);
               } else {
                 this.messages_data = {type: res.data.status, messages: res.data.messages}
                 this.currentPassword = "";
@@ -351,17 +342,12 @@ export default {
             })
             .then(res => {
               if (res.data.isLoggedIn === false) {
-                breakAuth();
-                this.$router.push({
-                  name: 'login',
-                  params: {
-                    messages_data: {type: res.data.status, messages: res.data.messages}
-                  }
-                });
+                breakAuth.breakAuth(res);
               } else {
                 this.messages_data = {type: res.data.status, messages: res.data.messages};
                 if (res.data.status === "success") {
-                  this.user = res.data.user;
+                  this.SET_USER({username: res.data.user.username, email: res.data.user.email, phone: res.data.user.phone})
+                  this.user = store.getters.USER;
                 }
               }
             })
@@ -382,30 +368,14 @@ export default {
           this.$http
               .get("/user/delete-user/")
               .then(res => {
-                if (res.data.isLoggedIn === false) {
-                  breakAuth();
-                  this.$router.push({
-                    name: 'login',
-                    params: {
-                      messages_data: {type: res.data.status, messages: res.data.messages}
-                    }
-                  });
-                } else {
-                  breakAuth();
-                  this.$router.push({
-                    name: "login",
-                    params: {
-                      messages_data: {type: res.data.status, messages: res.data.messages}
-                    }
-                  });
-                }
+                breakAuth.breakAuth(res);
               })
               .catch(err => console.error(err));
         } else {
-          this.messages_data.messages.push({ text: "Неверно введена фраза!"});
+          this.messages_data.messages.push({text: "Неверно введена фраза!"});
         }
       } else {
-        this.messages_data.messages.push({ text: "Неверно введен никнейм!"});
+        this.messages_data.messages.push({text: "Неверно введен никнейм!"});
       }
     }
   }

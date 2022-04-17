@@ -19,11 +19,6 @@ async function validateSameServerData({projectId, hostname, ip, hostnameUser, ip
                         hostname: {
                             [Op.ne]: hostnameUser
                         }
-                    },
-                    {
-                        deleted: {
-                            [Op.is]: null
-                        }
                     }
                 ]
             }
@@ -37,11 +32,6 @@ async function validateSameServerData({projectId, hostname, ip, hostnameUser, ip
                     {
                         ip: {
                             [Op.ne]: ipUser
-                        }
-                    },
-                    {
-                        deleted: {
-                            [Op.is]: null
                         }
                     }
                 ]
@@ -57,27 +47,11 @@ async function validateSameServerData({projectId, hostname, ip, hostnameUser, ip
                     {
                         hostname: hostname
                     },
-                    {
-                        deleted: {
-                            [Op.is]: null
-                        }
-                    }
                 ]
             }
         });
         sameIp = await this.findOne({
-            where: {
-                [Op.and]: [
-                    {
-                        ip: ip
-                    },
-                    {
-                        deleted: {
-                            [Op.is]: null
-                        }
-                    }
-                ]
-            }
+            where: {ip: ip}
         });
     }
     if (sameHostname) {

@@ -24,9 +24,9 @@
                 <p class="text-muted">Форма регистрации пользователя</p>
 
                 <BaseMessage
-                  v-for="item in messages_data.messages"
-                  :key="item.text"
-                  :message_data="{type: messages_data.type, item: item}"
+                    v-for="item in messages_data.messages"
+                    :key="item.text"
+                    :message_data="{type: messages_data.type, item: item}"
                 />
 
                 <b-form @submit.prevent="register">
@@ -123,6 +123,7 @@
 
 <script>
 import BaseMessage from "@/layouts/partials/BaseMessage";
+
 export default {
   name: "v-register",
 

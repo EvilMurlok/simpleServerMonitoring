@@ -22,6 +22,15 @@
             :key="item.text"
             :message_data="{type: messages_data.type, item: item}"
         />
+        <div class="d-flex justify-content-end">
+          <b-button type="submit"
+                    variant="alt-danger"
+                    class="mr-1 mb-3"
+                    @click="deleteTag"
+          >
+            <i class="si si-close mr-2"></i> Удалить тег
+          </b-button>
+        </div>
         <b-form @submit.prevent="updateTag">
           <div class="py-3">
             <div class="form-group">
@@ -60,7 +69,7 @@
 
 <script>
 import BaseMessage from "@/layouts/partials/BaseMessage";
-import {breakAuth} from "@/utils/authorization";
+import breakAuth from "@/utils/authorization";
 
 export default {
   name: "retrieve-tag",
@@ -72,6 +81,7 @@ export default {
     return {
       messages_data: {type: "warning", messages: []},
       tag: {
+        id: 0,
         name: "",
         color: "",
       },
@@ -87,25 +97,15 @@ export default {
     this.$http
         .get(`/tag/retrieve-tag/${this.$route.params.tagId}/`)
         .then(res => {
-          if (res.data.isLoggedIn === false) {
-            breakAuth();
+          if (res.data.status === "warning") {
             this.$router.push({
-              name: 'login',
+              name: 'retrieveServers',
               params: {
                 messages_data: {type: res.data.status, messages: res.data.messages}
               }
             });
           } else {
-            if (res.data.status === "warning") {
-              this.$router.push({
-                name: 'retrieveServers',
-                params: {
-                  messages_data: {type: res.data.status, messages: res.data.messages}
-                }
-              });
-            } else {
-              this.tag = res.data.tag;
-            }
+            this.tag = res.data.tag;
           }
         })
         .catch(err => console.error(err));
@@ -126,15 +126,27 @@ export default {
           })
           .then(res => {
             if (res.data.isLoggedIn === false) {
-              breakAuth();
+              breakAuth.breakAuth(res);
+            } else {
+              this.messages_data = {type: res.data.status, messages: res.data.messages}
+            }
+          })
+          .catch(err => console.error(err));
+    },
+
+    deleteTag() {
+      this.$http
+          .get(`/tag/delete-tag/${this.tag.id}/`)
+          .then(res => {
+            if (res.data.isLoggedIn === false) {
+              breakAuth.breakAuth(res);
+            } else {
               this.$router.push({
-                name: 'login',
+                name: 'retrieveProjects',
                 params: {
                   messages_data: {type: res.data.status, messages: res.data.messages}
                 }
               });
-            } else {
-              this.messages_data = {type: res.data.status, messages: res.data.messages}
             }
           })
           .catch(err => console.error(err));

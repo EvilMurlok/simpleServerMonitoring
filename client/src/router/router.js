@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
+import store from "../../vuex/store"
 
 import vLogin from '@/views/authorization/v-login';
 import vRegister from '@/views/authorization/v-register';
@@ -35,7 +36,6 @@ let router = new Router({
         {
             path: '/login/',
             component: LayoutSimple,
-            props: true,
             meta: {
                 guest: true
             },
@@ -50,7 +50,6 @@ let router = new Router({
         {
             path: '/register/',
             component: LayoutSimple,
-            props: true,
             meta: {
                 guest: true
             },
@@ -217,25 +216,35 @@ let router = new Router({
 
 router.beforeEach((to, from, next) => {
     if (to.matched.some(record => record.meta.requiresAuth)) {
-        if (localStorage.getItem('isLoggedIn') == null) {
-            next({
-                path: '/login/',
-                params: { nextUrl: to.fullPath }
+        store.dispatch("GET_PERMISSIONS_FROM_API")
+            .then(res => {
+                if (res.data) {
+                    console.log("Пользователь успешно авторизован!");
+                    next();
+                    // if we wanna filter some data and stay on the same page we gotta refresh the page!
+                    if (from.name === to.name) {
+                        router.go(0);
+                    }
+                }
+            })
+            .catch(e => {
+                router.push({
+                    name: "login",
+                    params: {
+                        messages_data: {type: e.type, messages: e.messages}
+                    }
+                });
             });
+    } else if (to.matched.some(record => record.meta.guest)) {
+        if (store.getters.USER.username) {
+            next({name: 'retrieveProjects'});
         } else {
             next();
         }
-    } else if (to.matched.some(record => record.meta.guest)) {
-        if (localStorage.getItem('isLoggedIn') == null) {
-            next()
-        } else {
-            next({ name: 'retrieveProjects' })
-        }
     } else {
-        next()
+        next();
     }
 });
 
 
 export default router;
-

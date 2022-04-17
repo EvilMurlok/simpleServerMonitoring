@@ -135,13 +135,13 @@ const retrieve_server_in_project = async (req, res) => {
 
 const update_server = async (req, res) => {
     const [serverId, projectId] = [req.params.serverId, req.params.projectId];
-    const {hostname, ip, newProjectName} = req.body;
+    const {hostname, ip, newProjectName, tagIds} = req.body;
     let editedServer = "";
     try {
         if (!newProjectName || newProjectName === "Не выбрано") {
-            [, editedServer] = await models.server.editServer({projectId, serverId, hostname, ip});
+            [, editedServer] = await models.server.editServer({projectId, serverId, hostname, ip, tagIds});
         } else {
-            [, editedServer] = await models.server.editServer({projectId, serverId, newProjectName, hostname, ip});
+            [, editedServer] = await models.server.editServer({projectId, serverId, newProjectName, hostname, ip, tagIds});
         }
         res.send({
             status: "success",

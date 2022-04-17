@@ -65,7 +65,7 @@
                         block
                         :disabled="!projects.length"
               >
-                <i class="fa fa-plus mr-1" ></i> Добавить сервер
+                <i class="fa fa-plus mr-1"></i> Добавить сервер
               </b-button>
             </b-col>
           </b-row>
@@ -77,7 +77,7 @@
 
 <script>
 import BaseMessage from "@/layouts/partials/BaseMessage";
-import {breakAuth} from "@/utils/authorization";
+import breakAuth from "@/utils/authorization";
 
 export default {
   name: "v-add-server",
@@ -112,34 +112,24 @@ export default {
       this.$http
           .get("/project/retrieve-all-user-projects/")
           .then(res => {
-            if (res.data.isLoggedIn === false) {
-              breakAuth();
+            if (res.data.status === "warning") {
               this.$router.push({
-                name: 'login',
+                name: 'retrieveProjects',
                 params: {
                   messages_data: {type: res.data.status, messages: res.data.messages}
                 }
               });
             } else {
-              if (res.data.status === "warning") {
-                this.$router.push({
-                  name: 'retrieveProjects',
-                  params: {
-                    messages_data: {type: res.data.status, messages: res.data.messages}
-                  }
+              if (res.data.userProjects.length === 0) {
+                this.messages_data.messages.push({
+                  text: "У вас нет ни одного доступного проекта!"
                 });
-              } else {
-                if (res.data.userProjects.length === 0){
-                  this.messages_data.messages.push({
-                    text: "У вас нет ни одного доступного проекта!"
-                  });
-                }
-                for (let project of res.data.userProjects) {
-                  this.projects.push({
-                    value: project.name,
-                    text: project.name
-                  });
-                }
+              }
+              for (let project of res.data.userProjects) {
+                this.projects.push({
+                  value: project.name,
+                  text: project.name
+                });
               }
             }
           })
@@ -153,32 +143,32 @@ export default {
         this.messages_data = {type: "warning", messages: []};
       }
       const [rightHostname, rightIp] = [
-          /^[a-zA-Z0-9_]{3,255}$/,
-          /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
+        /^[a-zA-Z0-9_]{3,255}$/,
+        /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
       ];
       if (!this.hostname) {
         this.messages_data.messages.push({
-              text: "Поле имени хоста обязательно для заполнения!"
+          text: "Поле имени хоста обязательно для заполнения!"
         });
       }
       if (!this.ip) {
         this.messages_data.messages.push({
-              text: "Поле ip обязательно для заполнения!"
+          text: "Поле ip обязательно для заполнения!"
         });
       }
       if (!this.projectName) {
         this.messages_data.messages.push({
-              text: "Выберите проект, к которому хотите добавить сервер!"
+          text: "Выберите проект, к которому хотите добавить сервер!"
         });
       }
       if (this.hostname && !rightHostname.test(this.hostname)) {
         this.messages_data.messages.push({
-              text: "Имя хоста должно состоять только из латинских букв, цифр, символов подчеркивания длиной 3-255 символов!"
+          text: "Имя хоста должно состоять только из латинских букв, цифр, символов подчеркивания длиной 3-255 символов!"
         });
       }
       if (this.ip && !rightIp.test(this.ip)) {
         this.messages_data.messages.push({
-              text: "Неверный формат ip-адреса!"
+          text: "Неверный формат ip-адреса!"
         });
       }
       if (this.messages_data.messages.length === 0) {
@@ -190,13 +180,7 @@ export default {
             })
             .then(res => {
               if (res.data.isLoggedIn === false) {
-                breakAuth();
-                this.$router.push({
-                  name: 'login',
-                  params: {
-                    messages_data: {type: res.data.status, messages: res.data.messages}
-                  }
-                });
+                breakAuth.breakAuth(res);
               } else {
                 if (res.data.status === "warning") {
                   this.messages_data.messages = res.data.messages;

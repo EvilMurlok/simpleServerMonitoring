@@ -1,6 +1,11 @@
 const {Model, DataTypes, Op} = require("sequelize");
 const generateColor = require("../utils/tags/generateColor")
-const {TagSameCredentialsError, TagCredentialsError, TagNotUpdatedError} = require("../errors/tag/tagErrors");
+const {
+    TagSameCredentialsError,
+    TagCredentialsError,
+    TagNotUpdatedError,
+    TagDeletionError
+} = require("../errors/tag/tagErrors");
 const {models} = require("../../sequelize");
 
 
@@ -15,7 +20,6 @@ module.exports = (models) => {
                 },
                 name: {
                     type: DataTypes.STRING(255),
-                    unique: true,
                     allowNull: false
                 },
                 color: {
@@ -236,6 +240,16 @@ module.exports = (models) => {
             return adminPerm.getTags();
         }
 
+        static retrieveAllTags = async () => {
+            return await Tag.findAll({
+               where: {
+                   deleted: {
+                       [Op.is]: null
+                   }
+               }
+            });
+        }
+
         editTag = async ({name = "", color = "", serverIds = []}) => {
             let isSameTagData = false;
             try {
@@ -282,6 +296,34 @@ module.exports = (models) => {
         destroyIfNotUsed = async () => {
             if (await this.countServers() <= 0) {
                 return this.destroy();
+            } else {
+                throw new TagDeletionError("Fail to delete the tag!", [{
+                    text: "Ошибка при удалении тега!"
+                }]);
+            }
+        }
+
+        static deleteTag = async ({tagId = 0}) => {
+            const deletedTag = await this.destroy({
+                where: {
+                    [Op.and]: [
+                        {
+                            id: tagId
+                        },
+                        {
+                            deleted: {
+                                [Op.is]: null
+                            }
+                        }
+                    ]
+                }
+            });
+            if (deletedTag > 0) {
+                return deletedTag;
+            } else {
+                throw new TagDeletionError("Fail to delete the tag!", [{
+                    text: "Ошибка при удалении тега!"
+                }]);
             }
         }
 

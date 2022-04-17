@@ -25,7 +25,7 @@
             :message_data="{type: messages_data.type, item: item}"
         />
 
-        <b-form @submit.prevent="addProject">
+        <b-form @submit.prevent="createProject">
           <div class="py-3">
             <div class="form-group">
               <label class="form-check-label mb-2">Название проекта</label>
@@ -58,7 +58,7 @@
 
 <script>
 import BaseMessage from "@/layouts/partials/BaseMessage";
-import {breakAuth} from "@/utils/authorization";
+import breakAuth from "@/utils/authorization";
 
 export default {
   name: "v-create-project",
@@ -83,7 +83,7 @@ export default {
   },
 
   methods: {
-    addProject() {
+    createProject() {
       if (this.messages_data.messages.length !== 0) {
         this.messages_data = {type: "warning", messages: []};
       }
@@ -110,27 +110,22 @@ export default {
               projectName: this.projectName,
             })
             .then(res => {
-              if (res.data.isLoggedIn === false){
-                breakAuth();
-                this.$router.push({
-                      name: 'login',
-                      params: {
-                        messages_data: {type: res.data.status, messages: res.data.messages}
-                      }
-                });
-              } else {
-                if (res.data.status === "warning") {
-                  this.messages_data = {type: res.data.status, messages: res.data.messages};
-                } else {
-                  this.$router.push({
+                  if (res.data.isLoggedIn === false) {
+                    breakAuth.breakAuth(res);
+                  } else {
+                    if (res.data.status === "warning") {
+                      this.messages_data = {type: res.data.status, messages: res.data.messages};
+                    } else {
+                      this.$router.push({
                         name: 'retrieveProjects',
                         params: {
                           messages_data: {type: "success", messages: res.data.messages}
                         }
-                  });
+                      });
+                    }
+                  }
                 }
-              }
-            })
+            )
             .catch(err => console.error(err));
       } else {
         this.name = '';

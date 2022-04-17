@@ -68,6 +68,13 @@ const retrieveTagById = async (req, res) => {
     }
 }
 
+const retrieveAllTags = async (req, res) => {
+    res.send({
+        status: "success",
+        tags: await models.tag.retrieveAllTags()
+    });
+}
+
 const setServers = async (req, res) => {
     const tagId = req.params.tagId;
     const serverIds = req.body.serverIds;
@@ -97,14 +104,15 @@ const setServers = async (req, res) => {
 const delete_tag = async (req, res) => {
     const tagId = req.params.tagId;
     try {
-        const tag = await models.tag.findByPk(tagId);
-        const tagName = tag.name;
-        await tag.destroy();
+        const deletedTagCount = await models.tag.deleteTag({tagId});
         res.send({
             status: "success",
-            tag: tagName
+            messages: [{
+               text: "Сервер успешно удален!"
+            }],
+            deletedTagCount: deletedTagCount
         });
-    } catch {
+    } catch (e) {
         res.send({
             status: "warning",
             messages: e.message
@@ -115,6 +123,7 @@ const delete_tag = async (req, res) => {
 module.exports = {
     create_tag,
     retrieveTagById,
+    retrieveAllTags,
     edit_tag,
     setServers,
     delete_tag

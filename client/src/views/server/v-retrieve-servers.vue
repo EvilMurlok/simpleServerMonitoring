@@ -136,7 +136,7 @@
           >
             <i class="fa fa-info-circle m-1"></i> Показать сервера
           </b-button>
-        </div >
+        </div>
       </b-form>
     </div>
 
@@ -300,7 +300,7 @@
 
 <script>
 import BaseMessage from "@/layouts/partials/BaseMessage";
-import {breakAuth} from "@/utils/authorization";
+import breakAuth from "@/utils/authorization";
 
 export default {
   name: "v-show-servers",
@@ -371,13 +371,7 @@ export default {
         })
         .then(res => {
           if (res.data.isLoggedIn === false) {
-            breakAuth();
-            this.$router.push({
-              name: 'login',
-              params: {
-                messages_data: {type: res.data.status, messages: res.data.messages}
-              }
-            });
+            breakAuth.breakAuth(res);
           } else {
             let [currentMinDateTime, currentMaxDateTime] = ["", ""];
             if (this.$route.query.createdMin) {
@@ -411,7 +405,15 @@ export default {
                     hostname: server.hostname,
                     ip: server.ip,
                     projectName: project.name,
-                    tags: server.tags
+                    tags: server.tags.sort((lhs, rhs) => {
+                      if (lhs.name > rhs.name) {
+                        return 1;
+                      } else if (lhs.name < rhs.name) {
+                        return -1;
+                      } else {
+                        return 0;
+                      }
+                    })
                   });
                 }
               }
@@ -542,7 +544,6 @@ export default {
             createdMax: maxDateString
           }
         });
-        this.$router.go(0);
       } else {
         this.messages_data.messages.push({
           text: "Минимальная дата не может быть меньше максимальной!"

@@ -79,6 +79,7 @@
 
 <script>
 import BaseMessage from "@/layouts/partials/BaseMessage";
+import { mapActions } from "vuex";
 
 export default {
   name: "v-login",
@@ -101,14 +102,15 @@ export default {
     } else {
       this.messages_data = {type: "warning", messages: []};
     }
-    if (this.$route.params.username !== undefined) {
+    if (this.$route.params?.username !== undefined) {
       this.username = this.$route.params.username;
     } else {
-      this.username = '';
+      this.username = "";
     }
   },
 
   methods: {
+    ...mapActions(["SET_USER"]),
     login() {
       if (this.messages_data.messages.length !== 0) {
         this.messages_data = {type: "warning", messages: []};
@@ -135,9 +137,7 @@ export default {
             })
             .then(res => {
               if (res.data.status === "success") {
-                localStorage.setItem("isLoggedIn", "in");
-                localStorage.setItem("id", String(res.data.id));
-                localStorage.setItem("username", res.data.username);
+                this.SET_USER(res.data.user);
                 this.$router.push({
                       name: 'retrieveProjects',
                       params: {

@@ -28,6 +28,7 @@
         <b-form @submit.prevent="updateServer">
           <div class="py-3">
             <div class="form-group">
+              <label class="form-check-label mb-2">Название сервера</label>
               <b-form-input size="lg"
                             class="form-control-alt"
                             id="hostname"
@@ -38,6 +39,7 @@
               </b-form-input>
             </div>
             <div class="form-group">
+              <label class="form-check-label mb-2">IP адрес</label>
               <b-form-input size="lg"
                             class="form-control-alt"
                             id="ip"
@@ -47,6 +49,46 @@
                             v-model="server.ip">
               </b-form-input>
             </div>
+            <b-form-checkbox-group
+                v-model="checkBoxesData.tagIds"
+                id="tagIds"
+            >
+              <div class="m-1 d-flex justify-content-between">
+                <label class="form-check-label mb-2">Теги сервера</label>
+                <b-button variant="alt-info"
+                          class="mr-1"
+                          @click="chooseAll"
+                          v-if="!checkBoxesData.isChosenAll"
+                >
+                  <i class="si si-check opacity-50 mr-1"></i> Выбрать все
+                </b-button>
+                <b-button variant="alt-info"
+                          class="mr-1"
+                          @click="chooseAll"
+                          v-else
+                >
+                  <i class="si si-close opacity-50 mr-1"></i> Убрать все
+                </b-button>
+              </div>
+
+              <div class="d-flex flex-wrap">
+                <b-form-checkbox v-for="tag in allTags"
+                                 :key="tag.name"
+                                 :value="tag.id"
+                                 class="m-4"
+                >
+                  <span class="p-1"
+                        :style="{ 'background-color': tag.color,
+                                  'color': '#ffffff',
+                                  'border-radius': '10px',
+                                  'margin': '3px'
+                        }"
+                  >
+                  {{ tag.name }}
+                </span>
+                </b-form-checkbox>
+              </div>
+            </b-form-checkbox-group>
             <div class="form-group">
               <label class="form-check-label mb-2">Проект, к которому принадлежит сервер</label>
               <b-form-input size="lg"
@@ -59,14 +101,14 @@
                             readonly
               >
               </b-form-input>
-              <div class="form-group">
-                <label class="form-check-label mb-2">Чтобы изменить принадлежность сервера проекту, выберите новый
-                  проект снизу</label>
-                <b-form-select size="lg"
-                               v-model="newProjectName"
-                               :options="projects"
-                ></b-form-select>
-              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-check-label mb-2">Чтобы изменить принадлежность сервера проекту, выберите новый
+                проект снизу</label>
+              <b-form-select size="lg"
+                             v-model="newProjectName"
+                             :options="projects"
+              ></b-form-select>
             </div>
           </div>
           <b-row class="form-group">
@@ -84,7 +126,7 @@
 
 <script>
 import BaseMessage from "@/layouts/partials/BaseMessage";
-import {breakAuth} from "@/utils/authorization";
+import breakAuth from "@/utils/authorization";
 
 export default {
   name: "v-retrieve-server",
@@ -101,6 +143,11 @@ export default {
         hostname: "",
         ip: "",
       },
+      checkBoxesData: {
+        tagIds: [],
+        isChosenAll: false,
+      },
+      allTags: [],
       projectName: "",
       newProjectName: "",
       projects: [{value: "Не выбрано", text: "Не выбрано"}],
@@ -116,62 +163,68 @@ export default {
     this.$http
         .get("/project/retrieve-all-user-projects/")
         .then(res => {
-          if (res.data.isLoggedIn === false) {
-            breakAuth();
+          if (res.data.status === "warning") {
             this.$router.push({
-              name: 'login',
+              name: 'retrieveServers',
               params: {
                 messages_data: {type: res.data.status, messages: res.data.messages}
               }
             });
           } else {
-            if (res.data.status === "warning") {
-              this.$router.push({
-                name: 'retrieveServers',
-                params: {
-                  messages_data: {type: res.data.status, messages: res.data.messages}
-                }
+            for (let project of res.data.userProjects) {
+              this.projects.push({
+                value: project.name,
+                text: project.name
               });
-            } else {
-              for (let project of res.data.userProjects) {
-                this.projects.push({
-                  value: project.name,
-                  text: project.name
-                });
-              }
-              this.$http
-                  .get(`/server/view-server/${this.$route.params.projectId}/${this.$route.params.serverId}/`)
-                  .then(res => {
-                    if (res.data.isLoggedIn === false) {
-                      breakAuth();
-                      this.$router.push({
-                        name: 'login',
-                        params: {
-                          messages_data: {type: res.data.status, messages: res.data.messages}
-                        }
-                      });
-                    } else {
-                      if (res.data.status === "warning") {
-                        this.$router.push({
-                          name: 'retrieveServers',
-                          params: {
-                            messages_data: {type: res.data.status, messages: res.data.messages}
-                          }
-                        });
-                      } else {
-                        this.server = res.data.projectServer.servers[0];
-                        this.projectName = res.data.projectServer.name;
-                      }
-                    }
-                  })
-                  .catch(err => console.error(err));
             }
+            this.$http
+                .get(`/server/retrieve-server/${this.$route.params.projectId}/${this.$route.params.serverId}/`)
+                .then(res => {
+                  if (res.data.status === "warning") {
+                    this.$router.push({
+                      name: 'retrieveServers',
+                      params: {
+                        messages_data: {type: res.data.status, messages: res.data.messages}
+                      }
+                    });
+                  } else {
+                    this.server = res.data.projectServer.servers[0];
+                    this.projectName = res.data.projectServer.name;
+                    this.checkBoxesData.tagIds = res.data.projectServer.servers[0].tags.map(tag => tag.id);
+                    this.$http
+                        .get("/tag/retrieve-all-tags/")
+                        .then(res => {
+                          this.allTags = res.data.tags.sort(function (lhs, rhs) {
+                            if (lhs.name > rhs.name) {
+                              return 1;
+                            } else if (lhs.name < rhs.name) {
+                              return -1;
+                            } else {
+                              return 0
+                            }
+                          });
+                        })
+                        .catch(err => console.error(err));
+                  }
+                })
+                .catch(err => console.error(err));
           }
         })
         .catch(err => console.error(err));
   },
 
   methods: {
+    chooseAll() {
+      if (this.checkBoxesData.isChosenAll) {
+        this.checkBoxesData.tagIds = [];
+      } else {
+        for (let tag of this.allTags) {
+          this.checkBoxesData.tagIds.push(tag.id);
+        }
+      }
+      this.checkBoxesData.isChosenAll = !this.checkBoxesData.isChosenAll;
+    },
+
     updateServer() {
       if (this.$route.params.messages_data !== undefined) {
         this.messages_data = this.$route.params.messages_data;
@@ -182,17 +235,12 @@ export default {
           .post(`/server/update-server/${this.$route.params.projectId}/${this.$route.params.serverId}/`, {
             hostname: this.server.hostname,
             ip: this.server.ip,
-            newProjectName: this.newProjectName
+            newProjectName: this.newProjectName,
+            tagIds: this.checkBoxesData.tagIds
           })
           .then(res => {
             if (res.data.isLoggedIn === false) {
-              breakAuth();
-              this.$router.push({
-                name: 'login',
-                params: {
-                  messages_data: {type: res.data.status, messages: res.data.messages}
-                }
-              });
+              breakAuth.breakAuth(res);
             } else {
               const types = {"not found": "warning", "info": "info", "success": "success", "warning": "warning"};
               this.messages_data = {type: types[res.data.status], messages: res.data.messages}

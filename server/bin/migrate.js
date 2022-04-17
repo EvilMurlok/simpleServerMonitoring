@@ -1,5 +1,5 @@
 let sequelize = require('../sequelize');
 
-sequelize.sync({force:true}).then(() => {
+sequelize.sync().then(() => {
     console.log("Сервер ожидает подключения...");
 }).catch(err => console.log(err));

@@ -59,7 +59,7 @@ module.exports = (models) => {
             });
         };
 
-        static #validateEntity = async ({entity = null}) => {
+        static #validateEntity = async ({entity = ""}) => {
             const validEntities = ['Dashboard', 'Permission', 'Project', 'Server', 'Tag', 'User', 'Metric'];
 
             let messages = [];
@@ -72,14 +72,14 @@ module.exports = (models) => {
 
             if (!validEntities.includes(entity)) {
                 messages.push({
-                    text: "Сущность в названии Возможности неверна!"
+                    text: "Сущность в названии Возможности неверна \n(доступные сущности: 'Dashboard', 'Permission', 'Project', 'Server', 'Tag', 'User', 'Metric')!"
                 });
             }
 
             return messages;
         }
 
-        static #validateAction = async ({action = null}) => {
+        static #validateAction = async ({action = ""}) => {
             const validActions = ['Create', 'Retrieve', 'Update', 'Delete', 'Share'];
 
             let messages = [];
@@ -99,7 +99,7 @@ module.exports = (models) => {
             return messages;
         }
 
-        static #validateDetail = async ({detail = null}) => {
+        static #validateDetail = async ({detail = ""}) => {
             const validDetails = ['Hardware', 'Application'];
 
             let messages = [];

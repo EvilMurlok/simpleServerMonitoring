@@ -58,7 +58,7 @@
 
 <script>
 import BaseMessage from "@/layouts/partials/BaseMessage";
-import {breakAuth} from "@/utils/authorization";
+import breakAuth from "@/utils/authorization";
 
 export default {
   name: "v-retrieve-project",
@@ -86,26 +86,16 @@ export default {
     this.$http
         .get(`/project/retrieve-project/${this.$route.params.projectId}/`)
         .then(res => {
-          if (res.data.isLoggedIn === false) {
-            breakAuth();
-            this.$router.push({
-                  name: 'login',
+          if (res.data.status === "warning") {
+            this.$router.push(
+                {
+                  name: "retrieveProjects",
                   params: {
                     messages_data: {type: res.data.status, messages: res.data.messages}
                   }
-            });
+                });
           } else {
-            if (res.data.status === "warning") {
-              this.$router.push(
-                  {
-                    name: "retrieveProjects",
-                    params: {
-                      messages_data: {type: res.data.status, messages: res.data.messages}
-                    }
-              });
-            } else {
-              this.project = res.data.project;
-            }
+            this.project = res.data.project;
           }
         })
         .catch(err => console.error(err));
@@ -123,24 +113,17 @@ export default {
           })
           .then(res => {
             if (res.data.isLoggedIn === false) {
-              breakAuth();
-              this.$router.push({
-                    name: 'login',
-                    params: {
-                      messages_data: {type: res.data.status, messages: res.data.messages}
-                    }
-                  }
-              );
+              breakAuth.breakAuth(res);
             } else {
-              if (res.data.status === "warning"){
+              if (res.data.status === "warning") {
                 this.messages_data.messages = res.data.messages;
               } else {
                 const types = {"not found": "warning", "info": "info", "success": "success"};
                 this.$router.push({
-                      name: "retrieveProjects",
-                      params: {
-                        messages_data: {type: types[res.data.status], messages: res.data.messages}
-                      }
+                  name: "retrieveProjects",
+                  params: {
+                    messages_data: {type: types[res.data.status], messages: res.data.messages}
+                  }
                 });
               }
             }
