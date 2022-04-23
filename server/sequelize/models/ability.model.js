@@ -1,7 +1,7 @@
 const {Model, DataTypes} = require("sequelize");
 const {AbilityCredentialsError, AbilitySameCredentialsError} = require("../errors/ability/abilityErrors");
 
-module.exports = (models) => {
+module.exports = (sequelize) => {
     class Ability extends Model {
         static initModel(sequelize) {
             return super.init({

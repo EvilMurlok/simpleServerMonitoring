@@ -1,4 +1,4 @@
-const {Model, Op, DataTypes} = require("sequelize");
+const {Model, Op, DataTypes, Transaction} = require("sequelize");
 const bcrypt = require("bcrypt");
 
 const {validateUserData} = require("../utils/user/validationUserData");
@@ -6,10 +6,10 @@ const {validateSameUserData} = require("../utils/user/validationSameUserData");
 const {validateNewPasswordData} = require("../utils/user/validationChangePassword");
 const {
     UserNotUpdatedDataError, UserNotFoundError,
-    UserDeletionError, UserCredentialsError
+    UserDeletionError, UserCredentialsError, UserTransactionError
 } = require("../errors/user/userExceptions");
 
-module.exports = (models) => {
+module.exports = (sequelize) => {
     class User extends Model {
         static initModel(sequelize) {
             return super.init({
@@ -55,8 +55,6 @@ module.exports = (models) => {
             });
         };
 
-        v
-
         static registerUser = async ({username = "", phone = "", email = "", password = "", confirm_password = ""}) => {
             try {
                 await validateUserData({username, phone, email, password, confirm_password});
@@ -66,27 +64,28 @@ module.exports = (models) => {
             }
 
             let hashedPassword = await bcrypt.hash(password, 10);
-            let createdUser = await this.create({
-                username: username,
-                password: hashedPassword,
-                phone: phone,
-                email: email
-            });
-            if (createdUser.username === "admin") {
-                try {
-                    createdUser = await models.permission.createAdminPermission({currentAdmin: createdUser});
-                } catch (e) {
-                    createdUser.addPermission(await models.permission.findOne({
-                            where: {
-                                name: "admin"
-                            }
-                        })
-                    );
-                    e.messages[0].text += "\nОно было добавлено к Вашему аккаунту!";
-                    throw e;
+            const t = await sequelize.transaction();
+            try {
+                const createdUser = await this.create({
+                    username: username,
+                    password: hashedPassword,
+                    phone: phone,
+                    email: email
+                }, {transaction: t});
+                if (createdUser.username !== "superuser") {
+                    const defaultPermission = await sequelize.models.permission.findOne({
+                        where: {
+                            name: "default"
+                        }
+                    });
+                    await createdUser.setPermissions([defaultPermission], { transaction: t });
                 }
+                await t.commit();
+                return createdUser;
+            } catch (e) {
+                await t.rollback();
+                throw new UserTransactionError("An error occurred during the transaction", [{text: "Ошибка при создании пользователя с правом по умолчанию!"}]);
             }
-            return createdUser;
         };
 
         static editUser = async ({username = "", phone = "", email = "", userId = 0}) => {

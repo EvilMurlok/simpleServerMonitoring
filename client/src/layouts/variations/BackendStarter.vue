@@ -45,7 +45,7 @@
               {
                 name: 'Мой профиль',
                 to: '/retrieve-user/',
-                icon: 'si si-info'
+                icon: 'fa fa-user'
               },
 
               {
@@ -68,9 +68,14 @@
                 heading: true
               },
               {
-                name: 'Мои правав (в разработке)',
-                // to:,
-                icon: 'si si-plus'
+                name: 'Мои права (проекты)',
+                to: '/retrieve-all-projects-permissions/',
+                icon: 'far fa-eye-slash'
+              },
+              {
+                name: 'Мои права (общие)',
+                to: '/retrieve-all-common-permissions/',
+                icon: 'far fa-eye-slash'
               },
 
               {
@@ -148,11 +153,15 @@
         <!-- END Left Section -->
 
         <!-- Right Section -->
-        <div class="d-flex align-items-center">
-          <!--           Toggle Side Overlay-->
-          <!--          <base-layout-modifier action="sideOverlayToggle" variant="dual" size="sm" class="ml-2">-->
-          <!--            <i class="fa fa-fw fa-list-ul fa-flip-horizontal"></i>-->
-          <!--          </base-layout-modifier>-->
+        <div class="d-flex align-items-center justify-content-around">
+          <b-button variant="light"
+                    class="mr-4"
+                    to="/retrieve-user/"
+                    v-click-ripple
+          >
+            <i class="fa fa-user opacity-50 mr-1"></i>{{ $store.getters.USER.username }}
+          </b-button>
+
           <b-button variant="alt-danger"
                     @click="logout"
                     v-click-ripple
@@ -192,8 +201,8 @@
 </template>
 
 <script>
-import BaseLayout from '../Base'
 import {mapActions} from "vuex";
+import BaseLayout from '../Base'
 
 // SimpleBar, for more info and examples you can check out https://github.com/Grsmto/simplebar/tree/master/packages/simplebar-vue
 import simplebar from 'simplebar-vue'
@@ -206,7 +215,6 @@ export default {
   },
   data() {
     return {
-      username: localStorage.getItem("username") || '',
       // Override and set custom CSS classes to the container of each base layout element
       layoutClasses: {
         sideOverlay: '',

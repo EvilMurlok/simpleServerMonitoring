@@ -15,20 +15,10 @@ const user_register_post = async (req, res) => {
             }]
         });
     } catch (e) {
-        if (e instanceof PermissionSameCredentialsError) {
-            e.messages.push({
-                text: "Пользователь admin успешно зарегистрирован!"
-            });
-            res.send({
-               status: "success",
-               messages: e.messages
-            });
-        } else {
-            res.send({
-                status: "warning",
-                messages: e.messages
-            });
-        }
+        res.send({
+            status: "warning",
+            messages: e.messages
+        });
     }
 }
 
@@ -36,7 +26,7 @@ const user_edition = async (req, res) => {
     let {username, phone, email} = req.body;
     const userId = req.user.id;
     try {
-        const [,updatedUser] = await models.user.editUser({username, phone, email, userId});
+        const [, updatedUser] = await models.user.editUser({username, phone, email, userId});
         res.send({
             status: "success",
             user: updatedUser,
@@ -63,7 +53,12 @@ const user_change_password = async (req, res) => {
     const userId = req.user.id;
     const {currentPassword, newPassword, confirmNewPassword} = req.body;
     try {
-        const updatedUser = await models.user.changePassword({userId, currentPassword, newPassword, confirmNewPassword});
+        const updatedUser = await models.user.changePassword({
+            userId,
+            currentPassword,
+            newPassword,
+            confirmNewPassword
+        });
         res.send({
             updatedUser: updatedUser,
             status: "success",
@@ -103,7 +98,7 @@ const user_deletion = async (req, res) => {
         res.send({
             numberDeletedUsers: numberDeletedUsers,
             status: "success",
-            messages: [{ text: "Пользователь успешно удален!"}]
+            messages: [{text: "Пользователь успешно удален!"}]
         });
     } catch (e) {
         res.send({

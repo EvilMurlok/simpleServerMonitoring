@@ -36,9 +36,17 @@ class TagDeletionError extends TagCommonError {
     }
 }
 
+class TagTransactionError extends TagCommonError {
+    constructor(message, messages) {
+        super(message, messages);
+        this.name = "TagTransactionError";
+    }
+}
+
 module.exports = {
     TagCredentialsError,
     TagSameCredentialsError,
     TagNotUpdatedError,
-    TagDeletionError
+    TagDeletionError,
+    TagTransactionError
 }

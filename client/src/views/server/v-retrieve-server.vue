@@ -55,23 +55,28 @@
             >
               <div class="m-1 d-flex justify-content-between">
                 <label class="form-check-label mb-2">Теги сервера</label>
+                <p>Добавить тег данному серверу можно <code @click="addTagToServer(server.id)"
+                                                      style="cursor: pointer">тут</code>
+                </p>
                 <b-button variant="alt-info"
                           class="mr-1"
                           @click="chooseAll"
-                          v-if="!checkBoxesData.isChosenAll"
+                          v-if="!checkBoxesData.isChosenAll && allTags.length"
                 >
                   <i class="si si-check opacity-50 mr-1"></i> Выбрать все
                 </b-button>
                 <b-button variant="alt-info"
                           class="mr-1"
                           @click="chooseAll"
-                          v-else
+                          v-else-if="checkBoxesData.isChosenAll && allTags.length"
                 >
                   <i class="si si-close opacity-50 mr-1"></i> Убрать все
                 </b-button>
               </div>
 
-              <div class="d-flex flex-wrap">
+              <div class="d-flex flex-wrap"
+                   v-if="allTags.length"
+              >
                 <b-form-checkbox v-for="tag in allTags"
                                  :key="tag.name"
                                  :value="tag.id"
@@ -84,9 +89,14 @@
                                   'margin': '3px'
                         }"
                   >
-                  {{ tag.name }}
-                </span>
+                    {{ tag.name }}
+                  </span>
                 </b-form-checkbox>
+              </div>
+              <div v-else>
+                <p class="font-size-sm">
+                  Команда не добавила ни одного тега.
+                </p>
               </div>
             </b-form-checkbox-group>
             <div class="form-group">
@@ -214,6 +224,15 @@ export default {
   },
 
   methods: {
+    addTagToServer(serverToAddId) {
+      this.$router.push({
+        name: "createTag",
+        params: {
+          serverToAddId
+        }
+      });
+    },
+
     chooseAll() {
       if (this.checkBoxesData.isChosenAll) {
         this.checkBoxesData.tagIds = [];

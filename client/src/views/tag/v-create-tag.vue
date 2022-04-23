@@ -208,6 +208,9 @@ export default {
     } else {
       this.messages_data = {type: "warning", messages: []};
     }
+    if (this.$route.params.serverToAddId) {
+      this.checkBoxesData.serverIds.push(this.$route.params.serverToAddId);
+    }
     this.$http
         .get(`/server/retrieve-filtered-user-servers/`, {
           params: {

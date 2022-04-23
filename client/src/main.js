@@ -45,7 +45,7 @@ Vue.prototype.$http = axios;
 Vue.config.productionTip = false
 
 axios.defaults.withCredentials = true
-axios.defaults.baseURL = 'http://localhost:4000/';
+axios.defaults.baseURL = 'http://localhost:9000/';
 // axios.defaults.baseURL = 'http://159.223.42.191:4000/';
 
 new Vue({

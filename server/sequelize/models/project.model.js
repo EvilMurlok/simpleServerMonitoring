@@ -4,13 +4,14 @@ const {validateProjectData} = require("../utils/project/validateProjectData");
 const {validateSameProjectData} = require("../utils/project/validateSameProjectData");
 
 const {
-    ProjectCommonError,
-    ProjectNotUpdatedDataError,
-    ProjectDeletionError,
-    ProjectNotFoundError
-} = require("../errors/project/projectException");
+    ProjectCommonError, ProjectNotUpdatedDataError,
+    ProjectDeletionError, ProjectNotFoundError,
+    ProjectTransactionError
 
-module.exports = (models) => {
+} = require("../errors/project/projectException");
+const {PermissionTransactionError, PermissionCredentialsError, PermissionSameCredentialsError} = require("../errors/permission/permissionErrors");
+
+module.exports = (sequelize) => {
     class Project extends Model {
         static initModel(sequelize) {
             return super.init({
@@ -43,10 +44,29 @@ module.exports = (models) => {
             } catch (e) {
                 throw e;
             }
-            return await this.create({
-                userId: userId,
-                name: projectName
-            });
+            const currentUser = await sequelize.models.user.findByPk(userId,);
+            const t = await sequelize.transaction();
+            try {
+
+                const createdProject = await this.create({
+                    userId: userId,
+                    name: projectName
+                }, {transaction: t});
+                const createdAdminPermission = await sequelize.models.permission.createAdminPermissionWithProject({project: createdProject}, t);
+                await currentUser.addPermission(createdAdminPermission, {transaction: t});
+                await t.commit();
+                return createdProject;
+            } catch (e) {
+                await t.rollback();
+                if (e instanceof PermissionTransactionError ||
+                    e instanceof PermissionCredentialsError ||
+                    e instanceof PermissionSameCredentialsError) {
+                    throw e;
+                } else {
+                    throw new ProjectTransactionError("An error occurred during the transaction", [{text: "Не удалось создать проект и добавить Вам право администратора!"}]);
+                }
+            }
+
         }
 
         static editProject = async ({projectId = 0, projectName = ""}) => {
@@ -64,14 +84,31 @@ module.exports = (models) => {
                     } catch (e) {
                         throw e;
                     }
-                }
-                return [await this.update({
-                    name: projectName
-                }, {
-                    where: {
-                        id: projectId
+                    const t = await sequelize.transaction();
+                    try {
+                        const updatedProject = await this.update({
+                            name: projectName
+                        }, {
+                            where: {
+                                id: projectId
+                            }
+                        });
+                        await sequelize.models.permission.update({
+                            name: `admin${projectName}`
+                        }, {
+                            where: {
+                                name: `admin${projectNameUser}`
+                            }
+                        });
+                        await t.commit();
+                        return [updatedProject, {projectName}];
+                    } catch (e) {
+                        console.error(e);
+                        await t.rollback();
+                        throw new ProjectTransactionError("An error occurred during the transaction", [{text: "Не удалось изменить проект и право администратора на этот проект!"}]);
                     }
-                }), {projectName}];
+                }
+
             }
             throw new ProjectNotFoundError("Such project not found", [{
                 text: "Такого проекта у Вас нет!"
@@ -79,7 +116,7 @@ module.exports = (models) => {
         }
 
         static retrieveUserProjects = async ({userId = 0, offset, limit}) => {
-            const currentUser = await models.user.findByPk(userId);
+            const currentUser = await sequelize.models.user.findByPk(userId);
             if (currentUser) {
                 return await this.findAndCountAll({
                     where: {userId: userId},
@@ -94,15 +131,15 @@ module.exports = (models) => {
         }
 
         static retrieveUserSortedProjectsWithServers = async ({userId, sortField, sortType, offset, limit}) => {
-            const currentUser = await models.user.findByPk(userId);
+            const currentUser = await sequelize.models.user.findByPk(userId);
             if (currentUser) {
                 return [
                     await this.findAll({
                         include: {
-                            model: models.server,
+                            model: sequelize.models.server,
                             required: false,
                             include: {
-                                model: models.tag,
+                                model: sequelize.models.tag,
                                 required: false,
                             }
                         },
@@ -121,7 +158,7 @@ module.exports = (models) => {
         }
 
         static retrieveAllUserProjects = async ({userId = 0}) => {
-            const currentUser = await models.user.findByPk(userId);
+            const currentUser = await sequelize.models.user.findByPk(userId);
             if (currentUser) {
                 return await this.findAll({
                     where: {userId: userId},

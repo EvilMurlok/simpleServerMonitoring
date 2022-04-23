@@ -41,11 +41,19 @@ class UserDeletionError extends UserCommonError {
     }
 }
 
+class UserTransactionError extends UserCommonError {
+    constructor (message, messages) {
+        super(message, messages);
+        this.name = "UserTransactionError";
+    }
+}
+
 module.exports = {
     UserCredentialsError,
     UserSameCredentialsError,
     UserNotUpdatedDataError,
     UserNotFoundError,
-    UserDeletionError
+    UserDeletionError,
+    UserTransactionError
 }
 

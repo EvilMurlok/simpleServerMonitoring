@@ -4,11 +4,13 @@
       <div
           class="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center py-2 text-center text-sm-left">
         <div class="flex-sm-fill">
-          <h1 class="h3 font-w700 mb-2">
+          <h1 class="h2 font-w700 mb-2">
             Мои проекты
           </h1>
         </div>
-        <div class="mt-3 mt-sm-0 ml-sm-3">
+        <div class="mt-3 mt-sm-0 ml-sm-3"
+             v-if="checkDefault() === true"
+        >
           <b-button variant="alt-info"
                     class="mr-1"
                     to="/create-project/"
@@ -176,6 +178,8 @@
 <script>
 import BaseMessage from "@/layouts/partials/BaseMessage";
 import breakAuth from "@/utils/authorization";
+import checkDefault from "@/utils/checkPermissions/default";
+
 
 export default {
   name: "v-retrieve-projects",
@@ -224,6 +228,10 @@ export default {
   },
 
   methods: {
+    checkDefault() {
+      return checkDefault.checkDefault();
+    },
+
     viewProject(userProject) {
       this.$router.push({
         path: `/retrieve-project/${userProject.id}/`,

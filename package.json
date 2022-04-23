@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "migrate": "node server/bin/migrate.js",
-    "insert_abilities": "node server/bin/insertion.js",
+    "insert_abilities": "node server/bin/insertionAbilities.js",
+    "insert_default_permission": "node server/bin/insertionDefaultPermission.js",
     "test_user_db": "node server/test/testUsersMethods.js",
     "test_project_db": "node server/test/testProjectMethods.js",
     "test_server_db": "node server/test/testServerMethods.js",

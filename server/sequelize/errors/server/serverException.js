@@ -41,11 +41,20 @@ class ServerDeletionError extends ServerCommonError {
     }
 }
 
+class ServerTransactionError extends ServerCommonError {
+    constructor(message, messages) {
+        super(message, messages);
+        this.name = "ServerTransactionError";
+    }
+}
+
+
 module.exports = {
     ServerCommonError,
     ServerNotUpdatedError,
     ServerDeletionError,
     ServerSameCredentialsError,
     ServerCredentialsError,
-    ServerNotFoundError
+    ServerNotFoundError,
+    ServerTransactionError
 }

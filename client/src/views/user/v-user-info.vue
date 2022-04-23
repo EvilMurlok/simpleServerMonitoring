@@ -153,7 +153,7 @@
 <script>
 import BaseMessage from "@/layouts/partials/BaseMessage";
 import breakAuth from "@/utils/authorization";
-import {mapGetters, mapActions} from "vuex";
+import {mapActions} from "vuex";
 import store from "../../../vuex/store";
 
 export default {
@@ -170,23 +170,6 @@ export default {
       this.messages_data = {type: "warning", messages: []};
     }
     this.user = store.getters.USER;
-
-    // this.$http
-    //     .get("/user/retrieve-user/")
-    //     .then(res => {
-    //       if (res.data.status === "warning") {
-    //         this.$router.push({
-    //           name: 'retrieveProjects',
-    //           params: {
-    //             messages_data: {type: res.data.status, messages: res.data.messages}
-    //           }
-    //         });
-    //       } else {
-    //
-    //       }
-    //
-    //     })
-    //     .catch(err => console.error(err));
   },
 
   data() {

@@ -82,10 +82,6 @@
     },
     {
       "entity": "User",
-      "action": "Create"
-    },
-    {
-      "entity": "User",
       "action": "Retrieve"
     },
     {
@@ -95,6 +91,21 @@
     {
       "entity": "User",
       "action": "Delete"
+    },
+    {
+      "entity": "User",
+      "action": "Retrieve",
+      "detail": "Self"
+    },
+    {
+      "entity": "User",
+      "action": "Update",
+      "detail": "Self"
+    },
+    {
+      "entity": "User",
+      "action": "Delete",
+      "detail": "Self"
     },
     {
       "entity": "Metric",

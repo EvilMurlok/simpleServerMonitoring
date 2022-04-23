@@ -1,25 +1,37 @@
-import Vue from 'vue'
-import Router from 'vue-router'
+import Vue from "vue"
+import Router from "vue-router"
 import store from "../../vuex/store"
 
-import vLogin from '@/views/authorization/v-login';
-import vRegister from '@/views/authorization/v-register';
+// errors
+import vNotFoundPage from "@/views/errors/v-not-found"
 
-import vAddProject from '@/views/project/v-create-project';
-import vRetrieveProject from '@/views/project/v-retrieve-project'
-import vRetrieveProjects from '@/views/project/v-retrieve-projects';
+// auth
+import vLogin from "@/views/authorization/v-login";
+import vRegister from "@/views/authorization/v-register";
 
-import vCreateServer from '@/views/server/v-create-server';
-import vRetrieveServer from '@/views/server/v-retrieve-server';
-import vRetrieveServers from '@/views/server/v-retrieve-servers';
+// project
+import vAddProject from "@/views/project/v-create-project";
+import vRetrieveProject from "@/views/project/v-retrieve-project"
+import vRetrieveProjects from "@/views/project/v-retrieve-projects";
 
-import vCreateTag from '@/views/tag/v-create-tag';
-import vRetrieveTag from '@/views/tag/v-retrieve-tag';
+// servers
+import vCreateServer from "@/views/server/v-create-server";
+import vRetrieveServer from "@/views/server/v-retrieve-server";
+import vRetrieveServers from "@/views/server/v-retrieve-servers";
 
+// tags
+import vCreateTag from "@/views/tag/v-create-tag";
+import vRetrieveTag from "@/views/tag/v-retrieve-tag";
+
+// permissions
+import vRetrieveProjectPermissions from "@/views/permission/v-retrieve-project-permissions";
+import vRetrieveCommonPermissions from "@/views/permission/v-retrieve-common-permissions";
+
+// user
 import vRetrieveUser from "@/views/user/v-user-info";
 
-import LayoutSimple from '@/layouts/variations/Simple';
-import LayoutBackend from '@/layouts/variations/BackendStarter';
+import LayoutSimple from "@/layouts/variations/Simple";
+import LayoutBackend from "@/layouts/variations/BackendStarter";
 import TestMetric from "@/views/test_views/TestMetric";
 
 
@@ -28,11 +40,26 @@ Vue.use(Router);
 let router = new Router({
     // mode: "history",
     routes: [
-        // auth
+        // main
         {
-            path: '/',
-            redirect: '/login/'
+            path: "/",
+            redirect: "/login/"
         },
+
+        // errors
+        {
+            path: '/not-found-page/',
+            component: vNotFoundPage,
+            children: [
+                {
+                    path: '/not-found-page/',
+                    name: 'notFoundPage',
+                    component: vNotFoundPage
+                }
+            ]
+        },
+
+        // auth
         {
             path: '/login/',
             component: LayoutSimple,
@@ -66,7 +93,7 @@ let router = new Router({
             path: '/create-project/',
             component: LayoutBackend,
             meta: {
-                requiresAuth: true
+                requiresAuth: true,
             },
             children: [
                 {
@@ -80,7 +107,7 @@ let router = new Router({
             path: '/retrieve-projects/',
             component: LayoutBackend,
             meta: {
-                requiresAuth: true
+                requiresAuth: true,
             },
             children: [
                 {
@@ -94,7 +121,7 @@ let router = new Router({
             path: '/retrieve-project/:projectId/',
             component: LayoutBackend,
             meta: {
-                requiresAuth: true
+                requiresAuth: true,
             },
             children: [
                 {
@@ -110,7 +137,7 @@ let router = new Router({
             path: '/create-server/',
             component: LayoutBackend,
             meta: {
-                requiresAuth: true
+                requiresAuth: true,
             },
             children: [
                 {
@@ -179,13 +206,45 @@ let router = new Router({
             ]
         },
 
+        // permissions
+        {
+            path: '/retrieve-all-projects-permissions/',
+            component: LayoutBackend,
+            meta: {
+                requiresAuth: true,
+                requiresDefault: true
+            },
+            children: [
+                {
+                    path: '/retrieve-all-projects-permissions/',
+                    name: 'retrieveProjectPermissions',
+                    component: vRetrieveProjectPermissions
+                }
+            ]
+        },
+        {
+            path: '/retrieve-all-common-permissions/',
+            component: LayoutBackend,
+            meta: {
+                requiresAuth: true,
+                requiresDefault: true
+            },
+            children: [
+                {
+                    path: '/retrieve-all-common-permissions/',
+                    name: 'retrieveCommonPermissions',
+                    component: vRetrieveCommonPermissions
+                }
+            ]
+        },
 
         //user
         {
             path: '/retrieve-user/',
             component: LayoutBackend,
             meta: {
-                requiresAuth: true
+                requiresAuth: true,
+                requiresDefault: true
             },
             children: [
                 {
@@ -199,7 +258,6 @@ let router = new Router({
             path: '/button',
             redirect: '/button',
             component: LayoutSimple,
-            props: true,
             meta: {
                 guest: true
             },
@@ -215,6 +273,7 @@ let router = new Router({
 });
 
 router.beforeEach((to, from, next) => {
+    console.log(from.ame, to.name);
     if (to.matched.some(record => record.meta.requiresAuth)) {
         store.dispatch("GET_PERMISSIONS_FROM_API")
             .then(res => {

@@ -1,15 +1,16 @@
 const {Op, Model, DataTypes} = require("sequelize");
 
 const {
-    ServerCommonError,
-    ServerDeletionError,
-    ServerNotUpdatedError,
-    ServerNotFoundError
+    ServerCommonError, ServerDeletionError,
+    ServerNotUpdatedError, ServerNotFoundError,
+    ServerTransactionError, ServerCredentialsError,
+    ServerSameCredentialsError
 } = require("../errors/server/serverException");
 const {validateServerData} = require("../utils/server/validationServerData");
 const {validateSameServerData} = require("../utils/server/validationSameServerData");
+const {getAllTagsOfServers} = require("../utils/server/getAllTagsOfServers")
 
-module.exports = (models) => {
+module.exports = (sequelize) => {
     class Server extends Model {
         static initModel(sequelize) {
             return super.init({
@@ -41,13 +42,14 @@ module.exports = (models) => {
         };
 
         static createServer = async ({projectId = 0, projectName = "", hostname = "", ip = ""}) => {
-            const currentProjectById = await models.project.findByPk(projectId);
-            const currentProjectByName = await models.project.findOne({
+            const currentProjectById = await sequelize.models.project.findByPk(projectId);
+            const currentProjectByName = await sequelize.models.project.findOne({
                 where: {
                     name: projectName
                 }
             });
-            if (currentProjectByName || currentProjectById) {
+            const currentProject = currentProjectByName || currentProjectById;
+            if (currentProject) {
                 projectId = projectId || currentProjectByName.id
                 try {
                     await validateServerData({hostname, ip});
@@ -55,73 +57,189 @@ module.exports = (models) => {
                 } catch (e) {
                     throw e;
                 }
-                return await this.create({
-                    hostname: hostname,
-                    ip: ip,
-                    projectId: projectId
-                });
+                const t = await sequelize.transaction();
+                try {
+                    const createdServer = await this.create({
+                        hostname: hostname,
+                        ip: ip,
+                        projectId: projectId
+                    }, {transaction: t});
+                    let adminPermission = await currentProject.getPermissions({
+                        where: {
+                            name: `admin${currentProject.name}`
+                        }
+                    }, {transaction: t});
+                    adminPermission = adminPermission[0];
+                    console.log(adminPermission);
+                    await adminPermission.addServer(createdServer, {transaction: t});
+                    await t.commit();
+                    return createdServer;
+                } catch (e) {
+                    console.error(e);
+                    await t.rollback();
+                    throw new ServerTransactionError("An error occurred during the transaction", [{text: "Не удалось добавить сервер и обновить права администратора!"}]);
+                }
             }
             throw new ServerCommonError("Fail to create server", [{
                 text: "Невозможно создать сервер!"
             }]);
         };
 
-        static editServer = async ({projectId = 0, serverId = 0, newProjectName = "", hostname = "", ip = "", tagIds = []}) => {
-            const currentProject = await models.project.findByPk(projectId);
+        static editServer = async ({
+                                       projectId = 0,
+                                       serverId = 0,
+                                       newProjectName = "",
+                                       hostname = "",
+                                       ip = "",
+                                       tagIds = []
+                                   }) => {
+            const currentProject = await sequelize.models.project.findByPk(projectId);
             if (currentProject) {
                 const currentServer = await this.findOne({
                     where: {
-                        [Op.and]: [
-                            {
-                                id: serverId
-                            },
-                            {
-                                projectId: projectId
-                            }
-                        ]
+                        id: serverId,
+                        projectId: projectId
                     }
                 });
                 if (currentServer) {
-                    const currentServerTags = await currentServer.getTags();
-                    const currentServerTagsIds = currentServerTags.map(tag => tag.id);
-                    let isSameTags = currentServerTagsIds.length === tagIds.length;
-                    if (isSameTags) {
-                        for (let tagIdIndex in tagIds) {
-                            if (tagIds[tagIdIndex] !== currentServerTagsIds[tagIdIndex]){
-                                isSameTags = false;
-                                break;
+                    const t = await sequelize.transaction();
+                    try {
+                        const currentServerTags = await currentServer.getTags({}, {transaction: t});
+                        const currentServerTagsIds = currentServerTags.map(tag => tag.id);
+                        let isSameTags = currentServerTagsIds.length === tagIds.length;
+                        if (isSameTags) {
+                            for (let tagIdIndex in tagIds) {
+                                if (tagIds[tagIdIndex] !== currentServerTagsIds[tagIdIndex]) {
+                                    isSameTags = false;
+                                    break;
+                                }
                             }
                         }
-                    }
-                    const [hostnameUser, ipUser] = [currentServer.hostname, currentServer.ip];
-                    if (hostname === hostnameUser && ip === ipUser && (currentProject.name === newProjectName || !newProjectName || newProjectName === "Не выбрано") && isSameTags) {
-                        throw new ServerNotUpdatedError("The server was not updated", [{
-                            text: "Данные о сервере изменены не были!"
-                        }]);
-                    }
-                    try {
-                        await validateServerData({hostname, ip});
-                        await validateSameServerData.bind(this)({projectId, hostname, ip, hostnameUser, ipUser}, true);
-                    } catch (e) {
-                        throw e;
-                    }
-                    newProjectName = newProjectName || currentProject.name;
-                    const newProjectByName = await models.project.findOne({
-                        where: {name: newProjectName}
-                    });
-                    const chosenTags = await models.tag.findAll({
-                        where: {id: tagIds}
-                    });
-                    currentServer.setTags(chosenTags);
-                    return [await this.update({
-                        hostname: hostname,
-                        ip: ip,
-                        projectId: newProjectByName.id
-                    }, {
-                        where: {
-                            id: serverId
+                        const [hostnameUser, ipUser] = [currentServer.hostname, currentServer.ip];
+                        if (hostname === hostnameUser && ip === ipUser && (currentProject.name === newProjectName || !newProjectName || newProjectName === "Не выбрано") && isSameTags) {
+                            throw new ServerNotUpdatedError("The server was not updated", [{
+                                text: "Данные о сервере изменены не были!"
+                            }]);
                         }
-                    }), {hostname, ip, newProjectName}];
+                        try {
+                            await validateServerData({hostname, ip});
+                            await validateSameServerData.bind(this)({
+                                projectId,
+                                hostname,
+                                ip,
+                                hostnameUser,
+                                ipUser
+                            }, true);
+                        } catch (e) {
+                            throw e;
+                        }
+                        newProjectName = newProjectName || currentProject.name;
+                        const newProjectByName = await sequelize.models.project.findOne({
+                            where: {name: newProjectName}
+                        }, {transaction: t});
+                        const chosenTags = await sequelize.models.tag.findAll({
+                            where: {id: tagIds}
+                        }, {transaction: t});
+                        await currentServer.setTags(chosenTags, {transaction: t});
+
+                        // if the new project we should move
+                        // the server from all currentProjectPermissions to newProjectPermissions
+                        const currentProjectPermissions = await currentProject.getPermissions({}, {transaction: t});
+                        const newProjectPermissions = await newProjectByName.getPermissions({}, {transaction: t});
+
+                        const newProjectServers = await newProjectByName.getServers({}, {transaction: t});
+                        const currentProjectServers = await currentProject.getServers({where: {ip: {[Op.ne]: currentServer.ip}}}, {transaction: t});
+                        // we should check if the list of the server tags was changed and move them from currentProjectPermissions to newProjectPermissions
+                        // get all currentProjectServers beside the currentServer
+                        if (currentProject.name !== newProjectByName.name) {
+                            // change the PermissionServer table if the other project has been chosen
+                            for (let currentProjectPermission of currentProjectPermissions) {
+                                await currentProjectPermission.removeServers([currentServer], {transaction: t});
+                            }
+                            for (let newProjectPermission of newProjectPermissions) {
+                                await newProjectPermission.addServers([currentServer], {transaction: t});
+                            }
+
+                            // change the PermissionTag table if the other project has been chosen
+
+                            // newProjectServers.push(currentServer);
+
+                            const allNewProjectTagsIds = await getAllTagsOfServers(newProjectServers);
+
+                            for (let chosenTag of chosenTags) {
+                                if (!allNewProjectTagsIds.has(chosenTag.id)) {
+                                    for (let newProjectPermission of newProjectPermissions) {
+                                        await newProjectPermission.addTags([chosenTag], {transaction: t});
+                                    }
+                                }
+                            }
+
+                            const allCurrentProjectTagsIds = await getAllTagsOfServers(currentProjectServers);
+
+                            for (let currentServerTag of currentServerTags) {
+                                if (!allCurrentProjectTagsIds.has(currentServerTag.id)) {
+                                    for (let currentProjectPermission of currentProjectPermissions) {
+                                        await currentProjectPermission.removeTags([currentServerTag], {transaction: t});
+                                    }
+                                }
+                            }
+
+                            console.log(allCurrentProjectTagsIds);
+
+                        } else {
+                            if (!isSameTags) {
+
+                                // for each server we should get all tags without repetition
+                                const allProjectTagsIds = await getAllTagsOfServers(currentProjectServers);
+
+                                console.log(allProjectTagsIds);
+                                // we should find all tags which don't belong to allProjectTagsIds and belong to currentServer and don't belong to newServer
+                                // remove them from all currentProjectPermissions
+                                for (let currentServerTag of currentServerTags) {
+                                    if (!allProjectTagsIds.has(currentServerTag.id) && !tagIds.includes(currentServerTag.id)) {
+                                        for (let currentProjectPermission of currentProjectPermissions) {
+                                            await currentProjectPermission.removeTags([currentServerTag], {transaction: t});
+                                        }
+                                    }
+                                }
+
+
+                                // we should find all tags which belong to newServer and don't belong to allProjectTagsIds and don't belong to currentServer
+                                // add them to all currentProjectPermissions
+                                for (let chosenTag of chosenTags) {
+                                    if (!allProjectTagsIds.has(chosenTag.id) && !currentServerTagsIds.includes(chosenTag.id)) {
+                                        for (let currentProjectPermission of currentProjectPermissions) {
+                                            await currentProjectPermission.addTags([chosenTag], {transaction: t});
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        console.log("UPDATE!");
+                        const updatedServer = [await this.update({
+                            hostname: hostname,
+                            ip: ip,
+                            projectId: newProjectByName.id
+                        }, {
+                            where: {
+                                id: serverId
+                            }
+                        }, {transaction: t}), {hostname, ip, newProjectName}];
+
+                        await t.commit();
+                        return updatedServer;
+                    } catch (e) {
+                        console.error(e);
+                        await t.rollback();
+                        if (e instanceof ServerNotUpdatedError || e instanceof ServerCredentialsError || e instanceof ServerSameCredentialsError) {
+                            throw e;
+                        } else {
+                            console.error(e);
+                            throw new ServerTransactionError("An error occurred during the transaction", [{text: "Не удалось изменить сервер и обновить права, связанные с сервером!"}]);
+                        }
+                    }
+
                 } else {
                     throw new ServerNotFoundError("Such server not found", [{
                         text: "Такой сервер не найден!"
@@ -134,23 +252,23 @@ module.exports = (models) => {
         }
 
         static retrieveUserServers = async ({userId = 0}) => {
-            return await models.user.findAll({
+            return await sequelize.models.user.findAll({
                 where: {
                     id: userId
                 },
                 include: {
-                    model: models.project,
+                    model: sequelize.models.project,
                     required: true,
                     include: {
-                        model: models.server,
+                        model: sequelize.models.server,
                         required: true,
                         include: {
-                            model: models.tag,
+                            model: sequelize.models.tag,
                             required: false,
                         }
                     }
                 },
-                order: [[models.project, "name", "DESC"], [models.project, models.server, "hostname", "ASC"]]
+                order: [[sequelize.models.project, "name", "DESC"], [sequelize.models.project, sequelize.models.server, "hostname", "ASC"]]
             });
         }
 
@@ -163,12 +281,12 @@ module.exports = (models) => {
                                                         createdMin,
                                                         createdMax
                                                     }, isFilterTag = false) => {
-            return await models.user.findAll({
+            return await sequelize.models.user.findAll({
                 where: {
                     id: userId
                 },
                 include: {
-                    model: models.project,
+                    model: sequelize.models.project,
                     required: true,
                     where: {
                         name: {
@@ -176,7 +294,7 @@ module.exports = (models) => {
                         }
                     },
                     include: {
-                        model: models.server,
+                        model: sequelize.models.server,
                         required: true,
                         where: {
                             [Op.and]: [
@@ -203,7 +321,7 @@ module.exports = (models) => {
                             ]
                         },
                         include: {
-                            model: models.tag,
+                            model: sequelize.models.tag,
                             required: isFilterTag,
                             where: {
                                 name: {
@@ -213,7 +331,7 @@ module.exports = (models) => {
                         }
                     }
                 },
-                order: [[models.project, "name", "DESC"]]
+                order: [[sequelize.models.project, "name", "DESC"]]
             });
         }
 
@@ -222,25 +340,25 @@ module.exports = (models) => {
                                                       sortField,
                                                       sortType,
                                                   }) => {
-            return await models.user.findAll({
+            return await sequelize.models.user.findAll({
                 where: {
                     id: userId
                 },
                 include: {
-                    model: models.project,
+                    model: sequelize.models.project,
                     required: true,
                     include: {
-                        model: models.server,
+                        model: sequelize.models.server,
                         required: true,
                     },
                 },
-                order: [[models.project, sortField, sortType]]
+                order: [[sequelize.models.project, sortField, sortType]]
             });
 
         }
 
         static retrieveProjectServers = async ({projectId = 0}) => {
-            const currentProject = await models.project.findByPk(projectId);
+            const currentProject = await sequelize.models.project.findByPk(projectId);
             if (currentProject) {
                 return await this.findAll({
                     where: {projectId: projectId}
@@ -252,15 +370,15 @@ module.exports = (models) => {
         }
 
         static retrieveProjectServer = async ({serverId = 0, projectId = 0}) => {
-            const currentServer = await models.project.findOne({
+            const currentServer = await sequelize.models.project.findOne({
                 attributes: ["name"],
                 where: {id: projectId},
                 include: {
-                    model: models.server,
+                    model: sequelize.models.server,
                     required: true,
                     where: {id: serverId},
                     include: {
-                        model: models.tag,
+                        model: sequelize.models.tag,
                         required: false,
                     }
                 },
@@ -295,7 +413,7 @@ module.exports = (models) => {
         }
 
         static retrieveServersByTags = async ({tagIds = []}) => {
-            const tags = await models.tag.findAll({
+            const tags = await sequelize.models.tag.findAll({
                 where: {
                     id: tagIds
                 }
@@ -309,13 +427,26 @@ module.exports = (models) => {
         }
 
         static retrieveAllServerTags = async ({serverId = 0}) => {
-            const currentServer = await models.server.findByPk(serverId);
+            const currentServer = await sequelize.models.server.findByPk(serverId);
             if (currentServer) {
                 return await currentServer.getTags();
             }
             throw new ServerNotFoundError("Such server not found!", [{
                 text: "В данном проекте такого сервера не найдено!"
             }]);
+        }
+
+        static getProjectsByServers = async ({serverIds = []}) => {
+            const projectIds = new Set();
+            for (let serverId of serverIds) {
+                projectIds.add((await this.findByPk(serverId)).projectId);
+            }
+
+            return await sequelize.models.project.findAll({
+                where: {
+                    id: Array.from(projectIds)
+                }
+            });
         }
 
         static deletionServer = async ({serverId = 0, projectId = 0}) => {

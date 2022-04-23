@@ -1,15 +1,13 @@
 const {Model, DataTypes, Op} = require("sequelize");
 const generateColor = require("../utils/tags/generateColor")
 const {
-    TagSameCredentialsError,
-    TagCredentialsError,
-    TagNotUpdatedError,
-    TagDeletionError
+    TagSameCredentialsError, TagCredentialsError,
+    TagNotUpdatedError, TagDeletionError,
+    TagTransactionError
 } = require("../errors/tag/tagErrors");
-const {models} = require("../../sequelize");
 
 
-module.exports = (models) => {
+module.exports = (sequelize) => {
     class Tag extends Model {
         static initModel(sequelize) {
             return super.init({
@@ -153,21 +151,36 @@ module.exports = (models) => {
                 throw e;
             }
 
-            const myTag = await this.create({
-                name: tagName,
-                color: color
-            });
-
-            if (serverIds.length > 0) {
-                const serversToAdd = await models.server.findAll({
-                    where: {
-                        id: serverIds
+            const t = await sequelize.transaction();
+            try {
+                const myTag = await this.create({
+                    name: tagName,
+                    color: color
+                }, {transaction: t});
+                if (serverIds.length > 0) {
+                    const serversToAdd = await sequelize.models.server.findAll({
+                        where: {
+                            id: serverIds
+                        }
+                    }, {transaction: t});
+                    await myTag.addServers(serversToAdd, {transaction: t});
+                    const projectsByServers = await sequelize.models.server.getProjectsByServers({serverIds: serverIds}, {transaction: t});
+                    console.log(projectsByServers);
+                    for (let project of projectsByServers) {
+                        const projectAdminPermission = await sequelize.models.permission.findOne({
+                            where: {name: `admin${project.name}`}
+                        }, {transaction: t});
+                        await projectAdminPermission.addTags([myTag], {transaction: t});
                     }
-                });
+                }
 
-                await myTag.addServers(serversToAdd);
+                await t.commit();
+                return myTag;
+            } catch (e) {
+                console.error(e);
+                await t.rollback();
+                throw new TagTransactionError("An error occurred during the transaction", [{text: "Ошибка при создании тега и добавлении его в право администратора проекта!"}]);
             }
-            return myTag;
         }
 
         static retrieveTag = async ({tagId = 0, tagName = ""}) => {
@@ -192,7 +205,7 @@ module.exports = (models) => {
                     ]
                 },
                 include: {
-                    model: models.server,
+                    model: sequelize.models.server,
                     required: true,
                     where: {
                         deleted: {
@@ -232,7 +245,7 @@ module.exports = (models) => {
         }
 
         static retrieveAllProjectTags = async ({project = null}) => {
-            const adminPerm = await models.permission.findByProjectAndName({
+            const adminPerm = await sequelize.models.permission.findByProjectAndName({
                 project: project,
                 name: 'admin'
             });
@@ -242,11 +255,11 @@ module.exports = (models) => {
 
         static retrieveAllTags = async () => {
             return await Tag.findAll({
-               where: {
-                   deleted: {
-                       [Op.is]: null
-                   }
-               }
+                where: {
+                    deleted: {
+                        [Op.is]: null
+                    }
+                }
             });
         }
 

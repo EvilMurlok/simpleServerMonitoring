@@ -41,11 +41,19 @@ class ProjectNotFoundError extends ProjectCommonError {
     }
 }
 
+class ProjectTransactionError extends ProjectCommonError {
+    constructor (message, messages) {
+        super(message, messages);
+        this.name = "ProjectTransactionError";
+    }
+}
+
 module.exports = {
     ProjectCommonError,
     ProjectCredentialsError,
     ProjectSameCredentialsError,
     ProjectNotUpdatedDataError,
     ProjectDeletionError,
-    ProjectNotFoundError
+    ProjectNotFoundError,
+    ProjectTransactionError
 }

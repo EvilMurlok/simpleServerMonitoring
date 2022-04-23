@@ -1,6 +1,6 @@
 const {Model, DataTypes} = require("sequelize");
 
-module.exports = (models) => {
+module.exports = (sequelize) => {
     class Dashboard extends Model {
         static initModel(sequelize) {
             return super.init({

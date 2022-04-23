@@ -10,7 +10,7 @@ services:
     restart: on-failure
     working_dir: "/app"
     ports:
-      - "4000:4000"
+      - "9000:9000"
     depends_on:
       - db
     volumes:

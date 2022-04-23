@@ -312,6 +312,7 @@ export default {
   data() {
     return {
       sortData: {
+        sortComparator: {"DESC>": -1, "DESC<": 1, "ASC>": 1, "ASC<": -1},
         sortChangeType: {"DESC": "ASC", "ASC": "DESC", "": "ASC"},
         sortedField: "name",
         sortTypeCreated: "",
@@ -568,27 +569,16 @@ export default {
         [this.sortData.sortTypeCreated, this.sortData.sortTypeIp, this.sortData.sortTypeHostname] = ["", "", ""];
       }
 
-      if (sortedType === "DESC") {
-        this.userServersAll.sort((serverA, serverB) => {
-          if (serverA[this.sortData.sortedField] > serverB[this.sortData.sortedField]) {
-            return -1;
-          }
-          if (serverA[this.sortData.sortedField] < serverB[this.sortData.sortedField]) {
-            return 1;
-          }
-          return 0;
-        });
-      } else {
-        this.userServersAll.sort((serverA, serverB) => {
-          if (serverA[this.sortData.sortedField] > serverB[this.sortData.sortedField]) {
-            return 1;
-          }
-          if (serverA[this.sortData.sortedField] < serverB[this.sortData.sortedField]) {
-            return -1;
-          }
-          return 0;
-        });
-      }
+      this.userServersAll.sort((lhs, rhs) => {
+        if (lhs[this.sortData.sortedField] > rhs[this.sortData.sortedField]) {
+          return this.sortData.sortComparator[sortedType + ">"];
+        }
+        if (lhs[this.sortData.sortedField] < rhs[this.sortData.sortedField]) {
+          return this.sortData.sortComparator[sortedType + "<"];
+        }
+        return 0;
+      });
+
       if (this.pagination.isShowedMore) {
         this.userServersPart = this.userServersAll.slice(this.pagination.startPageServerIndex, this.pagination.offset);
       } else {

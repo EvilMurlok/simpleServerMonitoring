@@ -1,6 +1,6 @@
 const {Op} = require("sequelize");
 const {models} = require("../../sequelize");
-const {PermissionAccessDeniedError} = require("../../sequelize/errors/permission/permissionErrors");
+// const {PermissionAccessDeniedError} = require("../../sequelize/errors/permission/permissionErrors");
 
 // const create_admin_permission = async (req, res) => {
 //     const userId = req.user.id;
@@ -202,20 +202,70 @@ const edit_custom_permission = async (req, res) => {
     }
 }
 
-const retrieve_project_permissions = async (req, res) => {
-    const permissionId = req.params.permissionId;
-    try {
-        const projectPermissions = await models.permission.retrieveProjectPermissions({permissionId});
-        res.send({
-            status: "success",
-            servers: projectPermissions
-        });
-    } catch (e) {
-        res.send({
-            status: "warning",
-            messages: e.messages
-        });
+const retrieve_all_projects_user_permissions = async (req, res) => {
+    const [
+        userId,
+        permissionName,
+        projectName,
+        serverHostname,
+        serverIp,
+        tagName,
+
+    ] = [
+        req.user.id,
+        req.query.permissionName,
+        req.query.projectName,
+        req.query.filterHostname,
+        req.query.filterIp,
+        req.query.filterTag,
+    ];
+    let [
+        actions,
+        entities
+    ] = [
+        req.query.actions,
+        req.query.entities
+    ];
+    if (typeof entities === "string") {
+        entities = [entities];
     }
+    if (typeof actions === "string") {
+        actions = [actions];
+    }
+    let [isFilterServer, isFilterTag] = [serverHostname !== "%" || serverIp !== "%", tagName !== "%"];
+    let userAllProjectsPermissions = await models.permission.retrieveAllUserProjectsPermissions({
+        userId,
+        permissionName,
+        projectName,
+        entities,
+        actions,
+        serverHostname,
+        serverIp,
+        tagName
+    }, isFilterServer, isFilterTag);
+    if (userAllProjectsPermissions || userAllProjectsPermissions.length) {
+        console.log("QQQQ");
+    } else {
+        userAllProjectsPermissions = [];
+    }
+    res.send({
+        status: "success",
+        userAllProjectsPermissions: userAllProjectsPermissions
+    });
+}
+
+const retrieve_common_user_permissions = async (req, res) => {
+    const userId = req.user.id;
+    let userAllCommonPermissions = await models.permission.retrieveCommonUserPermissions({userId: userId});
+    if (userAllCommonPermissions && userAllCommonPermissions.length) {
+        console.log("QQQQ");
+    } else {
+        userAllCommonPermissions = [];
+    }
+    res.send({
+        status: "success",
+        userAllCommonPermissions: userAllCommonPermissions
+    });
 }
 
 const get_sub_permissions = async (req, res) => {
@@ -271,6 +321,8 @@ module.exports = {
     update_admin_permission_with_project,
     create_custom_permission,
     edit_custom_permission,
+    retrieve_all_projects_user_permissions,
+    retrieve_common_user_permissions,
     get_sub_permissions,
     delete_permission
 }

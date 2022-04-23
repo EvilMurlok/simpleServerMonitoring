@@ -1,12 +1,12 @@
 const {Model, DataTypes, Op} = require("sequelize");
 const {
-    PermissionCredentialsError,
-    PermissionSameCredentialsError, PermissionNotFoundError, PermissionCommonError,
+    PermissionCredentialsError, PermissionSameCredentialsError,
+    PermissionNotFoundError, PermissionCommonError,
+    PermissionTransactionError
 } = require("../errors/permission/permissionErrors");
-const {ServerCommonError, ServerNotFoundError} = require("../errors/server/serverException");
 
 
-module.exports = (models) => {
+module.exports = (sequelize) => {
     class Permission extends Model {
         static initModel(sequelize) {
             return super.init({
@@ -81,15 +81,15 @@ module.exports = (models) => {
             }
         }
 
-        static #validateSameAdminData = async () => {
-            const currentAdminPermission = await models.permission.findOne({
+        static #validateSameDefaultData = async () => {
+            const currentDefaultPermission = await sequelize.models.permission.findOne({
                 where: {
-                    name: "admin"
+                    name: "default"
                 }
             });
-            if (currentAdminPermission) {
-                throw new PermissionSameCredentialsError("Admin permission already exists!", [{
-                    text: "Право администратора уже существует!"
+            if (currentDefaultPermission) {
+                throw new PermissionSameCredentialsError("Default permission already exists!", [{
+                    text: "Право по умолчанию уже существует!"
                 }]);
             }
         }
@@ -106,7 +106,7 @@ module.exports = (models) => {
 
             let sameNamePermission = null;
 
-            if (selfId != null) {
+            if (selfId) {
                 // If you call this method from instance and don't want to change name
                 sameNamePermission = await project.getPermissions({
                     where: {
@@ -134,24 +134,8 @@ module.exports = (models) => {
             }
         }
 
-        static findByProjectAndName = async ({project = null, name = ""}) => {
-            try {
-                Permission.#validateName({name});
-            } catch (e) {
-                throw e;
-            }
-
-            return await Permission.findOne({
-                where: {
-                    name: name,
-                    projectId: project.id
-                }
-            })
-        }
-
-        //TODO move to project model
         static #getTagsAndServersOfProject = async (servers) => {
-            let tagIds = new Set;
+            let tagIds = new Set();
             let resServers = [];
             for (let server of servers) {
 
@@ -160,17 +144,13 @@ module.exports = (models) => {
                 if (serverTags.length <= 0) {
                     resServers.push(server);
                 } else {
-                    let ids = [];
-                    for (let server of serverTags) {
-                        ids.push(server.id);
+                    for (let tag of serverTags) {
+                        tagIds.add(tag.id);
                     }
-
-                    tagIds.add(...ids);
                 }
-
             }
-
-            const tags = await models.tag.findAll({
+            console.log(Array.from(tagIds));
+            const tags = await sequelize.models.tag.findAll({
                 where: {
                     id: Array.from(tagIds)
                 }
@@ -180,108 +160,6 @@ module.exports = (models) => {
                 tags: tags,
                 servers: resServers
             };
-        }
-
-        // can do anything in the project
-        static createAdminPermissionWithProject = async ({project = null}) => {
-            console.log(`\n\n\n\n${project.name}\n\n\n\n`);
-            try {
-                await Permission.#validateSameDataWithProject({name: 'admin', project: project});
-            } catch (e) {
-                throw e;
-            }
-
-            const adminProjectPermission = await this.create({
-                name: `admin${project.name}`,
-            });
-
-            const adminAbilities = [
-                ...await models.ability.retrieveAllByEntity({
-                    entity: 'User'
-                }),
-                ...await models.ability.retrieveAllByEntity({
-                    entity: 'Project'
-                }),
-                ...await models.ability.retrieveAllByEntity({
-                    entity: 'Dashboard'
-                }),
-                ...await models.ability.retrieveAllByEntity({
-                    entity: 'Permission'
-                }),
-                ...await models.ability.retrieveAllByEntity({
-                    entity: 'Server'
-                }),
-                ...await models.ability.retrieveAllByEntity({
-                    entity: 'Tag'
-                }),
-                ...await models.ability.retrieveAllByEntity({
-                    entity: 'Metric'
-                }),
-            ];
-
-            await adminProjectPermission.addAbilities(adminAbilities);
-            await adminProjectPermission.setProject(project);
-            const servers = await project.getServers();
-
-            const toAdd = await this.#getTagsAndServersOfProject(servers);
-
-            if (toAdd.tags.length > 0) {
-                await adminProjectPermission.addTags(toAdd.tags);
-            }
-            if (toAdd.servers.length > 0) {
-                await adminProjectPermission.addServers(toAdd.servers);
-            }
-            return adminProjectPermission;
-        }
-
-        static createAdminPermission = async ({currentAdmin = {}}) => {
-            try {
-                await Permission.#validateSameAdminData();
-            } catch (e) {
-                throw e;
-            }
-
-            const allAbilities = await models.ability.findAll();
-
-            const adminPermission = await models.permission.create({
-                name: "admin"
-            });
-
-            adminPermission.setAbilities(allAbilities);
-            const [
-                allTags,
-                allServers,
-                allProjects,
-                allDashboards
-            ] = [
-                await models.tag.findAll(),
-                await models.server.findAll(),
-                await models.project.findAll(),
-                await models.dashboard.findAll()
-            ];
-            allTags.forEach(tag => tag.addPermission(adminPermission));
-            allServers.forEach(server => server.addPermission(adminPermission));
-            allProjects.forEach(project => project.addPermission(adminPermission));
-            allDashboards.forEach(dashboard => dashboard.addPermission(adminPermission));
-            currentAdmin.addPermission(adminPermission);
-            return currentAdmin;
-        }
-
-
-
-        static updateAdminPermission = async ({project = null}) => {
-            const adminPermission = await this.findByProjectAndName({
-                project: project,
-                name: 'admin'
-            });
-
-            const servers = await project.getServers();
-
-            const toSet = await this.#getTagsAndServersOfProject(servers);
-            await adminPermission.setTags(toSet.tags);
-            await adminPermission.setServers(toSet.servers);
-
-            return adminPermission;
         }
 
         static #credentialsValidation = async ({
@@ -335,6 +213,164 @@ module.exports = (models) => {
             }
 
             return messages;
+        }
+
+        static findByProjectAndName = async ({project = null, name = ""}) => {
+            try {
+                Permission.#validateName({name});
+            } catch (e) {
+                throw e;
+            }
+
+            return await Permission.findOne({
+                where: {
+                    name: name,
+                    projectId: project.id
+                }
+            })
+        }
+
+        static createDefaultPermission = async () => {
+            try {
+                await this.#validateSameDefaultData();
+            } catch (e) {
+                console.error(e.message);
+                return;
+            }
+            const availableAbilities = await sequelize.models.ability.findAll({
+                where: {
+                    [Op.or]: [
+                        {
+                            [Op.and]: [
+                                {
+                                    entity: "User",
+                                },
+                                {
+                                    detail: "Self",
+                                }
+                            ]
+                        },
+                        {
+                            entity: "Project",
+                            action: {
+                                [Op.in]: ["Create", "Retrieve"]
+                            }
+                        }
+                    ]
+                }
+            });
+            const t = await sequelize.transaction();
+            try {
+                const defaultPermission = await sequelize.models.permission.create({
+                    name: "default"
+                });
+                await defaultPermission.setAbilities(availableAbilities, {transaction: t});
+                await t.commit();
+            } catch (e) {
+                console.error(e);
+                await t.rollback();
+            }
+        }
+
+        // can do anything in the project
+        static createAdminPermissionWithProject = async ({project = null}, transaction) => {
+            console.log(`\n\n\n\n${project.name}\n\n\n\n`);
+            try {
+                await Permission.#validateSameDataWithProject({name: `admin${project.name}`, project: project});
+            } catch (e) {
+                throw e;
+            }
+            const adminAbilities = await sequelize.models.ability.findAll({
+                where: {
+
+                    [Op.or]: [
+                        {
+                            entity: {
+                                [Op.in]: ["Dashboard", "Permission", "Server", "Tag", "Metric"]
+                            }
+                        },
+                        {
+                            [Op.and]: [
+                                {
+                                    entity: "Project"
+                                },
+                                {
+                                    action: {
+                                        [Op.in]: ["Update", "Delete"]
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }, {transaction: transaction});
+            try {
+                const adminProjectPermission = await this.create({
+                    name: `admin${project.name}`,
+                }, {transaction: transaction});
+
+                await adminProjectPermission.addAbilities(adminAbilities, {transaction: transaction});
+
+                await adminProjectPermission.setProject(project, {transaction: transaction});
+
+                const servers = await project.getServers();
+
+                const toAdd = await this.#getTagsAndServersOfProject(servers);
+
+                if (toAdd.tags.length > 0) {
+                    await adminProjectPermission.addTags(toAdd.tags, {transaction: transaction});
+                }
+                if (toAdd.servers.length > 0) {
+                    await adminProjectPermission.addServers(toAdd.servers, {transaction: transaction});
+                }
+                return adminProjectPermission;
+            } catch (e) {
+                console.log(e);
+                throw new PermissionTransactionError("An error occurred during the transaction", [{text: "Ошибка при создании права администратора на проект!"}]);
+            }
+
+
+            // let a = [
+            //     ...await sequelize.models.ability.retrieveAllByEntityDetail({
+            //         entity: "User",
+            //         detail: "Self"
+            //     }),
+            //     ...await sequelize.models.ability.retrieveAllByEntity({
+            //         entity: "Project"
+            //     }),
+            //     ...await sequelize.models.ability.retrieveAllByEntity({
+            //         entity: "Dashboard"
+            //     }),
+            //     ...await sequelize.models.ability.retrieveAllByEntity({
+            //         entity: "Permission"
+            //     }),
+            //     ...await sequelize.models.ability.retrieveAllByEntity({
+            //         entity: "Server"
+            //     }),
+            //     ...await sequelize.models.ability.retrieveAllByEntity({
+            //         entity: "Tag"
+            //     }),
+            //     ...await sequelize.models.ability.retrieveAllByEntity({
+            //         entity: "Metric"
+            //     }),
+            // ];
+
+
+        }
+
+        static updateAdminPermission = async ({project = null}) => {
+            const adminPermission = await this.findByProjectAndName({
+                project: project,
+                name: "admin"
+            });
+
+            const servers = await project.getServers();
+
+            const toSet = await this.#getTagsAndServersOfProject(servers);
+            await adminPermission.setTags(toSet.tags);
+            await adminPermission.setServers(toSet.servers);
+
+            return adminPermission;
         }
 
         static createCustomPermission = async ({
@@ -436,27 +472,129 @@ module.exports = (models) => {
             return this;
         }
 
-        static retrieveProjectPermissions = async ({projectId = 0}) => {
-            const currentProject = await models.project.findByPk(projectId);
-            if (currentProject) {
-                return await this.findAll({
+        static retrieveCommonUserPermissions = async ({userId = 0}) => {
+            const currentUserWithCommonPermissions = await sequelize.models.user.findAll({
+                where: {id: userId},
+                include: {
+                    model: sequelize.models.permission,
+                    required: true,
+                    attributes: ["id", "name"],
+                    through: {attributes: []},
                     where: {
-                        [Op.and]: [
-                            {
-                                projectId: projectId
-                            },
-                            // {
-                            //     deleted: {
-                            //         [Op.is]: null
-                            //     }
-                            // }
-                        ]
+                        projectId: {
+                            [Op.is]: null
+                        }
+                    },
+                    include: {
+                        model: sequelize.models.ability,
+                        required: true,
+                        attributes: ["id", "entity", "action", "detail"],
+                        through: {attributes: []}
                     }
-                });
+                },
+                order: [[sequelize.models.permission, "name", "ASC"]]
+
+            });
+            if (currentUserWithCommonPermissions.length) {
+                return currentUserWithCommonPermissions[0].permissions;
+            } else {
+                return currentUserWithCommonPermissions;
             }
-            throw new PermissionCommonError("Fail to get project permissions", [{
-                text: "Невозможно получить список Прав у Проекта!"
-            }]);
+        }
+
+        static retrieveAllUserProjectsPermissions = async ({
+                                                               userId = 0,
+                                                               permissionName = "%",
+                                                               projectName = "%",
+                                                               entities = ["Server", "Tag", "Dashboard", "Permission", "Project"],
+                                                               actions = ["Create", "Retrieve", "Update", "Delete"],
+                                                               serverHostname = "%",
+                                                               serverIp = "%",
+                                                               tagName = "%",
+                                                           }, isFilterServer = false, isFilterTag = false) => {
+            const currentUserWithProjectsPermissions = await sequelize.models.user.findAll({
+                where: {id: userId},
+                include: {
+                    model: sequelize.models.permission,
+                    required: true,
+                    attributes: ["id", "name"],
+                    through: {attributes: []},
+                    where: {
+                        projectId: {
+                            [Op.not]: null
+                        },
+                        name: {
+                            [Op.iLike]: `%${permissionName}%`
+                        }
+                    },
+                    include:
+                        [
+                            {
+                                model: sequelize.models.user,
+                                required: false,
+                                attributes: ["id", "username", "email", "phone"],
+                                through: {attributes: []}
+                            },
+                            {
+                                model: sequelize.models.ability,
+                                required: true,
+                                attributes: ["id", "entity", "action", "detail"],
+                                through: {attributes: []},
+                                where: {
+                                    entity: {
+                                        [Op.in]: entities
+                                    },
+                                    action: {
+                                        [Op.in]: actions
+                                    }
+                                }
+                            },
+
+                            {
+                                model: sequelize.models.project,
+                                required: true,
+                                attributes: ["id", "name"],
+                                where: {
+                                    name: {
+                                        [Op.iLike]: `%${projectName}%`
+                                    }
+                                }
+                            },
+
+                            {
+                                model: sequelize.models.server,
+                                required: isFilterServer,
+                                attributes: ["id", "hostname", "ip"],
+                                through: {attributes: []},
+                                where: {
+                                    hostname: {
+                                        [Op.iLike]: `%${serverHostname}%`
+                                    },
+                                    ip: {
+                                        [Op.iLike]: `%${serverIp}%`
+                                    }
+                                }
+                            },
+                            {
+                                model: sequelize.models.tag,
+                                required: isFilterTag,
+                                attributes: ["id", "name", "color"],
+                                through: {attributes: []},
+                                where: {
+                                    name: {
+                                        [Op.iLike]: `%${tagName}%`
+                                    }
+                                }
+                            },
+                        ]
+                },
+                order: [[sequelize.models.permission, "name", "ASC"]]
+            });
+            if (currentUserWithProjectsPermissions.length) {
+                return currentUserWithProjectsPermissions[0].permissions;
+            } else {
+                return currentUserWithProjectsPermissions;
+            }
         }
 
         static retrieveProjectPermission = async ({permissionId = 0, projectId = 0}) => {
@@ -498,7 +636,7 @@ module.exports = (models) => {
         getLinkedPermissionsRecursive = async () => {
             let sub = [];
 
-            let children = await models.permission.findAll({
+            let children = await sequelize.models.permission.findAll({
                 where: {
                     permissionId: this.id
                 },

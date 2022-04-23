@@ -24,7 +24,7 @@ const models = {
 }
 
 for (const model in models) {
-    const myModel = models[model](sequelize.models);
+    const myModel = models[model](sequelize);
     myModel.initModel(sequelize);
 }
 

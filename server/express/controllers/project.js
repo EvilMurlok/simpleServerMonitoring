@@ -11,7 +11,7 @@ const create_project = async (req, res) => {
         res.send({
             status: "success",
             messages: [{
-                text: `Проект ${createdProject.name} успешно создан!`
+                text: `Проект ${createdProject.name} успешно создан! Вы получили права администратора на него!`
             }],
             project: createdProject
         });

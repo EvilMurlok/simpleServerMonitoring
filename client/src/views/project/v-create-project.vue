@@ -57,8 +57,10 @@
 </template>
 
 <script>
+import router from "@/router/router";
 import BaseMessage from "@/layouts/partials/BaseMessage";
 import breakAuth from "@/utils/authorization";
+import checkDefault from "@/utils/checkPermissions/default";
 
 export default {
   name: "v-create-project",
@@ -71,6 +73,16 @@ export default {
     return {
       messages_data: {type: "warning", messages: []},
       projectName: '',
+    }
+  },
+
+  beforeCreate() {
+    if (!checkDefault.checkDefault()) {
+      router.push({
+        name: "notFoundPage",
+        replace: true
+      });
+      router.go(0);
     }
   },
 
