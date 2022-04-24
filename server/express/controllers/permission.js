@@ -202,6 +202,21 @@ const edit_custom_permission = async (req, res) => {
     }
 }
 
+const retrieve_permissions_by_name = async (req, res) => {
+    const [
+        userId,
+        permissionName
+    ] = [
+        req.user.id,
+        req.query.permissionName
+    ];
+    const permissionsByName = await models.permission.retrievePermissionsByName({userId, permissionName});
+    res.send({
+        status: "success",
+        permissionsByName: permissionsByName
+    });
+}
+
 const retrieve_all_projects_user_permissions = async (req, res) => {
     const [
         userId,
@@ -321,6 +336,7 @@ module.exports = {
     update_admin_permission_with_project,
     create_custom_permission,
     edit_custom_permission,
+    retrieve_permissions_by_name,
     retrieve_all_projects_user_permissions,
     retrieve_common_user_permissions,
     get_sub_permissions,

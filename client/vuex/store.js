@@ -4,20 +4,28 @@ import Vuex from 'vuex'
 import templateGetters from "./getters/templateGetters";
 import permissionGetters from "./getters/permissionGetters";
 import userGetters from "./getters/userGetters";
+import tagGetters from "./getters/tagGetters";
+import projectGetters from "./getters/projectGetters";
+import serverGetters from "./getters/serverGetters";
 
 import templateMutations from "./mutations/templateMutations";
 import permissionMutations from "./mutations/permissionMutations";
 import userMutations from "./mutations/userMutations";
+import tagMutations from "./mutations/tagMutations";
+import projectMutations from "./mutations/projectMutations";
+import serverMutations from "./mutations/serverMutations";
 
 import permissionApiRequests from "./actions/permissionApiRequests";
-// import permissionActions from "./actions/permissionActions";
 import userActions from "./actions/userActions";
+import tagApiRequests from "./actions/tagApiRequests";
+import projectApiRequests from "./actions/projectApiRequests";
+import serverApiRequests from "./actions/serverApiRequests";
 
 Vue.use(Vuex);
 
-const getters = {...templateGetters, ...permissionGetters, ...userGetters};
-const mutations = {...templateMutations, ...permissionMutations, ...userMutations};
-const actions = {...permissionApiRequests, ...userActions};
+const getters = {...templateGetters, ...permissionGetters, ...userGetters, ...tagGetters, ...projectGetters, ...serverGetters};
+const mutations = {...templateMutations, ...permissionMutations, ...userMutations, ...tagMutations, ...projectMutations, ...serverMutations};
+const actions = {...permissionApiRequests, ...userActions, ...tagApiRequests, ...projectApiRequests, ...serverApiRequests};
 
 
 export default new Vuex.Store({
@@ -56,6 +64,11 @@ export default new Vuex.Store({
             mainContent: '' // 'boxed', ''narrow'
         },
 
+        tagsByName: [],
+        permissionsByName: [],
+        projectsByName: [],
+        serversByHostname: [],
+        serversByIp: [],
         permissions: [],
         user: { username: "", phone: "", email: ""},
     },

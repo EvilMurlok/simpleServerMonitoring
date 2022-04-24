@@ -155,12 +155,24 @@ import BaseMessage from "@/layouts/partials/BaseMessage";
 import breakAuth from "@/utils/authorization";
 import {mapActions} from "vuex";
 import store from "../../../vuex/store";
+import checkDefault from "@/utils/checkPermissions/default";
+import router from "@/router/router";
 
 export default {
   name: "v-user-info",
 
   components: {
     BaseMessage
+  },
+
+  beforeCreate() {
+    if (!checkDefault.checkDefault()) {
+      router.push({
+        name: "notFoundPage",
+        replace: true
+      });
+      router.go(0);
+    }
   },
 
   created() {

@@ -216,6 +216,17 @@ module.exports = (sequelize) => {
             });
         }
 
+        static retrieveTagsByName = async ({tagName = "%"}) => {
+            return (await sequelize.models.tag.findAll({
+                where: {
+                    name: {
+                        [Op.iLike]: `%${tagName}%`
+                    }
+                },
+                attributes: ["name"]
+            })).map(tag => tag.name);
+        }
+
         static findOneOrCreateWithName = async ({tagName = ""}) => {
             const color = generateColor();
             try {

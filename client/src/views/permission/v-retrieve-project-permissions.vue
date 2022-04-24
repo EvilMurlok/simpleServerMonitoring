@@ -26,33 +26,52 @@
             <b-form-input id="filterPermissionName"
                           name="filterPermissionName"
                           placeholder="Имя права"
-                          aria-describedby="filterPermissionName-feedback"
                           type="text"
                           v-model="filterData.filterPermissionName"
+                          list="availablePermissionNames"
             >
             </b-form-input>
+            <datalist id="availablePermissionNames">
+              <option v-for="availablePermissionName in filterData.availablePermissionNames"
+                      :key="availablePermissionName"
+              >{{ availablePermissionName }}
+              </option>
+            </datalist>
           </b-col>
           <b-col sm="3">
             <label class="form-check-label mb-2">Назваение проекта</label>
             <b-form-input id="filterProjectName"
                           name="filterProjectName"
                           placeholder="Имя проекта"
-                          aria-describedby="filterProjectName-feedback"
                           type="text"
                           v-model="filterData.filterProjectName"
+                          list="availableProjectNames"
+
             >
             </b-form-input>
+            <datalist id="availableProjectNames">
+              <option v-for="availableProjectName in filterData.availableProjectNames"
+                      :key="availableProjectName"
+              >{{ availableProjectName }}
+              </option>
+            </datalist>
           </b-col>
           <b-col sm="2" class="mr-3">
             <label class="form-check-label mb-2">Хост сервера</label>
             <b-form-input id="filterHostname"
                           name="filterHostname"
                           placeholder="Хост сервера"
-                          aria-describedby="filterHostname-feedback"
                           type="text"
                           v-model="filterData.filterHostname"
+                          list="availableHostnames"
             >
             </b-form-input>
+            <datalist id="availableHostnames">
+              <option v-for="availableHostname in filterData.availableHostnames"
+                      :key="availableHostname"
+              >{{ availableHostname }}
+              </option>
+            </datalist>
           </b-col>
           <b-col sm="2" class="mr-3">
             <label class="form-check-label mb-2">IP сервера</label>
@@ -62,19 +81,32 @@
                           aria-describedby="filterIP-feedback"
                           type="text"
                           v-model="filterData.filterIp"
+                          list="availableIps"
             >
             </b-form-input>
+            <datalist id="availableIps">
+              <option v-for="availableIp in filterData.availableIps"
+                      :key="availableIp"
+              >{{ availableIp }}
+              </option>
+            </datalist>
           </b-col>
           <b-col sm="2" class="mr-3">
             <label class="form-check-label mb-2">Тег</label>
             <b-form-input id="filterTag"
                           name="filterTag"
                           placeholder="Tag"
-                          aria-describedby="filterTag-feedback"
                           type="text"
                           v-model="filterData.filterTag"
+                          list="availableTagNames"
             >
             </b-form-input>
+            <datalist id="availableTagNames">
+              <option v-for="availableTagName in filterData.availableTagNames"
+                      :key="availableTagName"
+              >{{ availableTagName }}
+              </option>
+            </datalist>
           </b-col>
         </b-row>
         <b-row class="my-1 m-3">
@@ -308,6 +340,7 @@
 
 <script>
 import BaseMessage from "@/layouts/partials/BaseMessage";
+import store from "../../../vuex/store";
 
 export default {
   name: "v-retrieve-permissions",
@@ -328,6 +361,11 @@ export default {
       },
 
       filterData: {
+        availablePermissionNames: [],
+        availableTagNames: [],
+        availableProjectNames: [],
+        availableHostnames: [],
+        availableIps: [],
         filterPermissionName: "",
         filterProjectName: "",
         filterHostname: "",
@@ -337,37 +375,101 @@ export default {
     }
   },
 
+  watch: {
+    'filterData.filterPermissionName'(permissionName) {
+      this.filterData.availablePermissionNames = store.getters.PERMISSIONS_BY_NAME.filter(permName => permName.toLowerCase().includes(permissionName.toLowerCase()));
+    },
+
+    'filterData.filterTag'(tagName) {
+      this.filterData.availableTagNames = store.getters.TAGS_BY_NAME.filter(tgName => tgName.toLowerCase().includes(tagName.toLowerCase()));
+    },
+
+    'filterData.filterHostname'(hostname) {
+      this.filterData.availablePermissionNames = store.getters.SERVERS_BY_HOSTNAME.filter(nameOfHost => nameOfHost.toLowerCase().includes(hostname.toLowerCase()));
+    },
+
+    'filterData.filterIp'(ip) {
+      this.filterData.availablePermissionNames = store.getters.SERVERS_BY_IP.filter(ipOfHost => ipOfHost.toLowerCase().includes(ip.toLowerCase()));
+    },
+
+    'filterData.filterProjectName'(projectName) {
+      this.filterData.availablePermissionNames = store.getters.PROJECTS_BY_NAME.filter(projName => projName.toLowerCase().includes(projectName.toLowerCase()));
+    },
+
+
+
+  },
+
   created() {
     if (this.$route.params.messages_data !== undefined) {
       this.messages_data = this.$route.params.messages_data;
     } else {
       this.messages_data = {type: "warning", messages: []};
     }
-    console.log(typeof this.$route.query.actions);
-    console.log(this.$route.query.actions);
-    console.log("------------------------------");
-    console.log(typeof this.$route.query.entities);
-    console.log( this.$route.query.entities);
     this.$http
         .get("/permission/retrieve-all-projects-user-permissions/", {
           params: {
-            permissionName: (this.$route.query.permissionName === undefined || this.$route.query.permissionName === "all") ? "%" : this.$route.query.permissionName,
-            projectName: (this.$route.query.projectName === undefined || this.$route.query.projectName === "all") ? "%" : this.$route.query.projectName,
-            filterHostname: (this.$route.query.filterHostname === undefined || this.$route.query.filterHostname === "all") ? "%" : this.$route.query.filterHostname,
-            filterIp: (this.$route.query.filterIp === undefined || this.$route.query.filterIp === "all") ? "%" : this.$route.query.filterIp,
-            filterTag: (this.$route.query.filterTag === undefined || this.$route.query.filterTag === "all") ? "%" : this.$route.query.filterTag,
+            permissionName: (this.$route.query.permissionName === undefined || !this.$route.query.permissionName) ? "%" : this.$route.query.permissionName,
+            projectName: (this.$route.query.projectName === undefined || !this.$route.query.projectName) ? "%" : this.$route.query.projectName,
+            filterHostname: (this.$route.query.filterHostname === undefined || !this.$route.query.filterHostname) ? "%" : this.$route.query.filterHostname,
+            filterIp: (this.$route.query.filterIp === undefined || !this.$route.query.filterIp) ? "%" : this.$route.query.filterIp,
+            filterTag: (this.$route.query.filterTag === undefined || !this.$route.query.filterTag) ? "%" : this.$route.query.filterTag,
             actions: (this.$route.query.actions === undefined) ? ["Create", "Retrieve", "Update", "Delete"] : (typeof this.$route.query.actions === "string") ? [this.$route.query.actions, "actionsKeep"] : this.$route.query.actions,
             entities: (this.$route.query.entities === undefined) ? ["Server", "Tag", "Dashboard", "Permission", "Project"] : (typeof this.$route.query.entities === "string") ? [this.$route.query.entities, "entitiesKeep"] : this.$route.query.entities
           }
         })
         .then(res => {
-          this.filterData.filterPermissionName = this.$route.query.permissionName || "all";
-          this.filterData.filterProjectName = this.$route.query.projectName || "all";
-          this.filterData.filterHostname = this.$route.query.filterHostname || "all";
-          this.filterData.filterIp = this.$route.query.filterIp || "all";
-          this.filterData.filterTag = this.$route.query.filterTag || "all";
+          this.filterData.filterPermissionName = this.$route.query.permissionName || "";
+          this.filterData.filterProjectName = this.$route.query.projectName || "";
+          this.filterData.filterHostname = this.$route.query.filterHostname || "";
+          this.filterData.filterIp = this.$route.query.filterIp || "";
+          this.filterData.filterTag = this.$route.query.filterTag || "";
           this.checkBoxesData.actions = (this.$route.query.actions === undefined) ? ["Create", "Retrieve", "Update", "Delete"] : (typeof this.$route.query.actions === "string") ? [this.$route.query.actions, "actionsKeep"] : this.$route.query.actions;
           this.checkBoxesData.entities = (this.$route.query.entities === undefined) ? ["Server", "Tag", "Dashboard", "Permission", "Project"] : (typeof this.$route.query.entities === "string") ? [this.$route.query.entities, "entitiesKeep"] : this.$route.query.entities;
+
+          store.dispatch("GET_PERMISSIONS_BY_NAME", "%")
+              .then(res => {
+                if (res.data) {
+                  this.filterData.availablePermissionNames = store.getters.PERMISSIONS_BY_NAME;
+                }
+              })
+              .catch(err => console.error(err));
+
+          store.dispatch("GET_TAGS_BY_NAME", "%")
+              .then(res => {
+                if (res.data) {
+                  this.filterData.availableTagNames = store.getters.TAGS_BY_NAME;
+                  console.log(store.getters.TAGS_BY_NAME);
+                }
+              })
+              .catch(err => console.error(err));
+
+          store.dispatch("GET_SERVERS_BY_HOSTNAME", "%")
+              .then(res => {
+                if (res.data) {
+                  this.filterData.availableHostnames = store.getters.SERVERS_BY_HOSTNAME;
+                  console.log(store.getters.SERVERS_BY_HOSTNAME);
+                }
+              })
+              .catch(err => console.error(err));
+
+          store.dispatch("GET_SERVERS_BY_IP", "%")
+              .then(res => {
+                if (res.data) {
+                  this.filterData.availableIps = store.getters.SERVERS_BY_IP;
+                  console.log(store.getters.SERVERS_BY_IP);
+                }
+              })
+              .catch(err => console.error(err));
+
+          store.dispatch("GET_PROJECTS_BY_NAME", "%")
+              .then(res => {
+                if (res.data) {
+                  this.filterData.availableProjectNames = store.getters.PROJECTS_BY_NAME;
+                  console.log(store.getters.PROJECTS_BY_NAME);
+                }
+              })
+              .catch(err => console.error(err));
 
           for (let userProjectPermission of res.data.userAllProjectsPermissions) {
             const [serverActions, tagActions, projectActions,
@@ -417,8 +519,6 @@ export default {
               permissionUsers: userProjectPermission.users
             });
           }
-
-          console.log(this.userProjectsPermissions);
         })
         .catch(err => console.log(err));
   },
@@ -466,11 +566,11 @@ export default {
       this.$router.push({
         name: "retrieveProjectPermissions",
         query: {
-          permissionName: this.filterData.filterPermissionName || "all",
-          projectName: this.filterData.filterProjectName || "all",
-          filterHostname: this.filterData.filterHostname || "all",
-          filterIp: this.filterData.filterIp || "all",
-          filterTag: this.filterData.filterTag || "all",
+          permissionName: this.filterData.filterPermissionName || "",
+          projectName: this.filterData.filterProjectName || "",
+          filterHostname: this.filterData.filterHostname || "",
+          filterIp: this.filterData.filterIp || "",
+          filterTag: this.filterData.filterTag || "",
           actions: this.checkBoxesData.actions || ["Create", "Retrieve", "Update", "Delete"],
           entities: this.checkBoxesData.entities || ["Server", "Tag", "Dashboard", "Permission", "Project"]
         }

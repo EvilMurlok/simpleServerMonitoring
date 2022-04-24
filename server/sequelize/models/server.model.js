@@ -251,6 +251,46 @@ module.exports = (sequelize) => {
             }]);
         }
 
+        static retrieveUserServersByIpHostname = async ({userId, ip = "%", hostname = "%"}) => {
+            console.log(ip, hostname, userId);
+            const currentUserWithFoundServers = await sequelize.models.user.findAll({
+                where: {id: userId},
+                include: {
+                    model: sequelize.models.project,
+                    required: true,
+                    include: {
+                        model: sequelize.models.server,
+                        required: true,
+                        attributes: ["ip", "hostname"],
+                        where: {
+                            ip: {[Op.iLike]: `%${ip}%`},
+                            hostname: { [Op.iLike]: `%${hostname}%`}
+                        }
+                    }
+                }
+            });
+            let servers = [];
+            if (currentUserWithFoundServers.length && currentUserWithFoundServers[0].projects.length) {
+                for (let project of currentUserWithFoundServers[0].projects) {
+                    if (ip === "%" && hostname !== "%") {
+                        servers = [...servers, ...(project.servers.map(server => server.hostname))];
+                    } else if (hostname === "%" && ip !== "%") {
+                        servers = [...servers, ...(project.servers.map(server => server.ip))];
+                    } else {
+                        servers = [...servers, ...(project.servers.map(server => {
+                            return {
+                                hostname: server.hostname,
+                                ip: server.ip
+                            };
+                        }))];
+                    }
+                }
+                return servers;
+            } else {
+                return [];
+            }
+        }
+
         static retrieveUserServers = async ({userId = 0}) => {
             return await sequelize.models.user.findAll({
                 where: {

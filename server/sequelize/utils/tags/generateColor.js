@@ -1,18 +1,3 @@
-/**
- * Generates random color in HEX
- * @returns {string}
- */
-// function getRandomColor() {
-//     const letters = '0123456789ABCDEF';
-//     let color = '#';
-//     for (let i = 0; i < 6; i++) {
-//         color += letters[Math.floor(Math.random() * 16)];
-//     }
-//     return color;
-// }
-//
-// module.exports = getRandomColor
-
 // seperate array by index
 // [0, 1, 2, 3], 2 => [2, 3, 1, 0]
 function tail(arr, ind){

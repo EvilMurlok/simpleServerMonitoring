@@ -2,16 +2,13 @@ const {Op} = require("sequelize");
 
 const {ServerSameCredentialsError} = require("../../errors/server/serverException");
 
-async function validateSameServerData({projectId, hostname, ip, hostnameUser, ipUser}, isEdition = false) {
+async function validateSameServerData({hostname, ip, hostnameUser, ipUser}, isEdition = false) {
     let messages = [];
     let [sameHostname, sameIp] = ["", ""];
     if (isEdition) {
         sameHostname = await this.findOne({
             where: {
                 [Op.and]: [
-                    {
-                        projectId: projectId
-                    },
                     {
                         hostname: hostname
                     },
@@ -39,16 +36,7 @@ async function validateSameServerData({projectId, hostname, ip, hostnameUser, ip
         });
     } else {
         sameHostname = await this.findOne({
-            where: {
-                [Op.and]: [
-                    {
-                        projectId: projectId
-                    },
-                    {
-                        hostname: hostname
-                    },
-                ]
-            }
+            where: {hostname: hostname}
         });
         sameIp = await this.findOne({
             where: {ip: ip}
@@ -56,7 +44,7 @@ async function validateSameServerData({projectId, hostname, ip, hostnameUser, ip
     }
     if (sameHostname) {
         messages.push({
-            text: "Сервер с таким именем хоста уже добавлен в этот проект!"
+            text: "Сервер с таким именем хоста уже существует!"
         });
     }
     if (sameIp) {

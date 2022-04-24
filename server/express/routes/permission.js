@@ -24,6 +24,8 @@ router.get("/permission/get-sub/:permissionId/", middlewaresAuth.checkNotAuthent
 router.get("/permission/delete-permission/:permissionId/", middlewaresAuth.checkNotAuthenticated,
     permissionControllers.delete_permission);
 
+router.get("/permission/retrieve-all-by-name/", permissionControllers.retrieve_permissions_by_name);
+
 router.get("/permission/retrieve-all-projects-user-permissions/", middlewaresAuth.checkNotAuthenticated,
     permissionControllers.retrieve_all_projects_user_permissions);
 

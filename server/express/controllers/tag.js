@@ -68,6 +68,13 @@ const retrieveTagById = async (req, res) => {
     }
 }
 
+const retrieve_tags_by_name = async (req, res) => {
+    res.send({
+        status: "success",
+        tagsByName: await models.tag.retrieveTagsByName({tagName: req.query.tagName})
+    });
+}
+
 const retrieveAllTags = async (req, res) => {
     res.send({
         status: "success",
@@ -123,6 +130,7 @@ const delete_tag = async (req, res) => {
 module.exports = {
     create_tag,
     retrieveTagById,
+    retrieve_tags_by_name,
     retrieveAllTags,
     edit_tag,
     setServers,

@@ -71,6 +71,21 @@ const retrieve_user_projects = async (req, res) => {
     }
 }
 
+const retrieve_user_projects_by_name = async (req, res) => {
+    const [
+        userId,
+        projectName
+    ] = [
+      req.user.id,
+      req.query.projectName
+    ];
+    const userProjectsByName = await models.project.retrieveUserProjectsByName({userId, projectName});
+    res.send({
+        status: "success",
+        userProjectsByName
+    });
+}
+
 const retrieve_sorted_user_projects_with_servers = async (req, res) => {
     const [
         userId,
@@ -155,6 +170,7 @@ module.exports = {
     create_project,
     edit_project,
     retrieve_user_projects,
+    retrieve_user_projects_by_name,
     retrieve_sorted_user_projects_with_servers,
     retrieve_all_user_projects,
     retrieve_project,

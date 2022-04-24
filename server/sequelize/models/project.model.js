@@ -9,7 +9,11 @@ const {
     ProjectTransactionError
 
 } = require("../errors/project/projectException");
-const {PermissionTransactionError, PermissionCredentialsError, PermissionSameCredentialsError} = require("../errors/permission/permissionErrors");
+const {
+    PermissionTransactionError,
+    PermissionCredentialsError,
+    PermissionSameCredentialsError
+} = require("../errors/permission/permissionErrors");
 
 module.exports = (sequelize) => {
     class Project extends Model {
@@ -128,6 +132,28 @@ module.exports = (sequelize) => {
             throw new ProjectCommonError("Cannot retrieve user projects", [{
                 text: "Невозможно получить список проектов!"
             }]);
+        }
+
+        // TODO обновить после добавления кастомных прав, чтобы подтягивались еще и доступные проекты
+        static retrieveUserProjectsByName = async ({userId = 0, projectName = "%"}) => {
+            const currentUserFoundProjects = await sequelize.models.user.findAll({
+                where: {id: userId},
+                include: {
+                    model: sequelize.models.project,
+                    required: true,
+                    attributes: ["name"],
+                    where: {
+                        name: {
+                            [Op.iLike]: `%${projectName}%`
+                        }
+                    }
+                }
+            });
+            if (currentUserFoundProjects.length) {
+                return currentUserFoundProjects[0].projects.map(project => project.name);
+            } else {
+                return [];
+            }
         }
 
         static retrieveUserSortedProjectsWithServers = async ({userId, sortField, sortType, offset, limit}) => {

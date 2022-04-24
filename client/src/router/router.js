@@ -273,7 +273,6 @@ let router = new Router({
 });
 
 router.beforeEach((to, from, next) => {
-    console.log(from.ame, to.name);
     if (to.matched.some(record => record.meta.requiresAuth)) {
         store.dispatch("GET_PERMISSIONS_FROM_API")
             .then(res => {

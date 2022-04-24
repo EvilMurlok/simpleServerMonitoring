@@ -29,6 +29,23 @@ const retrieve_user_servers = async (req, res) => {
     });
 }
 
+const retrieve_user_servers_by_hostname_ip = async (req, res) => {
+    const [
+        userId,
+        hostname,
+        ip
+    ] = [
+        req.user.id,
+        req.query.hostname,
+        req.query.ip
+    ];
+    const requiredUserServers = await models.server.retrieveUserServersByIpHostname({userId, hostname, ip});
+    res.send({
+        status: "success",
+        requiredUserServers: requiredUserServers
+    });
+}
+
 const retrieve_filtered_user_servers = async (req, res) => {
     const [
         userId,
@@ -192,6 +209,7 @@ module.exports = {
     create_server,
     retrieve_project_servers,
     retrieve_user_servers,
+    retrieve_user_servers_by_hostname_ip,
     retrieve_filtered_user_servers,
     retrieve_user_sorted_servers,
     retrieve_server_in_project,

@@ -362,10 +362,10 @@ export default {
     this.$http
         .get(`/server/retrieve-filtered-user-servers/`, {
           params: {
-            name: (this.$route.query.name === undefined || this.$route.query.name === "all") ? "%" : this.$route.query.name,
-            ip: (this.$route.query.ip === undefined || this.$route.query.ip === "all") ? "%" : this.$route.query.ip,
-            hostname: (this.$route.query.hostname === undefined || this.$route.query.hostname === "all") ? "%" : this.$route.query.hostname,
-            tag: (this.$route.query.tag === undefined || this.$route.query.tag === "all") ? "%" : this.$route.query.tag,
+            name: (this.$route.query.name === undefined || !this.$route.query.name) ? "%" : this.$route.query.name,
+            ip: (this.$route.query.ip === undefined || !this.$route.query.ip) ? "%" : this.$route.query.ip,
+            hostname: (this.$route.query.hostname === undefined || !this.$route.query.hostname) ? "%" : this.$route.query.hostname,
+            tag: (this.$route.query.tag === undefined || !this.$route.query.tag) ? "%" : this.$route.query.tag,
             createdMin: this.$route.query.createdMin || "1970-01-01T00:00:00.000Z",
             createdMax: this.$route.query.createdMax || new Date(new Date().setHours(new Date().getHours() + 3)).toISOString()
           }
@@ -388,10 +388,10 @@ export default {
             } else {
               currentMaxDateTime = new Date(new Date().setHours(new Date().getHours() + 3)).toISOString();
             }
-            this.filterData.filterProjectName = this.$route.query.name || "all";
-            this.filterData.filterHostname = this.$route.query.hostname || "all";
-            this.filterData.filterIp = this.$route.query.ip || "all";
-            this.filterData.filterTag = this.$route.query.tag || "all";
+            this.filterData.filterProjectName = this.$route.query.name || "";
+            this.filterData.filterHostname = this.$route.query.hostname || "";
+            this.filterData.filterIp = this.$route.query.ip || "";
+            this.filterData.filterTag = this.$route.query.tag || "";
             this.filterData.filterMinCreationDate = currentMinDateTime.slice(0, 10);
             this.filterData.filterMinCreationTime = currentMinDateTime.slice(11, 16);
             this.filterData.filterMaxCreationDate = currentMaxDateTime.slice(0, 10);
@@ -537,10 +537,10 @@ export default {
         this.$router.push({
           name: "retrieveServers",
           query: {
-            name: this.filterData.filterProjectName || "all",
-            hostname: this.filterData.filterHostname || "all",
-            ip: this.filterData.filterIp || "all",
-            tag: this.filterData.filterTag || "all",
+            name: this.filterData.filterProjectName || "",
+            hostname: this.filterData.filterHostname || "",
+            ip: this.filterData.filterIp || "",
+            tag: this.filterData.filterTag || "",
             createdMin: minDateString,
             createdMax: maxDateString
           }

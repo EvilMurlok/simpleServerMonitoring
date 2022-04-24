@@ -472,6 +472,31 @@ module.exports = (sequelize) => {
             return this;
         }
 
+        static retrievePermissionsByName = async ({userId = 0, permissionName = "%"}) => {
+            const currentUserWithFoundPermissions = await sequelize.models.user.findAll({
+                where: {id: userId},
+                include: {
+                    model: sequelize.models.permission,
+                    required: true,
+                    attributes: ["name"],
+                    where: {
+                        projectId: {
+                            [Op.not]: null
+                        },
+                        name: {
+                            [Op.iLike]: `%${permissionName}%`
+                        }
+                    },
+                    through: {attributes: []}
+                }
+            });
+            if (currentUserWithFoundPermissions.length) {
+                return currentUserWithFoundPermissions[0].permissions.map(permission => permission.name);
+            } else {
+                return [];
+            }
+        }
+
         static retrieveCommonUserPermissions = async ({userId = 0}) => {
             const currentUserWithCommonPermissions = await sequelize.models.user.findAll({
                 where: {id: userId},
@@ -498,7 +523,7 @@ module.exports = (sequelize) => {
             if (currentUserWithCommonPermissions.length) {
                 return currentUserWithCommonPermissions[0].permissions;
             } else {
-                return currentUserWithCommonPermissions;
+                return [];
             }
         }
 
@@ -593,7 +618,7 @@ module.exports = (sequelize) => {
             if (currentUserWithProjectsPermissions.length) {
                 return currentUserWithProjectsPermissions[0].permissions;
             } else {
-                return currentUserWithProjectsPermissions;
+                return [];
             }
         }
 
