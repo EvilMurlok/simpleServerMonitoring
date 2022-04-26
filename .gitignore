@@ -315,3 +315,6 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+### Monitoring ###
+monitoring

@@ -1,10 +1,15 @@
 version: '3.9'
 
+networks:
+  monitoring:
+    driver: bridge
+
 volumes:
   postgres_data: {}
 
 services:
   server:
+    container_name: server_monitoring
     build:
       context: .
     restart: on-failure
@@ -12,17 +17,85 @@ services:
     ports:
       - "9000:9000"
     depends_on:
-      - db
+      - postgres
     volumes:
       - ".:/app"
       - "/app/node_modules"
+    networks:
+      - monitoring
 
-  db:
+  postgres:
+    container_name: postgres
     image: 'postgres'
     ports:
       - '5432:5432'
     environment:
-      POSTGRES_PASSWORD: '123456'
+      POSTGRES_DB: 'monitoring'
       POSTGRES_USER: 'root'
+      POSTGRES_PASSWORD: '123456'
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U root -d monitoring" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 4G
+    networks:
+      - monitoring
+
+  postgres_exporter:
+    container_name: exporter
+    image: prometheuscommunity/postgres-exporter:v0.10.0
+    environment:
+      DATA_SOURCE_URI: "postgres:5432/monitoring?sslmode=disable"
+      DATA_SOURCE_USER: "root"
+      DATA_SOURCE_PASS: "123456"
+      PG_EXPORTER_EXTEND_QUERY_PATH: "/etc/postgres_exporter/queries.yaml"
+    volumes:
+      - ./queries.yaml:/etc/postgres_exporter/queries.yaml:ro
+    ports:
+      - "9187:9187"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 500M
+    networks:
+      - monitoring
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    volumes:
+      - ./monitoring/grafana/data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
