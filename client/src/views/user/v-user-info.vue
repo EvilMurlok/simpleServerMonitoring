@@ -29,11 +29,9 @@
             <div class="form-group">
               <label class="form-check-label mb-2">Никнейм</label>
               <b-form-input size="lg"
-                            class="form-control-alt"
                             id="username"
                             name="username"
                             placeholder="Никнейм"
-                            aria-describedby="username-feedback"
                             v-model="user.username"
               >
               </b-form-input>
@@ -42,11 +40,9 @@
             <div class="form-group">
               <label class="form-check-label mb-2">Телефон</label>
               <b-form-input size="lg"
-                            class="form-control-alt"
                             id="phone"
                             name="phone"
                             placeholder="Телефон"
-                            aria-describedby="phone-feedback"
                             v-model="user.phone"
               >
               </b-form-input>
@@ -55,11 +51,9 @@
             <div class="form-group">
               <label class="form-check-label mb-2">Почтовый ящик</label>
               <b-form-input size="lg"
-                            class="form-control-alt"
                             id="email"
                             name="email"
                             placeholder="Почтовый ящик"
-                            aria-describedby="email-feedback"
                             v-model="user.email"
               >
               </b-form-input>

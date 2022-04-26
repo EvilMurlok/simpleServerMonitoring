@@ -93,29 +93,13 @@ module.exports = (sequelize) => {
                                 name: {
                                     [Op.ne]: currentName
                                 }
-                            },
-                            {
-                                deleted: {
-                                    [Op.is]: null
-                                }
                             }
                         ]
                     }
                 });
             } else {
                 sameTag = await Tag.findOne({
-                    where: {
-                        [Op.and]: [
-                            {
-                                name: name
-                            },
-                            {
-                                deleted: {
-                                    [Op.is]: null
-                                }
-                            }
-                        ]
-                    }
+                    where: {name: name}
                 });
             }
 

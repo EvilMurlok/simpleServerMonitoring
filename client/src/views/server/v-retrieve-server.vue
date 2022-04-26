@@ -30,22 +30,18 @@
             <div class="form-group">
               <label class="form-check-label mb-2">Название сервера</label>
               <b-form-input size="lg"
-                            class="form-control-alt"
                             id="hostname"
                             name="hostname"
                             placeholder="Hostname"
-                            aria-describedby="hostname-feedback"
                             v-model="server.hostname">
               </b-form-input>
             </div>
             <div class="form-group">
               <label class="form-check-label mb-2">IP адрес</label>
               <b-form-input size="lg"
-                            class="form-control-alt"
                             id="ip"
                             name="ip"
                             placeholder="ip"
-                            aria-describedby="ip-feedback"
                             v-model="server.ip">
               </b-form-input>
             </div>

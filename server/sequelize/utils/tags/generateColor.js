@@ -1,20 +1,20 @@
 // seperate array by index
 // [0, 1, 2, 3], 2 => [2, 3, 1, 0]
-function tail(arr, ind){
+function tail(arr, ind) {
     let mhs, lhs;
-    if(arr.length / 2 > ind){
+    if (arr.length / 2 > ind) {
         mhs = arr.length - 1 - ind;
         lhs = ind;
-    }else{
+    } else {
         mhs = ind;
         lhs = arr.length - 1 - ind;
     }
     let nd = [arr[ind]];
-    for(let i = 0; i < lhs; i++){
-        nd.push(arr[ind+i+1]);
-        nd.push(arr[ind-i-1]);
+    for (let i = 0; i < lhs; i++) {
+        nd.push(arr[ind + i + 1]);
+        nd.push(arr[ind - i - 1]);
     }
-    for(let i = 0; i < mhs - lhs; i++){
+    for (let i = 0; i < mhs - lhs; i++) {
         nd.push(arr[i]);
     }
     return nd;
@@ -28,15 +28,15 @@ function tail(arr, ind){
 // 2=>2 2=>1
 // 1=>1 1=>1
 // 21   12
-function dense(len, den){
+function dense(len, den) {
     let st = Math.ceil(len / den);
     let nd = [];
-    for(let i = 0; i < st; i++){
-        for(let j = 0; j < den; j++){
+    for (let i = 0; i < st; i++) {
+        for (let j = 0; j < den; j++) {
             nd.push(st - i);
         }
     }
-    if(len % 2 !== 0){
+    if (len % 2 !== 0) {
         nd.shift();
     }
     return nd;
@@ -44,28 +44,28 @@ function dense(len, den){
 
 // shift the weight to certain part of array by index
 // de controls the rate of differing
-function shift_weight(arr, ind, de){
+function shift_weight(arr, ind, de) {
     let ta = tail(arr, ind);
     let nd = [];
     let den = dense(arr.length, de)
-    for(let i = 0; i < ta.length; i++){
-        for(let j = 0; j < den[i]; j++){
+    for (let i = 0; i < ta.length; i++) {
+        for (let j = 0; j < den[i]; j++) {
             nd.push(ta[i]);
         }
     }
     return nd;
 }
 
-function getRandomColor(den = 4){
+function getRandomColor(den = 4) {
     let hexcode = '0123456789abcdef';
     let ocean = shift_weight(Array.from({length: 16}, (x, i) => hexcode[i]), 0, den);
-    return '#' + Array.from({length: 6}).map(ud=>ocean[Math.floor(Math.random() * ocean.length)]).join('');
+    return '#' + Array.from({length: 6}).map(ud => ocean[Math.floor(Math.random() * ocean.length)]).join('');
 }
 
-function parseLightHex(den){
+function parseLightHex(den) {
     let hexcode = '0123456789abcdef';
     let ocean = shift_weight(Array.from({length: 16}, (x, i) => hexcode[i]), 16, den);
-    return '#' + Array.from({length: 6}).map(ud=>ocean[Math.floor(Math.random() * ocean.length)]).join('');
+    return '#' + Array.from({length: 6}).map(ud => ocean[Math.floor(Math.random() * ocean.length)]).join('');
 }
 
 

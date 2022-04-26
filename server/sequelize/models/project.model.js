@@ -136,24 +136,17 @@ module.exports = (sequelize) => {
 
         // TODO обновить после добавления кастомных прав, чтобы подтягивались еще и доступные проекты
         static retrieveUserProjectsByName = async ({userId = 0, projectName = "%"}) => {
-            const currentUserFoundProjects = await sequelize.models.user.findAll({
-                where: {id: userId},
-                include: {
-                    model: sequelize.models.project,
-                    required: true,
-                    attributes: ["name"],
-                    where: {
-                        name: {
-                            [Op.iLike]: `%${projectName}%`
-                        }
+            const currentUserFoundProjects = await this.findAll({
+                where: {
+                    userId: userId,
+                    name: {
+                        [Op.iLike]: `%${projectName}%`
                     }
-                }
+                },
+                attributes: ["name"],
+                order: [["name", "ASC"]]
             });
-            if (currentUserFoundProjects.length) {
-                return currentUserFoundProjects[0].projects.map(project => project.name);
-            } else {
-                return [];
-            }
+            return currentUserFoundProjects.map(project => project.name);
         }
 
         static retrieveUserSortedProjectsWithServers = async ({userId, sortField, sortType, offset, limit}) => {

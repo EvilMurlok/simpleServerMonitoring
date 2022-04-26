@@ -30,11 +30,9 @@
             <div class="form-group">
               <label class="form-check-label mb-2">Название проекта</label>
               <b-form-input size="lg"
-                            class="form-control-alt"
                             id="projectName"
                             name="projectName"
                             placeholder="Имя поекта"
-                            aria-describedby="name-feedback"
                             v-model="projectName">
               </b-form-input>
             </div>

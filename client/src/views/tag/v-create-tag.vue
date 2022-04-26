@@ -112,7 +112,7 @@
                 <b-button variant="alt-info"
                           class="mr-1"
                           @click="chooseAll"
-                          v-if="!checkBoxesData.isChosenAll"
+                          v-if="!checkBoxesData.isSelectedAll"
                 >
                   <i class="si si-check opacity-50 mr-1"></i> Выбрать все
                 </b-button>
@@ -125,14 +125,31 @@
                 </b-button>
               </div>
               <div class="my-3 ml-5 mt-3"
-                   v-for="project in projects"
+                   v-for="(project, index) in projects"
                    :key="project.projectName"
               >
-                <b-button @click="project.isShowServers = !project.isShowServers"
-                          class="m-1 pr-5 pl-5"
-                >
-                  {{ project.projectName }}
-                </b-button>
+                <div class="d-flex">
+                  <b-button @click="project.isShowServers = !project.isShowServers"
+                            class="m-1 pr-5 pl-5"
+                  >
+                    {{ project.projectName }}
+                  </b-button>
+                  <b-button variant="alt-info"
+                            class="m-1 pr-2 pl-2"
+                            v-if="checkBoxesData.isSelectedAllInProject[index] === true"
+                            @click="deselectServersOfCurrentProject(index)"
+                  >
+                    <i class="si si-close opacity-50 mr-1"></i>Убрать все
+                  </b-button>
+                  <b-button v-else
+                            variant="alt-info"
+                            class="m-1 pr-2 pl-2"
+                            @click="selectServersOfCurrentProject(index)"
+                  >
+                    <i class="si si-check opacity-50 mr-1"></i> Выделить все
+                  </b-button>
+                </div>
+
                 <div class="mt-3">
                   <b-form-checkbox-group
                       v-model="checkBoxesData.serverIds"
@@ -187,7 +204,9 @@ export default {
       projects: [],
       checkBoxesData: {
         serverIds: [],
-        isChosenAll: false,
+        isSelectedAll: false,
+        isSelectedAllInProject: [],
+        serversCount: 0
       },
       filterData: {
         filterMinCreationDate: "",
@@ -224,6 +243,7 @@ export default {
         })
         .then(res => {
           if (res.data.userServers[0]) {
+            this.checkBoxesData.isSelectedAllInProject = Array(res.data.userServers[0].projects.length).fill(false);
             for (let project of res.data.userServers[0].projects) {
               const projectData = {projectName: project.name, isShowServers: false, servers: []};
               for (let server of project.servers) {
@@ -232,6 +252,7 @@ export default {
                   hostname: server.hostname,
                   ip: server.ip,
                 });
+                ++this.checkBoxesData.serversCount;
               }
               this.projects.push(projectData);
             }
@@ -250,7 +271,7 @@ export default {
 
   methods: {
     chooseAll() {
-      if (this.checkBoxesData.isChosenAll) {
+      if (this.checkBoxesData.isSelectedAll) {
         this.checkBoxesData.serverIds = [];
         for (let project of this.projects) {
           project.isShowServers = false;
@@ -263,7 +284,37 @@ export default {
           project.isShowServers = true;
         }
       }
-      this.checkBoxesData.isChosenAll = !this.checkBoxesData.isChosenAll;
+      this.checkBoxesData.isSelectedAllInProject = Array(this.projects.length).fill(!this.checkBoxesData.isSelectedAll);
+      this.checkBoxesData.isSelectedAll = !this.checkBoxesData.isSelectedAll;
+    },
+
+    selectServersOfCurrentProject(index) {
+      const currentProject = this.projects[index];
+      for (let server of currentProject.servers) {
+        if (!this.checkBoxesData.serverIds.includes(server.serverId)) {
+          this.checkBoxesData.serverIds.push(server.serverId);
+        }
+      }
+      this.checkBoxesData.isSelectedAllInProject[index] = true;
+      currentProject.isShowServers = true;
+
+      if (this.checkBoxesData.serverIds.length === this.checkBoxesData.serversCount) {
+        this.checkBoxesData.isSelectedAll = true;
+      }
+      console.log(this.checkBoxesData.serverIds);
+    },
+
+    deselectServersOfCurrentProject(index) {
+      const currentProject = this.projects[index];
+      for (let server of currentProject.servers) {
+        if (this.checkBoxesData.serverIds.includes(server.serverId)) {
+          this.checkBoxesData.serverIds = this.checkBoxesData.serverIds.filter(serverId => serverId !== server.serverId);
+        }
+      }
+      this.checkBoxesData.isSelectedAllInProject[index] = false;
+      currentProject.isShowServers = false;
+      this.checkBoxesData.isSelectedAll = false;
+      console.log(this.checkBoxesData.serverIds);
     },
 
     filterTag() {

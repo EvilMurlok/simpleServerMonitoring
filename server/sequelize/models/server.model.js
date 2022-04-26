@@ -251,6 +251,8 @@ module.exports = (sequelize) => {
             }]);
         }
 
+        // TODO обновить после добавления возможности создавать кастомные права
+        // TODO надо загружать еще и доступные сервера
         static retrieveUserServersByIpHostname = async ({userId, ip = "%", hostname = "%"}) => {
             console.log(ip, hostname, userId);
             const currentUserWithFoundServers = await sequelize.models.user.findAll({
