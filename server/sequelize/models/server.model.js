@@ -142,10 +142,15 @@ module.exports = (sequelize) => {
                         }, {transaction: t});
                         await currentServer.setTags(chosenTags, {transaction: t});
 
+                        /**
+                         * WE SHOULD COPY ALL NEW SERVER AND TAGS TO ALL ADMIN PERMISSIONS OF THE ANOTHER PROJECT
+                         * AND ALL THE ANOTHER PERMISSIONS OF NEW PROJECT STAY WITHOUT ANY CHANGES!
+                         */
+
                         // if the new project we should move
                         // the server from all currentProjectPermissions to newProjectPermissions
                         const currentProjectPermissions = await currentProject.getPermissions({}, {transaction: t});
-                        const newProjectPermissions = await newProjectByName.getPermissions({}, {transaction: t});
+                        const newProjectPermissions = await newProjectByName.getPermissions({where: { name: {[Op.like]: "admin%"}}}, {transaction: t});
 
                         const newProjectServers = await newProjectByName.getServers({}, {transaction: t});
                         const currentProjectServers = await currentProject.getServers({where: {ip: {[Op.ne]: currentServer.ip}}}, {transaction: t});

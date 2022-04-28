@@ -147,6 +147,14 @@ const retrieve_project = async (req, res) => {
     }
 }
 
+const retrieve_project_with_servers_tags = async (req, res) => {
+    const projectId = req.params.projectId;
+    res.send({
+        status: "success",
+        project: await models.project.retrieveProjectWithServers({projectId: projectId})
+    });
+}
+
 const delete_project = async (req, res) => {
     const projectId = req.params.projectId;
     try {
@@ -174,5 +182,6 @@ module.exports = {
     retrieve_sorted_user_projects_with_servers,
     retrieve_all_user_projects,
     retrieve_project,
+    retrieve_project_with_servers_tags,
     delete_project
 };

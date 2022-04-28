@@ -90,6 +90,14 @@ const user_retrieve = async (req, res) => {
     }
 }
 
+const retrieve_other_users = async (req, res) => {
+    const userId = req.user.id;
+    res.send({
+       status: "success",
+       otherUsers: await models.user.retrieveOtherUsers({userId: userId})
+    });
+}
+
 const user_deletion = async (req, res) => {
     const userId = req.user.id;
     try {
@@ -126,5 +134,6 @@ module.exports = {
     user_change_password,
     user_logout,
     user_retrieve,
+    retrieve_other_users,
     user_deletion
 }

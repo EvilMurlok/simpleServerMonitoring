@@ -11,7 +11,7 @@ function initialize(passport) {
             include: {
                 model: models.permission,
                 required: false,
-                attributes: ["id", "name"],
+                attributes: ["id", "name", "projectId"],
                 through: {attributes: []},
                 include: {
                     model: models.ability,
@@ -58,7 +58,7 @@ function initialize(passport) {
             include: {
                 model: models.permission,
                 required: false,
-                attributes: ["id", "name"],
+                attributes: ["id", "name", "projectId"],
                 through: {attributes: []},
                 include: {
                     model: models.ability,

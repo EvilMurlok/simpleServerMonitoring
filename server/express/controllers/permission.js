@@ -93,14 +93,6 @@ const getAllCredentials = async ({
     const serversOfCustomPermission = await models.server.findAll({
         where: {
             id: serverIds,
-        },
-        include: {
-            model: models.tag,
-            where: {
-                id: {
-                    [Op.notIn]: tagIds
-                }
-            }
         }
     });
     const usersOfCustomPermission = await models.user.findAll({
@@ -124,40 +116,74 @@ const create_custom_permission = async (req, res) => {
     const projectId = req.params.projectId;
     const currentUserId = req.user.id;
     const {masterPermissionId, name, abilityIds, tagIds, serverIds, userIds} = req.body;
-    try {
-        const credentials = await getAllCredentials({
-            currentUserId: currentUserId,
-            projectId: projectId,
-            masterPermissionId: masterPermissionId,
-            abilityIds: abilityIds,
-            tagIds: tagIds,
-            serverIds: serverIds,
-            userIds: userIds,
-        });
-        console.log(credentials);
-        const customPermission = await models.permission.createCustomPermission({
-            creator: credentials.currentUser,
-            masterPermission: credentials.masterPermission,
-            name: name,
-            project: credentials.currentProject,
-            abilities: credentials.abilitiesOfCustomPermission,
-            tags: credentials.tagsOfCustomPermission,
-            servers: credentials.serversOfCustomPermission,
-            users: credentials.usersOfCustomPermission,
-        });
-        res.send({
-            status: "success",
-            messages: [{
-                text: `В проекте ${credentials.currentProject.name} успешно создано Право ${customPermission.name}`
-            }],
-            permission: customPermission
-        });
-    } catch (e) {
+    const messages = [];
+
+    if (!userIds.length) {
         res.send({
             status: "warning",
-            message: e.message,
-            messages: e.messages
+            messages: [{text: "Выберите пользователей системы, которым Вы хотите присвоить создаваемое право!"}]
         });
+    } else {
+        try {
+            const abilitiesOfCustomPermission = await models.ability.findAll({
+                where: {id: abilityIds}
+            });
+            if ((tagIds.length && !(abilitiesOfCustomPermission.filter(ability => ability.entity === "Tag").length)) ||
+                (serverIds.length && !(abilitiesOfCustomPermission.filter(ability => ability.entity === "Server").length))) {
+                res.send({
+                    status: "warning",
+                    messages: [{
+                        text: "У тегов, серверов необходимо указать хотя бы одно действие!"
+                    }]
+                });
+            } else {
+                if ((abilitiesOfCustomPermission.filter(ability => ability.entity === "Tag").length && !tagIds.length) ||
+                    (abilitiesOfCustomPermission.filter(ability => ability.entity === "Server").length && !serverIds.length)) {
+                    res.send({
+                        status: "warning",
+                        messages: [{
+                            text: "Если выбрали действие, то укажите инстансы серверов или тегов, которым применяется действие!"
+                        }]
+                    });
+                } else {
+                    const currentUser = await models.user.findByPk(currentUserId);
+                    const masterPermission = await models.permission.findByPk(masterPermissionId);
+                    const currentProject = await models.project.findByPk(projectId);
+                    const tagsOfCustomPermission = await models.tag.findAll({
+                        where: {id: tagIds}
+                    });
+                    const serversOfCustomPermission = await models.server.findAll({
+                        where: {id: serverIds}
+                    });
+                    const usersOfCustomPermission = await models.user.findAll({
+                        where: {id: userIds}
+                    });
+                    const customPermission = await models.permission.createCustomPermission({
+                        creator: currentUser,
+                        masterPermission: masterPermission,
+                        name: name,
+                        project: currentProject,
+                        abilities: abilitiesOfCustomPermission,
+                        tags: tagsOfCustomPermission,
+                        servers: serversOfCustomPermission,
+                        users: usersOfCustomPermission,
+                    });
+                    res.send({
+                        status: "success",
+                        messages: [{
+                            text: `В проекте ${currentProject.name} успешно создано Право ${customPermission.name}`
+                        }],
+                        permission: customPermission
+                    });
+                }
+            }
+        } catch (e) {
+            res.send({
+                status: "warning",
+                message: e.message,
+                messages: e.messages
+            });
+        }
     }
 }
 
@@ -258,7 +284,7 @@ const retrieve_all_projects_user_permissions = async (req, res) => {
         serverIp,
         tagName
     }, isFilterServer, isFilterTag);
-    if (userAllProjectsPermissions || userAllProjectsPermissions.length) {
+    if (userAllProjectsPermissions && userAllProjectsPermissions.length) {
         console.log("QQQQ");
     } else {
         userAllProjectsPermissions = [];
@@ -266,6 +292,22 @@ const retrieve_all_projects_user_permissions = async (req, res) => {
     res.send({
         status: "success",
         userAllProjectsPermissions: userAllProjectsPermissions
+    });
+}
+
+const retrieve_project_user_permissions = async (req, res) => {
+    const [userId, projectId] = [req.user.id, req.params.projectId];
+    res.send({
+        status: "success",
+        projectUserPermissions: await models.permission.retrieveProjectUserPermissions({userId, projectId})
+    });
+}
+
+const retrieve_permissions_with_items = async (req, res) => {
+    const permissionId = req.params.permissionId;
+    res.send({
+        status: "success",
+        permissionWithItems: await models.permission.retrievePermissionWithItems({permissionId})
     });
 }
 
@@ -338,6 +380,8 @@ module.exports = {
     edit_custom_permission,
     retrieve_permissions_by_name,
     retrieve_all_projects_user_permissions,
+    retrieve_project_user_permissions,
+    retrieve_permissions_with_items,
     retrieve_common_user_permissions,
     get_sub_permissions,
     delete_permission

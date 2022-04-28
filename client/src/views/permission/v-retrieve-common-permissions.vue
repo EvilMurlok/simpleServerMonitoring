@@ -111,7 +111,7 @@ export default {
                 name: userCommonPermission.name,
                 entity: ability.entity,
                 action: ability.action,
-                detail: ability.detail
+                detail: ability.detail || ""
               });
             }
           }

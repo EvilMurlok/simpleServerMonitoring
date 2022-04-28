@@ -310,6 +310,15 @@
                         >
                           <span><code>{{ userProjectPermission.projectName }}</code></span>
                         </div>
+                        <div v-else-if="entityWithAbility.entity === 'Permission'"
+                             :style="{'cursor': 'pointer',
+                                    'border': 'thin solid #283243',
+                                    'border-radius': '10px',
+                                    'padding': '2px'
+                                  }"
+                        >
+                          <span><code>{{ entityItem.name }}</code></span>
+                        </div>
                       </div>
                     </div>
                   </b-td>
@@ -397,7 +406,6 @@ export default {
     },
 
 
-
   },
 
   created() {
@@ -439,7 +447,6 @@ export default {
               .then(res => {
                 if (res.data) {
                   this.filterData.availableTagNames = store.getters.TAGS_BY_NAME;
-                  console.log(store.getters.TAGS_BY_NAME);
                 }
               })
               .catch(err => console.error(err));
@@ -448,7 +455,6 @@ export default {
               .then(res => {
                 if (res.data) {
                   this.filterData.availableHostnames = store.getters.SERVERS_BY_HOSTNAME;
-                  console.log(store.getters.SERVERS_BY_HOSTNAME);
                 }
               })
               .catch(err => console.error(err));
@@ -457,7 +463,6 @@ export default {
               .then(res => {
                 if (res.data) {
                   this.filterData.availableIps = store.getters.SERVERS_BY_IP;
-                  console.log(store.getters.SERVERS_BY_IP);
                 }
               })
               .catch(err => console.error(err));
@@ -466,58 +471,63 @@ export default {
               .then(res => {
                 if (res.data) {
                   this.filterData.availableProjectNames = store.getters.PROJECTS_BY_NAME;
-                  console.log(store.getters.PROJECTS_BY_NAME);
                 }
               })
               .catch(err => console.error(err));
 
           for (let userProjectPermission of res.data.userAllProjectsPermissions) {
-            const [serverActions, tagActions, projectActions,
-              dashboardActions, permissionActions] = [[], [], [], [], []];
-            const addAction = {
-              "Dashboard": (action) => dashboardActions.push(action),
-              "Permission": (action) => permissionActions.push(action),
-              "Server": (action) => serverActions.push(action),
-              "Tag": (action) => tagActions.push(action),
-              "Project": (action) => projectActions.push(action)
-            };
-            const getActions = {
-              "Server": serverActions,
-              "Permission": permissionActions,
-              "Dashboard": dashboardActions,
-              "Tag": tagActions,
-              "Project": projectActions,
-            };
-            const permissionItems = {
-              "Server": userProjectPermission.servers,
-              "Project": [{
-                id: userProjectPermission.project.id,
-                name: userProjectPermission.project.name
-              }],
-              "Permission": userProjectPermission.permissions,
-              "Tag": userProjectPermission.tags,
-              "Dashboard": userProjectPermission.dashboards
-            }
-            const entitiesInPermission = new Set();
-            userProjectPermission.abilities.forEach(ability => {
-              entitiesInPermission.add(ability.entity);
-              if (ability.entity !== "User" && ability.entity !== "Metric") {
-                addAction[ability.entity](ability.action)
-              }
-            });
+            this.$http
+                .get(`/permission/get-sub/${userProjectPermission.id}/`)
+                .then(res => {
+                  userProjectPermission.subPermissions = res.data.permissions;
+                  const [serverActions, tagActions, projectActions,
+                    dashboardActions, permissionActions] = [[], [], [], [], []];
+                  const addAction = {
+                    "Dashboard": (action) => dashboardActions.push(action),
+                    "Permission": (action) => permissionActions.push(action),
+                    "Server": (action) => serverActions.push(action),
+                    "Tag": (action) => tagActions.push(action),
+                    "Project": (action) => projectActions.push(action)
+                  };
+                  const getActions = {
+                    "Server": serverActions,
+                    "Permission": permissionActions,
+                    "Dashboard": dashboardActions,
+                    "Tag": tagActions,
+                    "Project": projectActions,
+                  };
+                  const permissionItems = {
+                    "Server": userProjectPermission.servers,
+                    "Project": [{
+                      id: userProjectPermission.project.id,
+                      name: userProjectPermission.project.name
+                    }],
+                    "Permission": userProjectPermission.subPermissions,
+                    "Tag": userProjectPermission.tags,
+                    "Dashboard": userProjectPermission.dashboards
+                  };
+                  const entitiesInPermission = new Set();
+                  userProjectPermission.abilities.forEach(ability => {
+                    entitiesInPermission.add(ability.entity);
+                    if (ability.entity !== "User" && ability.entity !== "Metric") {
+                      addAction[ability.entity](ability.action);
+                    }
+                  });
 
-            const entitiesWithAbilities = [];
-            for (let entity of entitiesInPermission) {
-              entitiesWithAbilities.push({entity, actions: getActions[entity], items: permissionItems[entity]});
-            }
+                  const entitiesWithAbilities = [];
+                  for (let entity of entitiesInPermission) {
+                    entitiesWithAbilities.push({entity, actions: getActions[entity], items: permissionItems[entity]});
+                  }
 
-            this.userProjectsPermissions.push({
-              permissionName: userProjectPermission.name,
-              projectId: userProjectPermission.project.id,
-              projectName: userProjectPermission.project.name,
-              entitiesWithAbilities,
-              permissionUsers: userProjectPermission.users
-            });
+                  this.userProjectsPermissions.push({
+                    permissionName: userProjectPermission.name,
+                    projectId: userProjectPermission.project.id,
+                    projectName: userProjectPermission.project.name,
+                    entitiesWithAbilities,
+                    permissionUsers: userProjectPermission.users
+                  });
+                })
+                .catch(err => console.error(err));
           }
         })
         .catch(err => console.log(err));

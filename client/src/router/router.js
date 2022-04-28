@@ -26,6 +26,7 @@ import vRetrieveTag from "@/views/tag/v-retrieve-tag";
 // permissions
 import vRetrieveProjectPermissions from "@/views/permission/v-retrieve-project-permissions";
 import vRetrieveCommonPermissions from "@/views/permission/v-retrieve-common-permissions";
+import vCreatePermission from "@/views/permission/v-create-permission"
 
 // user
 import vRetrieveUser from "@/views/user/v-user-info";
@@ -212,7 +213,6 @@ let router = new Router({
             component: LayoutBackend,
             meta: {
                 requiresAuth: true,
-                requiresDefault: true
             },
             children: [
                 {
@@ -223,11 +223,24 @@ let router = new Router({
             ]
         },
         {
+            path: '/create-permission/:projectId/',
+            component: LayoutBackend,
+            meta: {
+                requiresAuth: true,
+            },
+            children: [
+                {
+                    path: '/create-permission/:projectId/',
+                    name: 'createPermission',
+                    component: vCreatePermission
+                }
+            ]
+        },
+        {
             path: '/retrieve-all-common-permissions/',
             component: LayoutBackend,
             meta: {
                 requiresAuth: true,
-                requiresDefault: true
             },
             children: [
                 {
@@ -244,7 +257,6 @@ let router = new Router({
             component: LayoutBackend,
             meta: {
                 requiresAuth: true,
-                requiresDefault: true
             },
             children: [
                 {

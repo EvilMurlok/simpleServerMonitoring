@@ -50,7 +50,7 @@ module.exports = (sequelize) => {
             if (name && !rightName.test(name)) {
                 messages.push(
                     {
-                        text: "Имя Права может содержать только латинские буквы, цифры, подчёркивания и чёрточки!"
+                        text: "Имя Права может содержать только латинские буквы, цифры, подчёркивания!"
                     }
                 );
             }
@@ -255,6 +255,10 @@ module.exports = (sequelize) => {
                             action: {
                                 [Op.in]: ["Create", "Retrieve"]
                             }
+                        },
+                        {
+                            entity: "Permission",
+                            action: "Retrieve"
                         }
                     ]
                 }
@@ -286,7 +290,7 @@ module.exports = (sequelize) => {
                     [Op.or]: [
                         {
                             entity: {
-                                [Op.in]: ["Dashboard", "Permission", "Server", "Tag", "Metric"]
+                                [Op.in]: ["Dashboard", "Server", "Tag", "Metric"]
                             }
                         },
                         {
@@ -297,6 +301,18 @@ module.exports = (sequelize) => {
                                 {
                                     action: {
                                         [Op.in]: ["Update", "Delete"]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            [Op.and]: [
+                                {
+                                    entity: "Permission"
+                                },
+                                {
+                                    action: {
+                                        [Op.in]: ["Create", "Update", "Delete"]
                                     }
                                 }
                             ]
@@ -383,7 +399,6 @@ module.exports = (sequelize) => {
                                                    servers = [],
                                                    users = []
                                                }) => {
-            console.log({creator, masterPermission, name, project, abilities, tags, servers, users})
             let messages = await this.#credentialsValidation({
                 user: creator,
                 masterPermission: masterPermission,
@@ -399,27 +414,36 @@ module.exports = (sequelize) => {
                 );
             }
 
-            const customPermission = await this.create({
-                name: name,
-                permissionId: masterPermission.id,
-                projectId: project.id
-            });
+            const t = await sequelize.transaction();
+            try {
+                const customPermission = await this.create({
+                    name: name,
+                    permissionId: masterPermission.id,
+                    projectId: project.id
+                });
 
-            await customPermission.addAbilities(abilities);
+                await customPermission.addAbilities(abilities);
 
-            if (tags.length > 0) {
-                await customPermission.addTags(tags);
+                if (tags.length > 0) {
+                    await customPermission.addTags(tags);
+                }
+
+                if (servers.length > 0) {
+                    await customPermission.addServers(servers);
+                }
+
+                if (users.length > 0) {
+                    await customPermission.addUsers(users);
+                }
+
+                await t.commit();
+                return customPermission;
+            } catch (e) {
+                await t.rollback();
+                throw PermissionTransactionError("An error occurred during the transaction!", [{
+                    text: "Возникла ошибка при создании пользовательского права!"
+                }]);
             }
-
-            if (servers.length > 0) {
-                await customPermission.addServers(servers);
-            }
-
-            if (users.length > 0) {
-                await customPermission.addUsers(users);
-            }
-
-            return customPermission;
         }
 
         editPermission = async ({
@@ -620,6 +644,53 @@ module.exports = (sequelize) => {
             } else {
                 return [];
             }
+        }
+
+        static retrieveProjectUserPermissions = async ({userId = 0, projectId = 0}) => {
+            const currentProjectPermissions = await sequelize.models.user.findAll({
+                where: {id: userId},
+                attributes: ["id"],
+                include: {
+                    model: sequelize.models.permission,
+                    required: true,
+                    attributes: ["id", "name"],
+                    where: { projectId: projectId }
+                }
+            });
+            if (currentProjectPermissions.length) {
+                return currentProjectPermissions[0].permissions;
+            } else {
+                return [];
+            }
+        }
+
+        static retrievePermissionWithItems = async ({permissionId = 0}) => {
+            return await this.findOne({
+                where: {id: permissionId},
+                attributes: ["id", "name"],
+                include: [
+                    {
+                        model: sequelize.models.ability,
+                        required: true,
+                        attributes: ["id", "entity", "action", "detail"],
+                        through: {attributes: []},
+                    },
+
+                    {
+                        model: sequelize.models.server,
+                        required: false,
+                        attributes: ["id", "hostname", "ip"],
+                        through: {attributes: []},
+                    },
+
+                    {
+                        model: sequelize.models.tag,
+                        required: false,
+                        attributes: ["id", "name", "color"],
+                        through: {attributes: []},
+                    },
+                ]
+            });
         }
 
         static retrieveProjectPermission = async ({permissionId = 0, projectId = 0}) => {

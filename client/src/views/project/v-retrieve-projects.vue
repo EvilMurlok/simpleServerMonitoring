@@ -43,7 +43,7 @@
       >
         <b-thead head-variant="dark">
           <b-tr>
-            <b-th>
+            <b-th class="col-3">
               <span style="cursor: pointer"
                     @click="sortField({sortedField: 'name'})"
               >
@@ -56,7 +56,7 @@
                 </i>
               </span>
             </b-th>
-            <b-th>
+            <b-th class="col-3">
               <span style="cursor: pointer"
                     @click="sortField({sortedField: 'created'})"
               >
@@ -69,7 +69,7 @@
                 </i>
               </span>
             </b-th>
-            <b-th class="text-center">Опции</b-th>
+            <b-th class="text-center col-6">Опции</b-th>
           </b-tr>
         </b-thead>
         <b-tbody v-for="(project, projectIndex) in userProjectsServers"
@@ -83,6 +83,13 @@
               <b-badge variant="primary" class="ml-3">{{ new Date(project.created).toLocaleString() }}</b-badge>
             </b-td>
             <b-td class="text-center">
+              <b-button size="sm"
+                        @click="$router.push({path: `/create-permission/${project.id}/`});"
+                        variant="alt-success"
+                        class="mr-3"
+              >
+                <i class="fa fa-plus opacity-50 mr-1"></i> Право
+              </b-button>
               <b-button @click="viewProject(project)"
                         size="sm"
                         variant="alt-info"
@@ -110,7 +117,7 @@
                         size="sm"
                         class="mr-3"
               >
-                <i class="fa fa-plus opacity-50 mr-1"></i>
+                <i class="fa fa-plus opacity-50 mr-1"></i> Сервер
               </b-button>
             </b-td>
           </b-tr>

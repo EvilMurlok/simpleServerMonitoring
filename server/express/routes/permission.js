@@ -29,6 +29,12 @@ router.get("/permission/retrieve-all-by-name/", permissionControllers.retrieve_p
 router.get("/permission/retrieve-all-projects-user-permissions/", middlewaresAuth.checkNotAuthenticated,
     permissionControllers.retrieve_all_projects_user_permissions);
 
+router.get("/permission/retrieve-project-user-permissions/:projectId/", middlewaresAuth.checkNotAuthenticated,
+    permissionControllers.retrieve_project_user_permissions);
+
+router.get("/permission/retrieve-permission-with-items/:permissionId/", middlewaresAuth.checkNotAuthenticated,
+    permissionControllers.retrieve_permissions_with_items);
+
 router.get("/permission/retrieve-common-user-permissions/", middlewaresAuth.checkNotAuthenticated,
     permissionControllers.retrieve_common_user_permissions);
 

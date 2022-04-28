@@ -199,6 +199,29 @@ module.exports = (sequelize) => {
             }]);
         }
 
+        static retrieveProjectWithServers = async ({projectId = 0}) => {
+            const currentProject = await this.findAll({
+                where: {id: projectId},
+                attributes: ["id", "name"],
+                include: {
+                    model: sequelize.models.server,
+                    required: false,
+                    attributes: ["id", "hostname", "ip"],
+                    include: {
+                        model: sequelize.models.tag,
+                        require: false,
+                        attributes: ["id", "name", "color"],
+                        through: {attributes: []},
+                    }
+                }
+            });
+            if (currentProject && currentProject.length) {
+                return currentProject[0];
+            } else {
+                return [];
+            }
+        }
+
         static deleteProject = async ({projectId = 0}) => {
             if (projectId) {
                 const deletedProjects = await this.destroy({

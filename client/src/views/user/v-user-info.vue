@@ -4,7 +4,7 @@
       <div
           class="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center py-2 text-center text-sm-left">
         <div class="flex-sm-fill">
-          <h2 class="h6 font-w500 text-center mb-0">На этой странице можно посмотреть Вашу личную информацию</h2>
+          <p class="h4 font-w500 text-center mb-0">На этой странице можно посмотреть Вашу личную информацию и изменить пароль</p>
         </div>
       </div>
     </div>
@@ -12,134 +12,141 @@
 
     <!-- Page Content -->
     <div class="content">
-      <base-block title="Личная информация" rounded header-bg content-full>
-
-        <div v-if="isPassword === false">
-          <BaseMessage
-              v-for="item in messages_data.messages"
-              :key="item.text"
-              :message_data="{type: messages_data.type, item: item}"
-          />
-        </div>
-
-        <b-form @submit.prevent="updateUser"
-                class="mb-4"
-        >
-          <div class="py-3">
-            <div class="form-group">
-              <label class="form-check-label mb-2">Никнейм</label>
-              <b-form-input size="lg"
-                            id="username"
-                            name="username"
-                            placeholder="Никнейм"
-                            v-model="user.username"
-              >
-              </b-form-input>
-            </div>
-
-            <div class="form-group">
-              <label class="form-check-label mb-2">Телефон</label>
-              <b-form-input size="lg"
-                            id="phone"
-                            name="phone"
-                            placeholder="Телефон"
-                            v-model="user.phone"
-              >
-              </b-form-input>
-            </div>
-
-            <div class="form-group">
-              <label class="form-check-label mb-2">Почтовый ящик</label>
-              <b-form-input size="lg"
-                            id="email"
-                            name="email"
-                            placeholder="Почтовый ящик"
-                            v-model="user.email"
-              >
-              </b-form-input>
-            </div>
-          </div>
-          <b-row class="form-group">
-            <b-col md="6" xl="3">
-              <b-button type="submit"
-                        variant="alt-info"
-                        class="mr-1 mb-3"
-                        block
-              >
-                <i class="si si-refresh mr-2"></i> Обновить данные
-              </b-button>
-            </b-col>
-          </b-row>
-        </b-form>
-
-        <b-dropdown id="dropdown-form" text="Изменить пароль" ref="dropdown" class="m-2" menu-class="w-100" block
-                    @show="messages_data = {type: 'warning', messages: []}">
-          <b-dropdown-form @submit.prevent="updatePassword">
-            <div v-if="isPassword === true">
-              <BaseMessage
-                  v-for="item in messages_data.messages"
-                  :key="item.text"
-                  :message_data="{type: messages_data.type, item: item}"
-              />
-            </div>
-            <b-form-group label="Текущий пароль" label-for="currentPassword">
-              <b-form-input
-                  type="password"
-                  id="currentPassword"
-                  name="currentPassword"
-                  size="lg"
-                  placeholder="Текущий пароль"
-                  aria-describedby="currentPassword-feedback"
-                  v-model="currentPassword"
-              >
-              </b-form-input>
-            </b-form-group>
-
-            <b-form-group label="Новый пароль" label-for="newPassword">
-              <b-form-input
-                  type="password"
-                  id="newPassword"
-                  name="currentPassword"
-                  size="lg"
-                  placeholder="Новый пароль"
-                  aria-describedby="newPassword-feedback"
-                  v-model="newPassword"
-              ></b-form-input>
-            </b-form-group>
-
-            <b-form-group label="Подтвердите новый пароль" label-for="confirmNewPassword">
-              <b-form-input
-                  type="password"
-                  id="confirmNewPassword"
-                  size="lg"
-                  placeholder="Подтвердите новый пароль"
-                  aria-describedby="confirmNewPassword-feedback"
-                  v-model="confirmNewPassword"
-              ></b-form-input>
-            </b-form-group>
-            <b-button type="submit"
-                      variant="alt-info"
-                      size="lg"
-                      block
+      <b-container class="mb-3 mt-3">
+        <b-row class="my-3 m-3">
+          <b-col sm="6">
+            <base-block title="Личная информация"
+                        rounded
+                        header-bg
+                        content-full
+                        header-class="text-center"
             >
-              <i class="si si-refresh mr-2"></i> Обновить пароль
-            </b-button>
-          </b-dropdown-form>
-        </b-dropdown>
-      </base-block>
-      <base-block title="Danger zone"
-                  header-bg
-                  content-full
-                  rounded
-      >
-        <b-button variant="alt-danger"
-                  size="lg"
-                  block
-                  @click="deleteUser"
-        >
-          <i class="fa fa-exclamation-triangle mr-2"></i> Удалить профиль
-        </b-button>
-      </base-block>
+
+              <div v-if="isPassword === false">
+                <BaseMessage
+                    v-for="item in messages_data.messages"
+                    :key="item.text"
+                    :message_data="{type: messages_data.type, item: item}"
+                />
+              </div>
+
+              <b-form @submit.prevent="updateUser">
+                  <div class="form-group">
+                    <label class="form-check-label mb-2">Никнейм</label>
+                    <b-form-input size="lg"
+                                  id="username"
+                                  name="username"
+                                  placeholder="Никнейм"
+                                  v-model="user.username"
+                    >
+                    </b-form-input>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-check-label mb-2">Телефон</label>
+                    <b-form-input size="lg"
+                                  id="phone"
+                                  name="phone"
+                                  placeholder="Телефон"
+                                  v-model="user.phone"
+                    >
+                    </b-form-input>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-check-label mb-2">Почтовый ящик</label>
+                    <b-form-input size="lg"
+                                  id="email"
+                                  name="email"
+                                  placeholder="Почтовый ящик"
+                                  v-model="user.email"
+                    >
+                    </b-form-input>
+                  </div>
+                <b-button type="submit"
+                          variant="alt-info"
+                          size="sm"
+                >
+                  <i class="si si-refresh mr-2"></i> Обновить данные
+                </b-button>
+              </b-form>
+            </base-block>
+          </b-col>
+          <b-col sm="6">
+            <base-block title="Изменить пароль"
+                        rounded
+                        header-bg
+                        content-full
+                        header-class="text-center"
+            >
+              <b-form @submit.prevent="updatePassword">
+                <div v-if="isPassword === true">
+                  <BaseMessage
+                      v-for="item in messages_data.messages"
+                      :key="item.text"
+                      :message_data="{type: messages_data.type, item: item}"
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-check-label mb-2">Текущий пароль</label>
+                  <b-form-input type="password"
+                                id="currentPassword"
+                                name="currentPassword"
+                                size="lg"
+                                placeholder="Текущий пароль"
+                                v-model="currentPassword"
+                  >
+                  </b-form-input>
+                </div>
+                <div class="form-group">
+                  <label class="form-check-label mb-2">Новый пароль</label>
+                  <b-form-input type="password"
+                                id="newPassword"
+                                name="currentPassword"
+                                size="lg"
+                                placeholder="Новый пароль"
+                                v-model="newPassword"
+                  >
+                  </b-form-input>
+                </div>
+                <div class="form-group">
+                  <label class="form-check-label mb-2">Подтвердите новый пароль</label>
+                  <b-form-input type="password"
+                                id="confirmNewPassword"
+                                size="lg"
+                                placeholder="Подтвердите новый пароль"
+                                v-model="confirmNewPassword"
+                  >
+                  </b-form-input>
+                </div>
+                <b-button type="submit"
+                          variant="alt-info"
+                          size="sm"
+                >
+                  <i class="si si-refresh mr-2"></i> Изменить пароль
+                </b-button>
+              </b-form>
+            </base-block>
+          </b-col>
+        </b-row>
+        <b-row class="my-3 m-3">
+          <b-col sm="4">
+            <base-block title="Danger zone"
+                        header-bg
+                        content-full
+                        rounded
+            >
+              <b-button variant="alt-danger"
+                        size="lg"
+                        block
+                        @click="deleteUser"
+              >
+                <i class="fa fa-exclamation-triangle mr-2"></i> Удалить профиль
+              </b-button>
+            </base-block>
+          </b-col>
+        </b-row>
+      </b-container>
     </div>
   </div>
 </template>
@@ -335,7 +342,11 @@ export default {
               } else {
                 this.messages_data = {type: res.data.status, messages: res.data.messages};
                 if (res.data.status === "success") {
-                  this.SET_USER({username: res.data.user.username, email: res.data.user.email, phone: res.data.user.phone})
+                  this.SET_USER({
+                    username: res.data.user.username,
+                    email: res.data.user.email,
+                    phone: res.data.user.phone
+                  })
                   this.user = store.getters.USER;
                 }
               }

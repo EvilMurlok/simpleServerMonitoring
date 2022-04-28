@@ -7,6 +7,7 @@ const router = express.Router();
 
 router.get("/project/delete-project/:projectId/", middlewaresAuth.checkNotAuthenticated, projectControllers.delete_project);
 router.get("/project/retrieve-project/:projectId/", middlewaresAuth.checkNotAuthenticated, projectControllers.retrieve_project);
+router.get("/project/retrieve-project-with-servers-tags/:projectId/", middlewaresAuth.checkNotAuthenticated, projectControllers.retrieve_project_with_servers_tags);
 router.get("/project/retrieve-user-projects/:offset/:limit/", middlewaresAuth.checkNotAuthenticated, projectControllers.retrieve_user_projects);
 router.get("/project/retrieve-user-projects-servers/:sortField/:sortType/:offset/:limit/", middlewaresAuth.checkNotAuthenticated,
     projectControllers.retrieve_sorted_user_projects_with_servers);

@@ -78,7 +78,7 @@ module.exports = (sequelize) => {
                             name: "default"
                         }
                     });
-                    await createdUser.setPermissions([defaultPermission], { transaction: t });
+                    await createdUser.setPermissions([defaultPermission], {transaction: t});
                 }
                 await t.commit();
                 return createdUser;
@@ -172,6 +172,17 @@ module.exports = (sequelize) => {
             throw new UserNotFoundError("Such user not found", [{
                 text: "Такого пользователя не существует!"
             }]);
+        }
+
+        static retrieveOtherUsers = async ({userId = 0}) => {
+            return await this.findAll({
+                where: {
+                    id: {
+                        [Op.ne]: userId
+                    }
+                },
+                attributes: ["id", "username", "phone", "email"]
+            });
         }
 
         static deletionUser = async ({userId = 0}) => {
