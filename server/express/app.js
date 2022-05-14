@@ -15,7 +15,6 @@ const projectRouter = require("./routes/project");
 const tagRouter = require("./routes/tag");
 const permissionRouter = require("./routes/permission");
 const abilityRouter = require("./routes/ability");
-const dashboardRouter = require("./routes/dashboard");
 
 // local auth requirements
 const {SESSION_SECRET} = require("../config/session.conf");
@@ -70,6 +69,5 @@ app.use('', projectRouter);
 app.use('', tagRouter);
 app.use('', permissionRouter);
 app.use('', abilityRouter);
-app.use('', dashboardRouter);
 
 module.exports = app;

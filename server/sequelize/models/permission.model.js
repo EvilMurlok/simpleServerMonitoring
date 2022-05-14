@@ -286,7 +286,7 @@ module.exports = (sequelize) => {
                     [Op.or]: [
                         {
                             entity: {
-                                [Op.in]: ["Dashboard", "Permission", "Server", "Tag", "Template", "Metric"]
+                                [Op.in]: ["Dashboard", "Permission", "Server", "Tag", "Metric"]
                             }
                         },
                         {
@@ -652,13 +652,13 @@ module.exports = (sequelize) => {
             }]);
         }
 
-        getChildrenPermissions = async () => {
-            let res = await this.getChildrenPermissionsRecursive();
+        getSubPermissions = async () => {
+            let res = await this.getLinkedPermissionsRecursive();
             res.splice(0, 1);
             return res;
         }
 
-        getChildrenPermissionsRecursive = async () => {
+        getLinkedPermissionsRecursive = async () => {
             let sub = [];
 
             let children = await sequelize.models.permission.findAll({
@@ -670,7 +670,7 @@ module.exports = (sequelize) => {
             if (children.length > 0) {
                 sub.push(this);
                 for (let child of children) {
-                    sub.push(...await child.getChildrenPermissionsRecursive());
+                    sub.push(...await child.getLinkedPermissionsRecursive());
                 }
             } else {
                 sub.push(this);
@@ -678,27 +678,8 @@ module.exports = (sequelize) => {
             return sub;
         };
 
-        getParentPermissions = async () => {
-            let parents = [];
-
-            let child = this;
-
-            while (true) {
-                let parent = await child.getPermission();
-                if (parent) {
-                    parents.push(parent);
-                    child = parent;
-                } else {
-                    break;
-                }
-            }
-
-            return parents;
-        }
-
         deletePermission = async ({cascade = false}) => {
-            const adminPermissionRegExpr = /admin.*/;
-            if (adminPermissionRegExpr.test(this.name)) {
+            if (this.name === "admin") {
                 throw new PermissionCommonError(
                     "You can't delete admin permission",
                     [{
@@ -707,28 +688,13 @@ module.exports = (sequelize) => {
                 );
             }
             if (cascade) {
-                let children = this.getChildrenPermissions();
+                let children = this.getSubPermissions();
                 (await children).forEach(child => {
                     child.destroy();
                 });
-            } else {
-                // connect children of this Permission with its parent
-                let parent = await this.getPermission();
-                // get all children of this permission (1 level below)
-                let children = await sequelize.models.permission.findAll({
-                    where: {
-                        permissionId: this.id
-                    },
-                });
-                console.log(parent);
-                console.log(children);
-                for (let ch of children) {
-                    console.log(ch.permissionId);
-                    await ch.setPermission(parent);
-                    console.log(ch.permissionId);
-                }
-                return this.destroy();
             }
+
+            await this.destroy();
         }
     }
 
