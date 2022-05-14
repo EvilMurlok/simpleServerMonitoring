@@ -362,7 +362,7 @@ export default {
         console.log(this.messages_data);
       }
       const username = prompt("Введите ваш никнейм", "");
-      if (username === localStorage.getItem("username")) {
+      if (username === store.getters.USER.username) {
         const deleteMyAccount = prompt("Чтобы подтвердить, введите 'delete my account'", "");
         if (deleteMyAccount === "delete my account") {
           this.$http

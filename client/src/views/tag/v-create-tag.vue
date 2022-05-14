@@ -89,7 +89,7 @@
                       size="sm"
                       class="mt-3"
             >
-              <i class="fa fa-info-circle m-1"></i> Показать доступные сервера
+              <i class="fa fa-info-circle m-1"></i>Показать доступные сервера
             </b-button>
           </div>
         </b-form>
@@ -124,11 +124,35 @@
                   <i class="si si-close opacity-50 mr-1"></i> Убрать все
                 </b-button>
               </div>
-              <div class="my-3 ml-5 mt-3"
+              <div class="my-3 ml-2 mt-3"
                    v-for="(project, index) in projects"
                    :key="project.projectName"
               >
                 <div class="d-flex">
+                  <div v-if="project.userId === $store.getters.USER.id"
+                       :style="{
+                                'margin': '6px 10px 0 0',
+                                'width': '2em',
+                                'height': '2em',
+                                'border': '2px solid green',
+                                'border-radius': '50%',
+                                'text-align': 'center',  /* выравнять текст по середине по горизонтали */
+                                'background': '#92fba7',
+                       }"
+                  >
+                  </div>
+                  <div v-else
+                       :style="{
+                                'margin': '6px 10px 0 0',
+                                'width': '2em',
+                                'height': '2em',
+                                'border': '2px solid red',
+                                'border-radius': '50%',
+                                'text-align': 'center',  /* выравнять текст по середине по горизонтали */
+                                'background': '#ffb0b0',
+                       }"
+                  >
+                  </div>
                   <b-button @click="project.isShowServers = !project.isShowServers"
                             class="m-1 pr-5 pl-5"
                   >
@@ -231,7 +255,7 @@ export default {
       this.checkBoxesData.serverIds.push(this.$route.params.serverToAddId);
     }
     this.$http
-        .get(`/server/retrieve-filtered-user-servers/`, {
+        .get(`/server/retrieve-available-servers-to-create-tag/`, {
           params: {
             name: (this.$route.query.name === undefined || !this.$route.query.name) ? "%" : this.$route.query.name,
             ip: (this.$route.query.ip === undefined || !this.$route.query.ip) ? "%" : this.$route.query.ip,
@@ -242,10 +266,15 @@ export default {
           }
         })
         .then(res => {
-          if (res.data.userServers[0]) {
-            this.checkBoxesData.isSelectedAllInProject = Array(res.data.userServers[0].projects.length).fill(false);
-            for (let project of res.data.userServers[0].projects) {
-              const projectData = {projectName: project.name, isShowServers: false, servers: []};
+          if (res.data.availableProjectsToCreateTag.length > 0) {
+            this.checkBoxesData.isSelectedAllInProject = Array(res.data.availableProjectsToCreateTag.length).fill(false);
+            for (let project of res.data.availableProjectsToCreateTag) {
+              const projectData = {
+                projectName: project.name,
+                isShowServers: false,
+                userId: project.userId,
+                servers: []
+              };
               for (let server of project.servers) {
                 projectData.servers.push({
                   serverId: server.id,

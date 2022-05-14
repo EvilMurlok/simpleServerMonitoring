@@ -278,40 +278,36 @@
                            class="m-1"
                       >
                         <div v-if="entityWithAbility.entity === 'Server'"
-                             :style="{  'cursor': 'pointer',
+                             :style="{
                                     'border': 'thin solid #283243',
                                     'border-radius': '10px',
                                     'padding': '2px'
                                   }"
-                             @click="retrieveServer(entityItem.id, userProjectPermission.projectId)"
                         >
                           <span>{{ entityItem.hostname }}<br>(<code>{{ entityItem.ip }}</code>)</span>
                         </div>
                         <span v-else-if="entityWithAbility.entity === 'Tag'"
                               class="p-1"
-                              :style="{'cursor': 'pointer',
+                              :style="{
                                   'background-color': entityItem.color,
                                   'color': '#ffffff',
                                   'border-radius': '10px',
                                   'margin': '1px'
                                   }"
-                              @click="retrieveTag(entityItem.id)"
-
                         >
                           {{ entityItem.name }}
                         </span>
                         <div v-else-if="entityWithAbility.entity === 'Project'"
-                             :style="{'cursor': 'pointer',
+                             :style="{
                                     'border': 'thin solid #283243',
                                     'border-radius': '10px',
                                     'padding': '2px'
                                   }"
-                             @click="retrieveProject(userProjectPermission.projectId)"
                         >
                           <span><code>{{ userProjectPermission.projectName }}</code></span>
                         </div>
                         <div v-else-if="entityWithAbility.entity === 'Permission'"
-                             :style="{'cursor': 'pointer',
+                             :style="{
                                     'border': 'thin solid #283243',
                                     'border-radius': '10px',
                                     'padding': '2px'
@@ -534,34 +530,6 @@ export default {
   },
 
   methods: {
-    retrieveServer(serverId, projectId) {
-      this.$router.push({
-        name: 'retrieveServer',
-        params: {
-          serverId: serverId,
-          projectId: projectId,
-        }
-      });
-    },
-
-    retrieveTag(tagId) {
-      this.$router.push({
-        name: 'retrieveTag',
-        params: {
-          tagId: tagId,
-        }
-      });
-    },
-
-    retrieveProject(projectId) {
-      this.$router.push({
-        name: 'retrieveProject',
-        params: {
-          projectId: projectId
-        }
-      });
-    },
-
     filterPermissions() {
       if (this.messages_data.messages.length !== 0) {
         this.messages_data = {type: "warning", messages: []};

@@ -70,7 +70,7 @@ export default new Vuex.Store({
         serversByHostname: [],
         serversByIp: [],
         permissions: [],
-        user: { username: "", phone: "", email: ""},
+        user: { username: "", phone: "", email: "", id: 0},
     },
     mutations,
     actions,

@@ -134,6 +134,83 @@ module.exports = (sequelize) => {
             }]);
         }
 
+        static retrieveAvailableUserProjects = async ({userId = 0, projectName = ""}) => {
+            const currentUserAvailableProjects = await this.findAll({
+                where: {userId: {[Op.ne]: userId}, name: {[Op.iLike]: `%${projectName}%`}},
+                attributes: ["id", "name", "created"],
+                include: {
+                    model: sequelize.models.permission,
+                    required: true,
+                    attributes: ["id", "name", "projectId"],
+                    include: [
+                        {
+                            model: sequelize.models.ability,
+                            required: true,
+                            where: {
+                                entity: {
+                                    [Op.in]: ["Project", "Permission", "Server"]
+                                },
+                            },
+                            attributes: ["id", "entity", "action"],
+                            through: {attributes: []}
+                        },
+                        {
+                            model: sequelize.models.user,
+                            required: true,
+                            where: {id: userId},
+                            attributes: [],
+                            through: {attributes: []}
+                        }
+                    ]
+                },
+                order: [["created", "DESC"]]
+            });
+            const availableProjectsWithOptions = [];
+            for (let currentUserAvailableProject of currentUserAvailableProjects) {
+                let [
+                    isAbleToCreatePermission,
+                    isAbleToUpdateProject,
+                    isAbleToDeleteProject,
+                    isAbleToCreateServer
+                ] = [false, false, false, false];
+                if (currentUserAvailableProject.permissions.map(permission => permission.name).includes(`admin${currentUserAvailableProject.name}`)) {
+                    availableProjectsWithOptions.push({
+                        id: currentUserAvailableProject.id,
+                        name: currentUserAvailableProject.name,
+                        created: currentUserAvailableProject.created,
+                        isAbleToCreatePermission: true,
+                        isAbleToUpdateProject: true,
+                        isAbleToDeleteProject: true,
+                        isAbleToCreateServer: true
+                    });
+                } else {
+                    for (let permissionOfProject of currentUserAvailableProject.permissions) {
+                        for (let ability of permissionOfProject.abilities) {
+                            if (ability.entity === "Permission" && ability.action === "Create") {
+                                isAbleToCreatePermission = true;
+                            } else if (ability.entity === "Project" && ability.action === "Update") {
+                                isAbleToUpdateProject = true;
+                            } else if (ability.entity === "Project" && ability.action === "Delete") {
+                                isAbleToDeleteProject = true;
+                            } else if (ability.entity === "Server" && ability.action === "Create") {
+                                isAbleToCreateServer = true;
+                            }
+                        }
+                    }
+                    availableProjectsWithOptions.push({
+                        id: currentUserAvailableProject.id,
+                        name: currentUserAvailableProject.name,
+                        created: currentUserAvailableProject.created,
+                        isAbleToCreatePermission: isAbleToCreatePermission,
+                        isAbleToUpdateProject: isAbleToUpdateProject,
+                        isAbleToDeleteProject: isAbleToDeleteProject,
+                        isAbleToCreateServer: isAbleToCreateServer
+                    });
+                }
+            }
+            return availableProjectsWithOptions;
+        }
+
         // TODO обновить после добавления кастомных прав, чтобы подтягивались еще и доступные проекты
         static retrieveUserProjectsByName = async ({userId = 0, projectName = "%"}) => {
             const currentUserFoundProjects = await this.findAll({
@@ -146,7 +223,32 @@ module.exports = (sequelize) => {
                 attributes: ["name"],
                 order: [["name", "ASC"]]
             });
-            return currentUserFoundProjects.map(project => project.name);
+
+            const currentUserAvailableProjects = await this.findAll({
+                where: {userId: {[Op.ne]: userId}, name: {[Op.iLike]: `%${projectName}%`}},
+                attributes: ["id", "name"],
+                include: {
+                    model: sequelize.models.permission,
+                    required: true,
+                    attributes: ["id", "name"],
+                    include: [
+                        {
+                            model: sequelize.models.ability,
+                            required: true,
+                            attributes: ["id"],
+                            through: {attributes: []}
+                        },
+                        {
+                            model: sequelize.models.user,
+                            required: true,
+                            where: {id: userId},
+                            attributes: ["id"],
+                            through: {attributes: []}
+                        }
+                    ]
+                }
+            });
+            return [...currentUserFoundProjects.map(project => project.name), ...currentUserAvailableProjects.map(project => project.name)];
         }
 
         static retrieveUserSortedProjectsWithServers = async ({userId, sortField, sortType, offset, limit}) => {
@@ -189,10 +291,56 @@ module.exports = (sequelize) => {
             }]);
         }
 
-        static retrieveProject = async ({projectId}) => {
-            const currentProject = await this.findByPk(projectId);
+        static retrieveProject = async ({userId = 0, projectId = 0}) => {
+            const currentProject = await this.findOne({
+                where: {id: projectId},
+                attributes: ["id", "name", "created"]
+            });
             if (currentProject) {
-                return currentProject;
+                let userProjectPermissions = await this.findOne({
+                    attributes: ["id"],
+                    where: {id: projectId},
+                    include: {
+                        model: sequelize.models.permission,
+                        attributes: ["id"],
+                        required: true,
+                        include: [
+                            {
+                                model: sequelize.models.ability,
+                                required: true,
+                                where: {
+                                    entity: "Project",
+                                    action: {
+                                        [Op.in]: ["Update", "Delete"]
+                                    }
+                                },
+                                attributes: ["entity", "action"],
+                                through: {attributes: []}
+                            },
+                            {
+                                model: sequelize.models.user,
+                                required: true,
+                                where: {id: userId},
+                                attributes: [],
+                                through: {attributes: []}
+                            }
+                        ]
+                    }
+                });
+                let [isAbleToUpdate, isAbleToDelete] = [false, false];
+                if (userProjectPermissions && userProjectPermissions.permissions && userProjectPermissions.permissions.length > 0) {
+                    userProjectPermissions = userProjectPermissions.permissions;
+                    for (let userProjectPermission of userProjectPermissions) {
+                        for (let ability of userProjectPermission.abilities) {
+                            if (ability.action === "Update") {
+                                isAbleToUpdate = true;
+                            } else if (ability.action === "Delete") {
+                                isAbleToDelete = true;
+                            }
+                        }
+                    }
+                }
+                return [currentProject, isAbleToUpdate, isAbleToDelete];
             }
             throw new ProjectNotFoundError("Such project not found", [{
                 text: "Такого проекта у вас нет!"

@@ -54,13 +54,15 @@ const edit_tag = async (req, res) => {
 
 const retrieveTagById = async (req, res) => {
     const tagId = req.params.tagId;
+    const userId = req.user.id;
     try {
-        const tag = await models.tag.retrieveTag({tagId: tagId});
+        const tagInfo = await models.tag.retrieveTag({userId: userId, tagId: tagId});
         res.send({
            status: "success",
-           tag: tag
+            tagInfo: tagInfo
         });
     } catch (e) {
+        console.log(e);
         res.send({
            status: "warning",
            messages: e.messages

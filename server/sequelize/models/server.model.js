@@ -70,7 +70,6 @@ module.exports = (sequelize) => {
                         }
                     }, {transaction: t});
                     adminPermission = adminPermission[0];
-                    console.log(adminPermission);
                     await adminPermission.addServer(createdServer, {transaction: t});
                     await t.commit();
                     return createdServer;
@@ -147,10 +146,10 @@ module.exports = (sequelize) => {
                          * AND ALL THE ANOTHER PERMISSIONS OF NEW PROJECT STAY WITHOUT ANY CHANGES!
                          */
 
-                        // if the new project we should move
-                        // the server from all currentProjectPermissions to newProjectPermissions
+                            // if the new project we should move
+                            // the server from all currentProjectPermissions to newProjectPermissions
                         const currentProjectPermissions = await currentProject.getPermissions({}, {transaction: t});
-                        const newProjectPermissions = await newProjectByName.getPermissions({where: { name: {[Op.like]: "admin%"}}}, {transaction: t});
+                        const newProjectPermissions = await newProjectByName.getPermissions({where: {name: `admin${newProjectName}`}}, {transaction: t});
 
                         const newProjectServers = await newProjectByName.getServers({}, {transaction: t});
                         const currentProjectServers = await currentProject.getServers({where: {ip: {[Op.ne]: currentServer.ip}}}, {transaction: t});
@@ -256,40 +255,52 @@ module.exports = (sequelize) => {
             }]);
         }
 
-        // TODO обновить после добавления возможности создавать кастомные права
-        // TODO надо загружать еще и доступные сервера
         static retrieveUserServersByIpHostname = async ({userId, ip = "%", hostname = "%"}) => {
             console.log(ip, hostname, userId);
-            const currentUserWithFoundServers = await sequelize.models.user.findAll({
+            const availableServers = await sequelize.models.user.findAll({
                 where: {id: userId},
+                attributes: ["id"],
                 include: {
-                    model: sequelize.models.project,
+                    model: sequelize.models.permission,
                     required: true,
+                    attributes: ["id", "name"],
                     include: {
                         model: sequelize.models.server,
-                        required: true,
+                        require: true,
                         attributes: ["ip", "hostname"],
                         where: {
                             ip: {[Op.iLike]: `%${ip}%`},
-                            hostname: { [Op.iLike]: `%${hostname}%`}
+                            hostname: {[Op.iLike]: `%${hostname}%`}
                         }
                     }
                 }
-            });
+            })
             let servers = [];
-            if (currentUserWithFoundServers.length && currentUserWithFoundServers[0].projects.length) {
-                for (let project of currentUserWithFoundServers[0].projects) {
+            const tempHostnames = [];
+            if (availableServers.length && availableServers[0].permissions.length) {
+                for (let permission of availableServers[0].permissions) {
                     if (ip === "%" && hostname !== "%") {
-                        servers = [...servers, ...(project.servers.map(server => server.hostname))];
+                        for (let server of permission.servers) {
+                            if (!servers.includes(server.hostname)) {
+                                servers.push(server.hostname);
+                            }
+                        }
                     } else if (hostname === "%" && ip !== "%") {
-                        servers = [...servers, ...(project.servers.map(server => server.ip))];
+                        for (let server of permission.servers) {
+                            if (!servers.includes(server.ip)) {
+                                servers.push(server.ip);
+                            }
+                        }
                     } else {
-                        servers = [...servers, ...(project.servers.map(server => {
-                            return {
-                                hostname: server.hostname,
-                                ip: server.ip
-                            };
-                        }))];
+                        for (let server of permission.servers) {
+                            if (!tempHostnames.includes(server.hostname)) {
+                                tempHostnames.push(server.hostname);
+                                servers.push({
+                                    hostname: server.hostname,
+                                    ip: server.ip
+                                });
+                            }
+                        }
                     }
                 }
                 return servers;
@@ -319,30 +330,55 @@ module.exports = (sequelize) => {
             });
         }
 
-        static retrieveFilteredUserServers = async ({
-                                                        userId,
-                                                        name,
-                                                        ip,
-                                                        hostname,
-                                                        tagName,
-                                                        createdMin,
-                                                        createdMax
-                                                    }, isFilterTag = false) => {
-            return await sequelize.models.user.findAll({
-                where: {
-                    id: userId
-                },
+        static retrieveAvailableUserProjectsWithServers = async ({
+                                                                     userId,
+                                                                     name,
+                                                                     ip,
+                                                                     hostname,
+                                                                     tagName,
+                                                                     createdMin,
+                                                                     createdMax
+                                                                 }) => {
+            console.log("QQQQQQQ", name, ip, hostname);
+            const availableProjectsToCreateTag = await sequelize.models.project.findAll({
+                where: {userId: {[Op.ne]: userId}, name: {[Op.iLike]: `%${name}%`}},
+                attributes: ["id", "name"],
                 include: {
-                    model: sequelize.models.project,
+                    model: sequelize.models.permission,
                     required: true,
-                    where: {
-                        name: {
-                            [Op.iLike]: `%${name}%`,
+                    attributes: [],
+                    include: [
+                        {
+                            model: sequelize.models.ability,
+                            required: true,
+                            where: {
+                                entity: "Tag",
+                                action: "Create"
+                            },
+                            attributes: [],
+                            through: {attributes: []}
+                        },
+                        {
+                            model: sequelize.models.user,
+                            required: true,
+                            where: {id: userId},
+                            attributes: [],
+                            through: {attributes: []}
                         }
+                    ]
+                },
+            });
+            const availableProjects = [];
+            for (let project of availableProjectsToCreateTag) {
+                const tempProject = await sequelize.models.project.findOne({
+                    where: {
+                        id: project.id
                     },
+                    attributes: ["id", "name", "userId"],
                     include: {
                         model: sequelize.models.server,
                         required: true,
+                        attributes: ["id", "hostname", "ip"],
                         where: {
                             [Op.and]: [
                                 {
@@ -369,12 +405,85 @@ module.exports = (sequelize) => {
                         },
                         include: {
                             model: sequelize.models.tag,
-                            required: isFilterTag,
+                            required: tagName !== "%",
+                            attributes: ["id", "name", "color"],
                             where: {
                                 name: {
                                     [Op.iLike]: `%${tagName}%`
                                 }
-                            }
+                            },
+                            through: {attributes: []}
+                        }
+                    }
+                });
+                if (tempProject) {
+                    availableProjects.push(tempProject);
+                }
+            }
+            return availableProjects;
+        }
+
+        static retrieveFilteredUserServers = async ({
+                                                        userId,
+                                                        name,
+                                                        ip,
+                                                        hostname,
+                                                        tagName,
+                                                        createdMin,
+                                                        createdMax
+                                                    }) => {
+            return await sequelize.models.user.findAll({
+                where: {
+                    id: userId
+                },
+                attributes: [],
+                include: {
+                    model: sequelize.models.project,
+                    required: true,
+                    attributes: ["id", "name", "userId"],
+                    where: {
+                        name: {
+                            [Op.iLike]: `%${name}%`,
+                        }
+                    },
+                    include: {
+                        model: sequelize.models.server,
+                        required: true,
+                        attributes: ["id", "hostname", "ip", "created"],
+                        where: {
+                            [Op.and]: [
+                                {
+                                    hostname: {
+                                        [Op.iLike]: `%${hostname}%`
+                                    }
+                                },
+                                {
+                                    ip: {
+                                        [Op.iLike]: `%${ip}%`
+                                    }
+                                },
+                                {
+                                    created: {
+                                        [Op.gte]: createdMin
+                                    }
+                                },
+                                {
+                                    created: {
+                                        [Op.lte]: createdMax
+                                    }
+                                }
+                            ]
+                        },
+                        include: {
+                            model: sequelize.models.tag,
+                            required: tagName !== "%",
+                            attributes: ["id", "name", "color"],
+                            where: {
+                                name: {
+                                    [Op.iLike]: `%${tagName}%`
+                                }
+                            },
+                            through: {attributes: []}
                         }
                     }
                 },

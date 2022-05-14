@@ -456,6 +456,10 @@ export default {
         name: 'retrieveTag',
         params: {
           tagId: tagId,
+        },
+        query: {
+          isAbleToUpdateTag: true,
+          isAbleToDeleteTag: false
         }
       });
     },

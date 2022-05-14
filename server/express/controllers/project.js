@@ -131,15 +131,33 @@ const retrieve_all_user_projects = async (req, res) => {
     }
 }
 
-const retrieve_project = async (req, res) => {
-    const projectId = req.params.projectId;
+const retrieve_available_user_projects = async (req, res) => {
+    const userId = req.user.id;
     try {
-        const project = await models.project.retrieveProject({projectId});
+        const userAvailableProjects = await models.project.retrieveAvailableUserProjects({userId});
         res.send({
             status: "success",
-            project: project
+            userAvailableProjects: userAvailableProjects
         });
     } catch (e) {
+        res.send({
+            status: "warning",
+            messages: e.message
+        });
+    }
+}
+
+const retrieve_project = async (req, res) => {
+    const projectId = req.params.projectId;
+    const userId = req.user.id;
+    try {
+        const projectInfo = await models.project.retrieveProject({userId: userId, projectId: projectId});
+        res.send({
+            status: "success",
+            projectInfo: projectInfo
+        });
+    } catch (e) {
+        console.log(e);
         res.send({
             status: "warning",
             messages: e.messages
@@ -181,6 +199,7 @@ module.exports = {
     retrieve_user_projects_by_name,
     retrieve_sorted_user_projects_with_servers,
     retrieve_all_user_projects,
+    retrieve_available_user_projects,
     retrieve_project,
     retrieve_project_with_servers_tags,
     delete_project

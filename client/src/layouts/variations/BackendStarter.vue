@@ -58,8 +58,8 @@
                 icon: 'fa fa-clipboard-list'
               },
               {
-                name: 'Доступные мне (в разработке)',
-                // to: '/retrieve-servers/',
+                name: 'Доступные мне',
+                to: '/retrieve-available-projects/',
                 icon: 'fa fa-clipboard-list'
               },
 
@@ -84,7 +84,7 @@
               },
               {
                 name: 'Мои серверы',
-                to: `/retrieve-servers/`,
+                to: '/retrieve-servers/',
                 icon: 'fa fa-server'
               },
               {

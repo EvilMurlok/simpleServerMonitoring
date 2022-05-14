@@ -5,64 +5,107 @@
           class="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center py-2 text-center text-sm-left">
         <div class="flex-sm-fill">
           <h2 class="h6 font-w500 text-muted mb-0">
-            На этой странице можно посмотреть информацию о теге и изменить её
+            На этой странице можно посмотреть информацию о теге
           </h2>
         </div>
       </div>
     </div>
 
     <div class="content">
-      <base-block title="Информация о теге"
-                  rounded
-                  header-bg
-                  content-full
-      >
-        <BaseMessage
-            v-for="item in messages_data.messages"
-            :key="item.text"
-            :message_data="{type: messages_data.type, item: item}"
-        />
-        <div class="d-flex justify-content-end">
-          <b-button type="submit"
-                    variant="alt-danger"
-                    class="mr-1 mb-3"
-                    @click="deleteTag"
+      <b-row class="my-3 m-3" v-if="isAbleToDeleteTag === true">
+        <b-col sm="8"></b-col>
+        <b-col sm="4">
+          <div class="d-flex justify-content-end">
+            <b-button type="submit"
+                      variant="alt-danger"
+                      class="mr-1 mb-3"
+                      @click="deleteTag"
+            >
+              <i class="si si-close mr-2"></i> Удалить тег
+            </b-button>
+          </div>
+        </b-col>
+      </b-row>
+      <b-row class="my-3 m-3">
+        <b-col sm="6">
+          <base-block title="Информация о теге"
+                      rounded
+                      header-bg
+                      content-full
           >
-            <i class="si si-close mr-2"></i> Удалить тег
-          </b-button>
-        </div>
-        <b-form @submit.prevent="updateTag">
-          <div class="py-3">
-            <div class="form-group">
-              <label class="form-check-label mb-2">Наименование тега</label>
-              <b-form-input size="lg"
-                            id="tag"
-                            name="tag"
-                            placeholder="Имя тега"
-                            v-model="tag.name"
-              >
-              </b-form-input>
+            <div class="py-3">
+              <div class="form-group">
+                <label class="form-check-label mb-2">Наименование тега</label>
+                <b-form-input size="lg"
+                              id="tagNameInfo"
+                              name="tagNameInfo"
+                              v-model="tag.name"
+                              disabled
+                >
+                </b-form-input>
+              </div>
+              <div class="form-group">
+                <label class="form-check-label mb-2">Цвет тега</label>
+                <div :style="{
+                    'width': '100%',
+                    'height': '2em',
+                    'background': tag.color,
+                    'border-radius': '10px',
+                  }"
+                >
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-check-label mb-2">Время создания</label>
+                <h2 class="mb-3">
+                  <b-badge variant="primary">{{ new Date(tag.created).toLocaleString() }}</b-badge>
+                </h2>
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-check-label mb-2">Цвет тега</label>
-              <b-form-input size="lg"
-                            id="color"
-                            name="color"
-                            v-model="tag.color"
-                            type="color"
-              >
-              </b-form-input>
-            </div>
-            <b-row class="form-group">
-              <b-col md="6" xl="3">
+          </base-block>
+        </b-col>
+        <b-col sm="6" v-if="isAbleToUpdateTag === true">
+          <base-block title="Форма редактирования тега"
+                      rounded
+                      header-bg
+                      content-full
+          >
+            <BaseMessage
+                v-for="item in messages_data.messages"
+                :key="item.text"
+                :message_data="{type: messages_data.type, item: item}"
+            />
+            <b-form @submit.prevent="updateTag">
+              <div class="py-3">
+                <div class="form-group">
+                  <label class="form-check-label mb-2">Наименование тега</label>
+                  <b-form-input size="lg"
+                                id="tag"
+                                name="tag"
+                                placeholder="Имя тега"
+                                v-model="tag.name"
+                  >
+                  </b-form-input>
+                </div>
+                <div class="form-group">
+                  <label class="form-check-label mb-2">Цвет тега</label>
+                  <b-form-input size="lg"
+                                id="color"
+                                name="color"
+                                v-model="tag.color"
+                                type="color"
+                  >
+                  </b-form-input>
+                </div>
                 <b-button type="submit" variant="alt-info" class="mr-1 mb-3">
                   <i class="si si-refresh mr-2"></i> Обновить данные
                 </b-button>
-              </b-col>
-            </b-row>
-          </div>
-        </b-form>
-      </base-block>
+              </div>
+            </b-form>
+          </base-block>
+        </b-col>
+      </b-row>
+
     </div>
   </div>
 </template>
@@ -84,7 +127,10 @@ export default {
         id: 0,
         name: "",
         color: "",
+        created: "",
       },
+      isAbleToUpdateTag: false,
+      isAbleToDeleteTag: false,
     }
   },
 
@@ -105,7 +151,9 @@ export default {
               }
             });
           } else {
-            this.tag = res.data.tag;
+            this.tag = res.data.tagInfo[0];
+            this.isAbleToUpdateTag = res.data.tagInfo[1];
+            this.isAbleToDeleteTag = res.data.tagInfo[2];
           }
         })
         .catch(err => console.error(err));

@@ -13,6 +13,7 @@ import vRegister from "@/views/authorization/v-register";
 import vAddProject from "@/views/project/v-create-project";
 import vRetrieveProject from "@/views/project/v-retrieve-project"
 import vRetrieveProjects from "@/views/project/v-retrieve-projects";
+import vRetrieveAvailableUserProjects from "@/views/project/v-retrieve-available-projects"
 
 // servers
 import vCreateServer from "@/views/server/v-create-server";
@@ -49,12 +50,12 @@ let router = new Router({
 
         // errors
         {
-            path: '/not-found-page/',
+            path: "/not-found-page/",
             component: vNotFoundPage,
             children: [
                 {
-                    path: '/not-found-page/',
-                    name: 'notFoundPage',
+                    path: "/not-found-page/",
+                    name: "notFoundPage",
                     component: vNotFoundPage
                 }
             ]
@@ -62,15 +63,15 @@ let router = new Router({
 
         // auth
         {
-            path: '/login/',
+            path: "/login/",
             component: LayoutSimple,
             meta: {
                 guest: true
             },
             children: [
                 {
-                    path: '/login/',
-                    name: 'login',
+                    path: "/login/",
+                    name: "login",
                     component: vLogin
                 }
             ]
@@ -119,7 +120,21 @@ let router = new Router({
             ]
         },
         {
-            path: '/retrieve-project/:projectId/',
+            path: "/retrieve-available-projects/",
+            component: LayoutBackend,
+            meta: {
+                requiresAuth: true,
+            },
+            children: [
+                {
+                    path: "/retrieve-available-projects/",
+                    name: "retrieveAvailableProjects",
+                    component: vRetrieveAvailableUserProjects
+                }
+            ]
+        },
+        {
+            path: "/retrieve-project/:projectId/",
             component: LayoutBackend,
             meta: {
                 requiresAuth: true,

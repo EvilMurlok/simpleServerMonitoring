@@ -46,6 +46,64 @@ const retrieve_user_servers_by_hostname_ip = async (req, res) => {
     });
 }
 
+const retrieve_available_servers_to_create_tag = async (req, res) => {
+    const [
+        userId,
+        name,
+        ip,
+        hostname,
+        tagName,
+        createdMin,
+        createdMax
+    ] = [
+        req.user.id,
+        req.query.name,
+        req.query.ip,
+        req.query.hostname,
+        req.query.tag,
+        req.query.createdMin,
+        req.query.createdMax
+    ];
+    try {
+        const userProjectsWithServers = await models.server.retrieveFilteredUserServers({
+            userId,
+            name,
+            ip,
+            hostname,
+            tagName,
+            createdMin,
+            createdMax
+        });
+        const availableProjectsWithServers = await models.server.retrieveAvailableUserProjectsWithServers({
+            userId,
+            name,
+            ip,
+            hostname,
+            tagName,
+            createdMin,
+            createdMax
+        });
+
+        let availableProjectsToCreateTag = [];
+
+        if (userProjectsWithServers[0]) {
+            availableProjectsToCreateTag = userProjectsWithServers[0].projects.concat(availableProjectsWithServers);
+        } else {
+            availableProjectsToCreateTag = availableProjectsWithServers;
+        }
+        res.send({
+            status: "success",
+            availableProjectsToCreateTag: availableProjectsToCreateTag
+        })
+    } catch (e) {
+        res.send({
+            status: "warning",
+            messages: e.messages
+        })
+    }
+
+}
+
 const retrieve_filtered_user_servers = async (req, res) => {
     const [
         userId,
@@ -73,7 +131,7 @@ const retrieve_filtered_user_servers = async (req, res) => {
             tagName,
             createdMin,
             createdMax
-        }, tagName !== "%");
+        });
         res.send({
             status: "success",
             userServers: userServers
@@ -210,6 +268,7 @@ module.exports = {
     retrieve_project_servers,
     retrieve_user_servers,
     retrieve_user_servers_by_hostname_ip,
+    retrieve_available_servers_to_create_tag,
     retrieve_filtered_user_servers,
     retrieve_user_sorted_servers,
     retrieve_server_in_project,

@@ -185,6 +185,28 @@ module.exports = (sequelize) => {
             });
         }
 
+        static retrieveOtherUsersWithoutAdminPermissions = async ({userId = 0, projectId = 0, projectName = ""}) => {
+            if (!projectName) {
+                projectName = (await sequelize.models.project.findByPk(projectId)).name;
+            }
+            const usersIdsWithAdminPermissions = (await this.findAll({
+                where: {id: {[Op.ne]: userId}},
+                attributes: ["id"],
+                include: {
+                    model: sequelize.models.permission,
+                    required: true,
+                    attributes: ["id"],
+                    where: {name: `admin${projectName}`}
+                }
+            })).map(user => user.id);
+            usersIdsWithAdminPermissions.push(userId);
+            return await this.findAll({
+                where: {
+                    id: {[Op.notIn]: usersIdsWithAdminPermissions}
+                },
+            });
+        }
+
         static deletionUser = async ({userId = 0}) => {
             const deletedUserNumber = await this.destroy({
                 where: {

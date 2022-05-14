@@ -167,27 +167,19 @@ module.exports = (sequelize) => {
             }
         }
 
-        static retrieveTag = async ({tagId = 0, tagName = ""}) => {
-            return this.findOne({
+        static retrieveTag = async ({userId = 0, tagId = 0, tagName = ""}) => {
+            const currentTag = await this.findOne({
                 where: {
-                    [Op.and]: [
+                    [Op.or]: [
                         {
-                            [Op.or]: [
-                                {
-                                    name: tagName
-                                },
-                                {
-                                    id: tagId
-                                }
-                            ]
+                            name: tagName
                         },
                         {
-                            deleted: {
-                                [Op.is]: null
-                            }
+                            id: tagId
                         }
                     ]
                 },
+                attributes: ["id", "name", "color", "created"],
                 include: {
                     model: sequelize.models.server,
                     required: true,
@@ -195,9 +187,58 @@ module.exports = (sequelize) => {
                         deleted: {
                             [Op.is]: null
                         }
-                    }
+                    },
+                    attributes: ["id", "ip", "hostname", "created"],
+                    through: {attributes: []}
                 }
             });
+            let userPermissionsWithTag = await this.findOne({
+                where: {id: tagId},
+                attributes: ["id"],
+                include: {
+                    model: sequelize.models.permission,
+                    attributes: ["id"],
+                    through: {attributes: []},
+                    required: true,
+                    include: [
+                        {
+                            model: sequelize.models.ability,
+                            required: true,
+                            where: {
+                                entity: "Tag",
+                                action: {
+                                    [Op.in]: ["Update", "Delete"]
+                                }
+                            },
+                            attributes: ["entity", "action"],
+                            through: {attributes: []}
+                        },
+                        {
+                            model: sequelize.models.user,
+                            required: true,
+                            where: {id: userId},
+                            attributes: [],
+                            through: {attributes: []}
+                        }
+                    ]
+                }
+
+            });
+            let [isAbleToUpdateTag, isAbleToDeleteTag] = [false, false];
+            if (userPermissionsWithTag && userPermissionsWithTag.permissions && userPermissionsWithTag.permissions.length > 0) {
+                userPermissionsWithTag = userPermissionsWithTag.permissions;
+                for (let userPermissionWithTag of userPermissionsWithTag) {
+                    for (let ability of userPermissionWithTag.abilities) {
+                        if (ability.action === "Update") {
+                            isAbleToUpdateTag = true;
+                        }
+                        if (ability.action === "Delete") {
+                            isAbleToDeleteTag = true;
+                        }
+                    }
+                }
+            }
+            return [currentTag, isAbleToUpdateTag, isAbleToDeleteTag];
         }
 
         static retrieveTagsByName = async ({tagName = "%"}) => {

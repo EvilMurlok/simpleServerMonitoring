@@ -98,6 +98,14 @@ const retrieve_other_users = async (req, res) => {
     });
 }
 
+const retrieve_other_users_without_admin_permissions = async (req, res) => {
+    const [userId, projectId] = [req.user.id, req.params.projectId];
+    res.send({
+       status: "success",
+       otherUsers: await models.user.retrieveOtherUsersWithoutAdminPermissions({userId: userId, projectId: projectId})
+    });
+}
+
 const user_deletion = async (req, res) => {
     const userId = req.user.id;
     try {
@@ -135,5 +143,6 @@ module.exports = {
     user_logout,
     user_retrieve,
     retrieve_other_users,
+    retrieve_other_users_without_admin_permissions,
     user_deletion
 }

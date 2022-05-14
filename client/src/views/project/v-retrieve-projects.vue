@@ -232,6 +232,7 @@ export default {
           }
         })
         .catch(err => console.error(err));
+
   },
 
   methods: {
@@ -242,9 +243,8 @@ export default {
     viewProject(userProject) {
       this.$router.push({
         path: `/retrieve-project/${userProject.id}/`,
-        params: {
-          projectId: userProject.id,
-          name: userProject.name
+        query: {
+          isAbleToUpdateProject: true
         }
       });
     },
@@ -254,7 +254,9 @@ export default {
         name: 'retrieveTag',
         params: {
           tagId: tagId,
-        }
+          isAbleToUpdateTag: true,
+          isAbleToDeleteTag: true
+        },
       });
     },
 

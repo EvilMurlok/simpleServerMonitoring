@@ -1,25 +1,4 @@
-const {Op} = require("sequelize");
 const {models} = require("../../sequelize");
-// const {PermissionAccessDeniedError} = require("../../sequelize/errors/permission/permissionErrors");
-
-// const create_admin_permission = async (req, res) => {
-//     const userId = req.user.id;
-//     const currentAdminUser = await models.user.findByPk(userId);
-//     if (currentAdminUser.username !== "admin") {
-//         res.send({
-//             status: "warning",
-//             messages: [{
-//                 text: "Доступ запрещен! Причина: У Вас аккаунт не администратора!"
-//             }]
-//         });
-//     } else {
-//         currentAdminUser.addPermission(await models.permission.createAdminPermission());
-//         res.send({
-//             status: "success",
-//             user: currentAdminUser
-//         });
-//     }
-// }
 
 const create_admin_permission_with_project = async (req, res) => {
     const currentUserId = req.user.id;
@@ -228,6 +207,30 @@ const edit_custom_permission = async (req, res) => {
     }
 }
 
+const give_admin_permission_to_people = async (req, res) => {
+    const [
+        userIds,
+        permissionAdminName
+    ] = [
+        req.body.userIds,
+        req.body.permissionAdminName,
+    ];
+    try {
+        await models.permission.giveAdminPermissionToPeople({permissionAdminName, userIds});
+        res.send({
+            status: "success",
+            messages: [{
+                text: `Право администратора ${permissionAdminName} успешно выдано пользователям!`
+            }]
+        });
+    } catch (e) {
+        res.send({
+            status: "warning",
+            messages: e.messages
+        });
+    }
+}
+
 const retrieve_permissions_by_name = async (req, res) => {
     const [
         userId,
@@ -273,7 +276,6 @@ const retrieve_all_projects_user_permissions = async (req, res) => {
     if (typeof actions === "string") {
         actions = [actions];
     }
-    let [isFilterServer, isFilterTag] = [serverHostname !== "%" || serverIp !== "%", tagName !== "%"];
     let userAllProjectsPermissions = await models.permission.retrieveAllUserProjectsPermissions({
         userId,
         permissionName,
@@ -283,7 +285,7 @@ const retrieve_all_projects_user_permissions = async (req, res) => {
         serverHostname,
         serverIp,
         tagName
-    }, isFilterServer, isFilterTag);
+    });
     if (userAllProjectsPermissions && userAllProjectsPermissions.length) {
         console.log("QQQQ");
     } else {
@@ -329,13 +331,36 @@ const get_sub_permissions = async (req, res) => {
     const permissionId = req.params.permissionId;
     try {
         const permission = await models.permission.findByPk(permissionId);
-        const children = await permission.getSubPermissions();
+        const children = await permission.getChildrenPermissions();
         res.send({
             status: "success",
             messages: [{
                 text: `Вот список дочерних Прав!`
             }],
             permissions: children
+        });
+    } catch (e) {
+        res.send({
+            status: "warning",
+            message: e.message,
+            messages: e.messages
+        });
+    }
+}
+
+const get_parent_permissions = async (req, res) => {
+    const permissionId = req.params.permissionId;
+    try {
+        const permission = await models.permission.findByPk(permissionId);
+        console.log(permissionId);
+        console.log(permission);
+        const parents = await permission.getParentPermissions();
+        res.send({
+            status: "success",
+            messages: [{
+                text: `Вот список родительских Прав!`
+            }],
+            permissions: parents
         });
     } catch (e) {
         res.send({
@@ -378,11 +403,13 @@ module.exports = {
     update_admin_permission_with_project,
     create_custom_permission,
     edit_custom_permission,
+    give_admin_permission_to_people,
     retrieve_permissions_by_name,
     retrieve_all_projects_user_permissions,
     retrieve_project_user_permissions,
     retrieve_permissions_with_items,
     retrieve_common_user_permissions,
+    get_parent_permissions,
     get_sub_permissions,
     delete_permission
 }

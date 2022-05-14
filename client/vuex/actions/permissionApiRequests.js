@@ -27,6 +27,7 @@ export default {
                 }
             })
             .then(res => {
+                console.log(res.data.permissionsByName);
                 commit("SET_PERMISSIONS_BY_NAME", res.data.permissionsByName);
                 return res;
             })

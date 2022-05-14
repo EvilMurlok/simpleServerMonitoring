@@ -50,52 +50,52 @@ services:
     networks:
       - monitoring
 
-  postgres_exporter:
-    container_name: exporter
-    image: prometheuscommunity/postgres-exporter:v0.10.0
-    environment:
-      DATA_SOURCE_URI: "postgres:5432/monitoring?sslmode=disable"
-      DATA_SOURCE_USER: "root"
-      DATA_SOURCE_PASS: "123456"
-      PG_EXPORTER_EXTEND_QUERY_PATH: "/etc/postgres_exporter/queries.yaml"
-    volumes:
-      - ./queries.yaml:/etc/postgres_exporter/queries.yaml:ro
-    ports:
-      - "9187:9187"
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '0.2'
-          memory: 500M
-    networks:
-      - monitoring
-
-  grafana:
-    container_name: grafana
-    image: grafana/grafana
-    volumes:
-      - ./monitoring/grafana/data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
-    ports:
-      - "3000:3000"
-    networks:
-      - monitoring
-
-  prometheus:
-    image: prom/prometheus
-    container_name: prometheus
-    restart: unless-stopped
-    volumes:
-      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./monitoring/prometheus/data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--web.enable-lifecycle'
-    ports:
-      - "9090:9090"
-    networks:
-      - monitoring
+#  postgres_exporter:
+#    container_name: exporter
+#    image: prometheuscommunity/postgres-exporter:v0.10.0
+#    environment:
+#      DATA_SOURCE_URI: "postgres:5432/monitoring?sslmode=disable"
+#      DATA_SOURCE_USER: "root"
+#      DATA_SOURCE_PASS: "123456"
+#      PG_EXPORTER_EXTEND_QUERY_PATH: "/etc/postgres_exporter/queries.yaml"
+#    volumes:
+#      - ./queries.yaml:/etc/postgres_exporter/queries.yaml:ro
+#    ports:
+#      - "9187:9187"
+#    restart: unless-stopped
+#    deploy:
+#      resources:
+#        limits:
+#          cpus: '0.2'
+#          memory: 500M
+#    networks:
+#      - monitoring
+#
+#  grafana:
+#    container_name: grafana
+#    image: grafana/grafana
+#    volumes:
+#      - ./monitoring/grafana/data:/var/lib/grafana
+#      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+#    ports:
+#      - "3000:3000"
+#    networks:
+#      - monitoring
+#
+#  prometheus:
+#    image: prom/prometheus
+#    container_name: prometheus
+#    restart: unless-stopped
+#    volumes:
+#      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+#      - ./monitoring/prometheus/data:/prometheus
+#    command:
+#      - '--config.file=/etc/prometheus/prometheus.yml'
+#      - '--storage.tsdb.path=/prometheus'
+#      - '--web.console.libraries=/etc/prometheus/console_libraries'
+#      - '--web.console.templates=/etc/prometheus/consoles'
+#      - '--web.enable-lifecycle'
+#    ports:
+#      - "9090:9090"
+#    networks:
+#      - monitoring

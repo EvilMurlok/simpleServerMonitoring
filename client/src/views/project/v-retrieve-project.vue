@@ -14,42 +14,65 @@
 
     <!-- Page Content -->
     <div class="content">
-      <base-block title="Конфигурация"
-                  rounded
-                  header-bg
-                  content-full
-      >
-        <BaseMessage
-            v-for="item in messages_data.messages"
-            :key="item.text"
-            :message_data="{type: messages_data.type, item: item}"
-        />
-
-        <b-form @submit.prevent="updateProject">
-          <div class="py-3">
-            <div class="form-group">
-              <label class="form-check-label mb-2">Название проекта</label>
-              <b-form-input size="lg"
-                            id="name"
-                            name="name"
-                            placeholder="Название проекта"
-                            v-model="project.name"
-              >
-              </b-form-input>
-            </div>
+      <b-row class="my-3 m-3" v-if="isAbleToDeleteProject === true">
+        <b-col sm="8"></b-col>
+        <b-col>
+          <div class="d-flex justify-content-end">
+            <b-button type="submit"
+                      variant="alt-danger"
+                      class="mr-1 mb-3"
+                      @click="deleteProject"
+            >
+              <i class="si si-close mr-2"></i> Удалить проект
+            </b-button>
           </div>
-          <b-row class="form-group">
-            <b-col md="6" xl="3">
+        </b-col>
+      </b-row>
+      <b-row class="my-3 m-3">
+        <b-col sm="5">
+          <base-block title="Информация о проекте"
+                      rounded
+                      header-bg
+                      content-full
+          >
+            <BaseMessage
+                v-for="item in messages_data.messages"
+                :key="item.text"
+                :message_data="{type: messages_data.type, item: item}"
+            />
+
+            <h6 class="mb-1">
+              Время создания
+            </h6>
+            <h2 class="mb-3">
+              <b-badge variant="primary">{{ new Date(project.created).toLocaleString() }}</b-badge>
+            </h2>
+            <b-form @submit.prevent="updateProject">
+              <div>
+                <div class="form-group mb-2">
+                  <label class="form-check-label mb-2">Название проекта</label>
+                  <b-form-input size="lg"
+                                id="name"
+                                name="name"
+                                placeholder="Название проекта"
+                                v-model="project.name"
+                                :disabled="isAbleToUpdateProject !== true"
+                  >
+                  </b-form-input>
+                </div>
+              </div>
               <b-button type="submit"
                         variant="alt-info"
-                        class="mr-1 mb-3"
+                        class="mt-3"
+                        size="sm"
+                        v-if="isAbleToUpdateProject === true"
               >
                 <i class="si si-refresh mr-2"></i> Обновить данные
               </b-button>
-            </b-col>
-          </b-row>
-        </b-form>
-      </base-block>
+            </b-form>
+          </base-block>
+        </b-col>
+      </b-row>
     </div>
   </div>
 </template>
@@ -70,8 +93,11 @@ export default {
       messages_data: {type: "warning", messages: []},
       project: {
         id: 0,
-        name: ""
+        name: "",
+        created: ""
       },
+      isAbleToUpdateProject: false,
+      isAbleToDeleteProject: false,
     }
   },
 
@@ -93,13 +119,18 @@ export default {
                   }
                 });
           } else {
-            this.project = res.data.project;
+            this.project = res.data.projectInfo[0];
+            this.isAbleToUpdateProject = res.data.projectInfo[1];
+            this.isAbleToDeleteProject = res.data.projectInfo[2];
           }
         })
         .catch(err => console.error(err));
   },
 
   methods: {
+    deleteProject() {
+      console.log("QWE");
+    },
 
     updateProject() {
       if (this.messages_data.messages.length !== 0) {
@@ -117,7 +148,7 @@ export default {
                 this.messages_data.messages = res.data.messages;
               } else {
                 const types = {"not found": "warning", "info": "info", "success": "success"};
-                this.messages_data = {type: types[res.data.status], messages:res.data.messages};
+                this.messages_data = {type: types[res.data.status], messages: res.data.messages};
               }
             }
           })

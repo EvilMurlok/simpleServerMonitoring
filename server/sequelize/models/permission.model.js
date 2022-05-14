@@ -104,11 +104,11 @@ module.exports = (sequelize) => {
                 );
             }
 
-            let sameNamePermission = null;
+            let sameNamePermissions = [];
 
             if (selfId) {
                 // If you call this method from instance and don't want to change name
-                sameNamePermission = await project.getPermissions({
+                sameNamePermissions = await sequelize.models.permission.findAll({
                     where: {
                         name: name,
                         id: {
@@ -117,18 +117,18 @@ module.exports = (sequelize) => {
                     }
                 });
             } else {
-                sameNamePermission = await project.getPermissions({
+                sameNamePermissions = await  sequelize.models.permission.findAll({
                     where: {
                         name: name
                     }
                 });
             }
 
-            if (sameNamePermission.length > 0) {
+            if (sameNamePermissions.length > 0) {
                 throw new PermissionSameCredentialsError(
                     "Same name for permission",
                     [{
-                        text: `Внутри этого проекта ${project.name} уже есть право с таким именем!`
+                        text: `Кто-то в команде уже создал право с таким именем!`
                     }]
                 );
             }
@@ -257,7 +257,9 @@ module.exports = (sequelize) => {
                             }
                         },
                         {
-                            entity: "Permission",
+                            entity: {
+                                [Op.in]: ["Permission", "Tag"]
+                            },
                             action: "Retrieve"
                         }
                     ]
@@ -290,7 +292,7 @@ module.exports = (sequelize) => {
                     [Op.or]: [
                         {
                             entity: {
-                                [Op.in]: ["Dashboard", "Server", "Tag", "Metric"]
+                                [Op.in]: ["Dashboard", "Server", "Metric"]
                             }
                         },
                         {
@@ -308,7 +310,9 @@ module.exports = (sequelize) => {
                         {
                             [Op.and]: [
                                 {
-                                    entity: "Permission"
+                                    entity: {
+                                        [Op.in]: ["Permission", "Tag"]
+                                    }
                                 },
                                 {
                                     action: {
@@ -496,6 +500,40 @@ module.exports = (sequelize) => {
             return this;
         }
 
+        static giveAdminPermissionToPeople = async ({userIds = [], permissionAdminName = ""}) => {
+            if (!userIds.length) {
+                throw new PermissionCredentialsError("No one user to add the admin permission!", [{
+                    text: "Не выбрано ни одного пользователя, которому можно было бы присвоить право администратора!"
+                }]);
+            } else {
+                const t = await sequelize.transaction();
+                try {
+                    const currenAdminPermission = await this.findOne({
+                        where:  {
+                            name: permissionAdminName
+                        }
+                    }, {transaction: t});
+                    const requiredUsersToGiveAdminPermission = await sequelize.models.user.findAll({
+                        where: {
+                            id: userIds
+                        }
+                    }, {transaction: t});
+                    for (let requiredUser of requiredUsersToGiveAdminPermission) {
+                        if (!(await currenAdminPermission.hasUser(requiredUser, {transaction: t}))) {
+                            await currenAdminPermission.addUser(requiredUser, {transaction: t});
+                        }
+                    }
+                    await t.commit();
+                } catch (e) {
+                    console.log(e);
+                    await t.rollback();
+                    throw new PermissionTransactionError("An error occurred during the transaction!", [{
+                        text: "Не удалось присвоить право администратора выбранным пользователям!"
+                    }]);
+                }
+            }
+        }
+
         static retrievePermissionsByName = async ({userId = 0, permissionName = "%"}) => {
             const currentUserWithFoundPermissions = await sequelize.models.user.findAll({
                 where: {id: userId},
@@ -560,7 +598,7 @@ module.exports = (sequelize) => {
                                                                serverHostname = "%",
                                                                serverIp = "%",
                                                                tagName = "%",
-                                                           }, isFilterServer = false, isFilterTag = false) => {
+                                                           }) => {
             const currentUserWithProjectsPermissions = await sequelize.models.user.findAll({
                 where: {id: userId},
                 include: {
@@ -612,7 +650,7 @@ module.exports = (sequelize) => {
 
                             {
                                 model: sequelize.models.server,
-                                required: isFilterServer,
+                                required: serverHostname !== "%" || serverIp !== "%",
                                 attributes: ["id", "hostname", "ip"],
                                 through: {attributes: []},
                                 where: {
@@ -626,7 +664,7 @@ module.exports = (sequelize) => {
                             },
                             {
                                 model: sequelize.models.tag,
-                                required: isFilterTag,
+                                required: tagName !== "%",
                                 attributes: ["id", "name", "color"],
                                 through: {attributes: []},
                                 where: {
@@ -664,7 +702,9 @@ module.exports = (sequelize) => {
             }
         }
 
+        // TODO добавить потом dashboards
         static retrievePermissionWithItems = async ({permissionId = 0}) => {
+            console.log("QQQ");
             return await this.findOne({
                 where: {id: permissionId},
                 attributes: ["id", "name"],
@@ -723,13 +763,13 @@ module.exports = (sequelize) => {
             }]);
         }
 
-        getSubPermissions = async () => {
-            let res = await this.getLinkedPermissionsRecursive();
+        getChildrenPermissions = async () => {
+            let res = await this.getChildrenPermissionsRecursive();
             res.splice(0, 1);
             return res;
         }
 
-        getLinkedPermissionsRecursive = async () => {
+        getChildrenPermissionsRecursive = async () => {
             let sub = [];
 
             let children = await sequelize.models.permission.findAll({
@@ -741,7 +781,7 @@ module.exports = (sequelize) => {
             if (children.length > 0) {
                 sub.push(this);
                 for (let child of children) {
-                    sub.push(...await child.getLinkedPermissionsRecursive());
+                    sub.push(...await child.getChildrenPermissionsRecursive());
                 }
             } else {
                 sub.push(this);
@@ -749,8 +789,24 @@ module.exports = (sequelize) => {
             return sub;
         };
 
+        getParentPermissions = async () => {
+            let parents = [];
+            let child = this;
+            while (true) {
+                let parent = await child.getPermission();
+                if (parent) {
+                    parents.push(parent);
+                    child = parent;
+                } else {
+                    break;
+                }
+            }
+            return parents;
+        }
+
         deletePermission = async ({cascade = false}) => {
-            if (this.name === "admin") {
+            const adminPermissionRegExpr = /admin.*/;
+            if (adminPermissionRegExpr.test(this.name)) {
                 throw new PermissionCommonError(
                     "You can't delete admin permission",
                     [{
@@ -759,13 +815,28 @@ module.exports = (sequelize) => {
                 );
             }
             if (cascade) {
-                let children = this.getSubPermissions();
+                let children = this.getChildrenPermissions();
                 (await children).forEach(child => {
                     child.destroy();
                 });
+            } else {
+                // connect children of this Permission with its parent
+                let parent = await this.getPermission();
+                // get all children of this permission (1 level below)
+                let children = await sequelize.models.permission.findAll({
+                    where: {
+                        permissionId: this.id
+                    },
+                });
+                console.log(parent);
+                console.log(children);
+                for (let ch of children) {
+                    console.log(ch.permissionId);
+                    await ch.setPermission(parent);
+                    console.log(ch.permissionId);
+                }
+                return this.destroy();
             }
-
-            await this.destroy();
         }
     }
 

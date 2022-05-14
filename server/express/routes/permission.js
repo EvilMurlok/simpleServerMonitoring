@@ -15,11 +15,17 @@ router.post("/permission/update-admin/:projectId/", middlewaresAuth.checkNotAuth
 router.post("/permission/create-custom/:projectId/", middlewaresAuth.checkNotAuthenticated,
     permissionControllers.create_custom_permission);
 
+router.post("/permission/give-admin-permission-to-people/", middlewaresAuth.checkNotAuthenticated,
+    permissionControllers.give_admin_permission_to_people);
+
 router.post("/permission/edit-custom/:permissionId/", middlewaresAuth.checkNotAuthenticated,
     permissionControllers.edit_custom_permission);
 
 router.get("/permission/get-sub/:permissionId/", middlewaresAuth.checkNotAuthenticated,
     permissionControllers.get_sub_permissions);
+
+router.get("/permission/get-parents/:permissionId/", middlewaresAuth.checkNotAuthenticated,
+    permissionControllers.get_parent_permissions);
 
 router.get("/permission/delete-permission/:permissionId/", middlewaresAuth.checkNotAuthenticated,
     permissionControllers.delete_permission);
