@@ -21,9 +21,6 @@ router.post("/permission/edit-custom/:permissionId/", middlewaresAuth.checkNotAu
 router.get("/permission/get-sub/:permissionId/", middlewaresAuth.checkNotAuthenticated,
     permissionControllers.get_sub_permissions);
 
-router.get("/permission/get-parents/:permissionId/", middlewaresAuth.checkNotAuthenticated,
-    permissionControllers.get_parent_permissions);
-
 router.get("/permission/delete-permission/:permissionId/", middlewaresAuth.checkNotAuthenticated,
     permissionControllers.delete_permission);
 

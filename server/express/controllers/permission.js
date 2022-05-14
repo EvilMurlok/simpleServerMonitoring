@@ -287,36 +287,13 @@ const get_sub_permissions = async (req, res) => {
     const permissionId = req.params.permissionId;
     try {
         const permission = await models.permission.findByPk(permissionId);
-        const children = await permission.getChildrenPermissions();
+        const children = await permission.getSubPermissions();
         res.send({
             status: "success",
             messages: [{
                 text: `Вот список дочерних Прав!`
             }],
-            children: children
-        });
-    } catch (e) {
-        res.send({
-            status: "warning",
-            message: e.message,
-            messages: e.messages
-        });
-    }
-}
-
-const get_parent_permissions = async (req, res) => {
-    const permissionId = req.params.permissionId;
-    try {
-        const permission = await models.permission.findByPk(permissionId);
-        console.log(permissionId);
-        console.log(permission);
-        const parents = await permission.getParentPermissions();
-        res.send({
-            status: "success",
-            messages: [{
-                text: `Вот список родительских Прав!`
-            }],
-            permissions: parents
+            permissions: children
         });
     } catch (e) {
         res.send({
@@ -363,6 +340,5 @@ module.exports = {
     retrieve_all_projects_user_permissions,
     retrieve_common_user_permissions,
     get_sub_permissions,
-    get_parent_permissions,
     delete_permission
 }
