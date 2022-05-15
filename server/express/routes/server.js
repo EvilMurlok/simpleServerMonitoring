@@ -13,8 +13,10 @@ router.get('/server/retrieve-user-servers/', middlewaresAuth.checkNotAuthenticat
 router.get('/server/retrieve-servers-by-hostname-ip/', middlewaresAuth.checkNotAuthenticated, serverControllers.retrieve_user_servers_by_hostname_ip);
 router.get('/server/retrieve-available-servers-to-create-tag/', middlewaresAuth.checkNotAuthenticated, serverControllers.retrieve_available_servers_to_create_tag);
 router.get('/server/retrieve-filtered-user-servers/', middlewaresAuth.checkNotAuthenticated, serverControllers.retrieve_filtered_user_servers);
+router.get('/server/retrieve-available-user-servers/', middlewaresAuth.checkNotAuthenticated, serverControllers.retrieve_available_user_servers);
 router.get('/server/retrieve-user-sorted-servers/:sortField/:sortType/', middlewaresAuth.checkNotAuthenticated, serverControllers.retrieve_user_sorted_servers);
-router.get('/server/retrieve-server/:projectId/:serverId/', middlewaresAuth.checkNotAuthenticated, serverControllers.retrieve_server_in_project);
+router.get('/server/retrieve-server-in-project/:projectId/:serverId/', middlewaresAuth.checkNotAuthenticated, serverControllers.retrieve_server_in_project);
+router.get('/server/retrieve-server/:serverId/', middlewaresAuth.checkNotAuthenticated, serverControllers.retrieve_server);
 
 router.post('/server/update-server/:projectId/:serverId/', middlewaresAuth.checkNotAuthenticated, serverControllers.update_server);
 router.post('/server/create-server/', middlewaresAuth.checkNotAuthenticated, serverControllers.create_server);

@@ -97,65 +97,114 @@ const create_custom_permission = async (req, res) => {
     const {masterPermissionId, name, abilityIds, tagIds, serverIds, userIds} = req.body;
     const messages = [];
 
+    if (!name) {
+        messages.push({
+            text: "Необходимо задать имя создаваемому праву!"
+        });
+    }
+
     if (!userIds.length) {
+        messages.push({
+            text: "Выберите пользователей системы, которым Вы хотите присвоить создаваемое право!"
+        });
+    }
+    const abilitiesOfCustomPermission = await models.ability.findAll({
+        where: {id: abilityIds}
+    });
+    const serverAbilities = abilitiesOfCustomPermission.filter(ability => ability.entity === "Server");
+    const tagAbilities = abilitiesOfCustomPermission.filter(ability => ability.entity === "Tag");
+
+    if ((tagIds.length && !(tagAbilities.length)) ||
+        (serverIds.length && !serverAbilities.length)) {
+        messages.push({
+            text: "У тегов, серверов необходимо указать хотя бы одно действие!"
+        });
+    }
+
+    if (serverAbilities.length && !serverIds.length) {
+        if (serverAbilities.length === 1 && serverAbilities[0].action === "Create") {
+            console.log("QQQ");
+        } else {
+            messages.push({
+                text: "Можно указать в качестве действия серверов только 'CREATE' и не указывать никакого инстанса, на остальные действия необходимо указывать инстансы серверов!"
+            });
+        }
+    }
+
+    if (tagAbilities.length && !tagIds.length) {
+        if (tagAbilities.length === 1 && tagAbilities[0].action === "Create") {
+            console.log("QQQ");
+        } else {
+            messages.push({
+                text: "Можно указать в качестве действия тегов только 'CREATE' и не указывать никакого инстанса, на остальные действия необходимо указывать инстансы тегов!"
+            });
+        }
+    }
+
+    if ((
+            tagAbilities.length === 1 &&
+            tagAbilities[0].action === "Create" &&
+            tagIds.length > 0
+        ) ||
+        (
+            serverAbilities.length === 1 &&
+            serverAbilities[0].action === "Create" &&
+            serverIds.length > 0)
+    ) {
+        messages.push({
+            text: "Нельзя выбрать только действие 'CREATE' и выбрать инстансы серверов или тегов!"
+        });
+    }
+
+    const serverActions = serverAbilities.map(serverAbility => serverAbility.action);
+    const tagActions = tagAbilities.map(tagAbility => tagAbility.action);
+
+    if (
+        ((serverActions.includes("Delete") || serverActions.includes("Update")) &&
+            !serverActions.includes("Retrieve")) ||
+        ((tagActions.includes("Delete") || tagActions.includes("Update")) &&
+            !tagActions.includes("Retrieve"))
+    ) {
+        messages.push({
+            text: "Невозможно задать действие 'UPDATE' или 'DELETE' и при этом не указать действие 'RETRIEVE'!"
+        });
+    }
+    if (messages.length) {
         res.send({
             status: "warning",
-            messages: [{text: "Выберите пользователей системы, которым Вы хотите присвоить создаваемое право!"}]
+            messages: messages
         });
     } else {
         try {
-            const abilitiesOfCustomPermission = await models.ability.findAll({
-                where: {id: abilityIds}
+            const currentUser = await models.user.findByPk(currentUserId);
+            const masterPermission = await models.permission.findByPk(masterPermissionId);
+            const currentProject = await models.project.findByPk(projectId);
+            const tagsOfCustomPermission = await models.tag.findAll({
+                where: {id: tagIds}
             });
-            if ((tagIds.length && !(abilitiesOfCustomPermission.filter(ability => ability.entity === "Tag").length)) ||
-                (serverIds.length && !(abilitiesOfCustomPermission.filter(ability => ability.entity === "Server").length))) {
-                res.send({
-                    status: "warning",
-                    messages: [{
-                        text: "У тегов, серверов необходимо указать хотя бы одно действие!"
-                    }]
-                });
-            } else {
-                if ((abilitiesOfCustomPermission.filter(ability => ability.entity === "Tag").length && !tagIds.length) ||
-                    (abilitiesOfCustomPermission.filter(ability => ability.entity === "Server").length && !serverIds.length)) {
-                    res.send({
-                        status: "warning",
-                        messages: [{
-                            text: "Если выбрали действие, то укажите инстансы серверов или тегов, которым применяется действие!"
-                        }]
-                    });
-                } else {
-                    const currentUser = await models.user.findByPk(currentUserId);
-                    const masterPermission = await models.permission.findByPk(masterPermissionId);
-                    const currentProject = await models.project.findByPk(projectId);
-                    const tagsOfCustomPermission = await models.tag.findAll({
-                        where: {id: tagIds}
-                    });
-                    const serversOfCustomPermission = await models.server.findAll({
-                        where: {id: serverIds}
-                    });
-                    const usersOfCustomPermission = await models.user.findAll({
-                        where: {id: userIds}
-                    });
-                    const customPermission = await models.permission.createCustomPermission({
-                        creator: currentUser,
-                        masterPermission: masterPermission,
-                        name: name,
-                        project: currentProject,
-                        abilities: abilitiesOfCustomPermission,
-                        tags: tagsOfCustomPermission,
-                        servers: serversOfCustomPermission,
-                        users: usersOfCustomPermission,
-                    });
-                    res.send({
-                        status: "success",
-                        messages: [{
-                            text: `В проекте ${currentProject.name} успешно создано Право ${customPermission.name}`
-                        }],
-                        permission: customPermission
-                    });
-                }
-            }
+            const serversOfCustomPermission = await models.server.findAll({
+                where: {id: serverIds}
+            });
+            const usersOfCustomPermission = await models.user.findAll({
+                where: {id: userIds}
+            });
+            const customPermission = await models.permission.createCustomPermission({
+                creator: currentUser,
+                masterPermission: masterPermission,
+                name: name,
+                project: currentProject,
+                abilities: abilitiesOfCustomPermission,
+                tags: tagsOfCustomPermission,
+                servers: serversOfCustomPermission,
+                users: usersOfCustomPermission,
+            });
+            res.send({
+                status: "success",
+                messages: [{
+                    text: `В проекте ${currentProject.name} успешно создано Право ${customPermission.name}`
+                }],
+                permission: customPermission
+            });
         } catch (e) {
             res.send({
                 status: "warning",

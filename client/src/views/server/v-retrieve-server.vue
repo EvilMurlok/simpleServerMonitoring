@@ -4,9 +4,9 @@
       <div
           class="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center py-2 text-center text-sm-left">
         <div class="flex-sm-fill">
-          <h2 class="h6 font-w500 text-muted mb-0">
+          <p class="h4 font-w500 mb-0">
             На этой странице можно посмотреть информацию о сервере и изменить её
-          </h2>
+          </p>
         </div>
       </div>
     </div>
@@ -14,87 +14,180 @@
 
     <!-- Page Content -->
     <div class="content">
-      <base-block title="Конфигурация"
-                  rounded
-                  header-bg
-                  content-full
+      <b-row v-if="server.isAbleToDelete === true">
+        <b-col sm="8"></b-col>
+        <b-col sm="4">
+          <div class="d-flex justify-content-end">
+            <b-button type="submit"
+                      variant="alt-danger"
+                      class="mr-1 mb-3"
+                      @click="deleteServer"
+            >
+              <i class="si si-close mr-2"></i> Удалить сервер
+            </b-button>
+          </div>
+        </b-col>
+      </b-row>
+      <b-row class="my-3 m-3"
+             v-if="server.isAbleToUpdate === true"
       >
-        <BaseMessage
-            v-for="item in messages_data.messages"
-            :key="item.text"
-            :message_data="{type: messages_data.type, item: item}"
-        />
+        <b-col sm="1"></b-col>
+        <b-col sm="10">
+          <base-block title="Данные о сервере"
+                      rounded
+                      header-bg
+                      content-full
+          >
+            <BaseMessage
+                v-for="item in messages_data.messages"
+                :key="item.text"
+                :message_data="{type: messages_data.type, item: item}"
+            />
+            <b-form @submit.prevent="updateServer">
+              <div class="py-3">
+                <div class="form-group">
+                  <label class="form-check-label mb-2">DNS сервера</label>
+                  <b-form-input size="lg"
+                                id="hostname"
+                                name="hostname"
+                                placeholder="Hostname"
+                                v-model="server.hostname">
+                  </b-form-input>
+                </div>
+                <div class="form-group">
+                  <label class="form-check-label mb-2">IP адрес</label>
+                  <b-form-input size="lg"
+                                id="ip"
+                                name="ip"
+                                placeholder="ip"
+                                v-model="server.ip">
+                  </b-form-input>
+                </div>
+                <div class="form-group">
+                  <label class="form-check-label mb-2">Время создания</label>
+                  <h2 class="mb-3">
+                    <b-badge variant="primary">{{ new Date(server.created).toLocaleString() }}</b-badge>
+                  </h2>
+                </div>
+                <b-form-checkbox-group
+                    v-model="checkBoxesData.tagIds"
+                    id="tagIds"
+                >
+                  <div class="m-1 d-flex justify-content-between">
+                    <label class="form-check-label mb-2">Теги сервера</label>
+                    <p>Добавить тег данному серверу можно <code @click="addTagToServer(server.id)"
+                                                                style="cursor: pointer">тут</code>
+                    </p>
+                    <b-button variant="alt-info"
+                              class="mr-1"
+                              @click="chooseAll"
+                              v-if="!checkBoxesData.isChosenAll && allTags.length"
+                    >
+                      <i class="si si-check opacity-50 mr-1"></i> Выбрать все
+                    </b-button>
+                    <b-button variant="alt-info"
+                              class="mr-1"
+                              @click="chooseAll"
+                              v-else-if="checkBoxesData.isChosenAll && allTags.length"
+                    >
+                      <i class="si si-close opacity-50 mr-1"></i> Убрать все
+                    </b-button>
+                  </div>
 
-        <b-form @submit.prevent="updateServer">
-          <div class="py-3">
+                  <div class="d-flex flex-wrap"
+                       v-if="allTags.length"
+                  >
+                    <b-form-checkbox v-for="tag in allTags"
+                                     :key="tag.name"
+                                     :value="tag.id"
+                                     class="m-4"
+                    >
+                      <span class="p-1"
+                            :style="{ 'background-color': tag.color,
+                                      'color': '#ffffff',
+                                      'border-radius': '10px',
+                                      'margin': '3px'
+                            }"
+                      >
+                        {{ tag.name }}
+                      </span>
+                    </b-form-checkbox>
+                  </div>
+                  <div v-else>
+                    <p class="font-size-sm">
+                      Команда не добавила ни одного тега.
+                    </p>
+                  </div>
+                </b-form-checkbox-group>
+                <div class="form-group">
+                  <label class="form-check-label mb-2">Проект, к которому принадлежит сервер</label>
+                  <b-form-input size="lg"
+                                class="form-control-alt"
+                                id="projectName"
+                                name="projectName"
+                                aria-describedby="projectName-feedback"
+                                v-model="project.name"
+                                disabled
+                                readonly
+                  >
+                  </b-form-input>
+                </div>
+                <div class="form-group">
+                  <label class="form-check-label mb-2">Чтобы изменить принадлежность сервера проекту, выберите новый
+                    проект снизу
+                  </label>
+                  <b-form-select size="lg"
+                                 v-model="newProjectName"
+                                 :options="projects"
+                  ></b-form-select>
+                </div>
+              </div>
+              <b-button type="submit" variant="alt-info" class="mr-1 mb-3">
+                <i class="si si-refresh mr-2"></i> Обновить данные
+              </b-button>
+            </b-form>
+          </base-block>
+        </b-col>
+        <b-col sm="1"></b-col>
+      </b-row>
+      <b-row class="my-3 m-3"
+             v-else
+      >
+        <b-col sm="3"></b-col>
+        <b-col sm="6">
+          <base-block title="Данные о сервере"
+                      rounded
+                      header-bg
+                      content-full
+          >
             <div class="form-group">
-              <label class="form-check-label mb-2">Название сервера</label>
+              <label class="form-check-label mb-2">DNS сервера</label>
               <b-form-input size="lg"
-                            id="hostname"
-                            name="hostname"
-                            placeholder="Hostname"
-                            v-model="server.hostname">
+                            id="hostnameInfo"
+                            name="hostnameInfo"
+                            v-model="server.hostname"
+                            disabled
+                            readonly
+              >
               </b-form-input>
             </div>
             <div class="form-group">
               <label class="form-check-label mb-2">IP адрес</label>
               <b-form-input size="lg"
-                            id="ip"
-                            name="ip"
-                            placeholder="ip"
-                            v-model="server.ip">
+                            id="ipInfo"
+                            name="ipInfo"
+                            v-model="server.ip"
+                            disabled
+                            readonly
+              >
               </b-form-input>
             </div>
-            <b-form-checkbox-group
-                v-model="checkBoxesData.tagIds"
-                id="tagIds"
-            >
-              <div class="m-1 d-flex justify-content-between">
-                <label class="form-check-label mb-2">Теги сервера</label>
-                <p>Добавить тег данному серверу можно <code @click="addTagToServer(server.id)"
-                                                      style="cursor: pointer">тут</code>
-                </p>
-                <b-button variant="alt-info"
-                          class="mr-1"
-                          @click="chooseAll"
-                          v-if="!checkBoxesData.isChosenAll && allTags.length"
-                >
-                  <i class="si si-check opacity-50 mr-1"></i> Выбрать все
-                </b-button>
-                <b-button variant="alt-info"
-                          class="mr-1"
-                          @click="chooseAll"
-                          v-else-if="checkBoxesData.isChosenAll && allTags.length"
-                >
-                  <i class="si si-close opacity-50 mr-1"></i> Убрать все
-                </b-button>
-              </div>
-
-              <div class="d-flex flex-wrap"
-                   v-if="allTags.length"
-              >
-                <b-form-checkbox v-for="tag in allTags"
-                                 :key="tag.name"
-                                 :value="tag.id"
-                                 class="m-4"
-                >
-                  <span class="p-1"
-                        :style="{ 'background-color': tag.color,
-                                  'color': '#ffffff',
-                                  'border-radius': '10px',
-                                  'margin': '3px'
-                        }"
-                  >
-                    {{ tag.name }}
-                  </span>
-                </b-form-checkbox>
-              </div>
-              <div v-else>
-                <p class="font-size-sm">
-                  Команда не добавила ни одного тега.
-                </p>
-              </div>
-            </b-form-checkbox-group>
+            <div class="form-group">
+              <label class="form-check-label mb-2">Время создания</label>
+              <h2 class="mb-3">
+                <b-badge variant="primary">{{ new Date(server.created).toLocaleString() }}</b-badge>
+              </h2>
+            </div>
             <div class="form-group">
               <label class="form-check-label mb-2">Проект, к которому принадлежит сервер</label>
               <b-form-input size="lg"
@@ -102,30 +195,36 @@
                             id="projectName"
                             name="projectName"
                             aria-describedby="projectName-feedback"
-                            v-model="projectName"
+                            v-model="project.name"
                             disabled
                             readonly
               >
               </b-form-input>
             </div>
-            <div class="form-group">
-              <label class="form-check-label mb-2">Чтобы изменить принадлежность сервера проекту, выберите новый
-                проект снизу</label>
-              <b-form-select size="lg"
-                             v-model="newProjectName"
-                             :options="projects"
-              ></b-form-select>
+            <div class="m-1"
+                 v-if="allTags.length"
+            >
+              <label class="form-check-label mb-2">Теги сервера</label>
+              <div class="d-flex flex-wrap">
+                  <span v-for="tag in allTags"
+                        :key="tag.name"
+                        @click="retrieveTag(tag.id)"
+                        class="mr-4 mb-2 p-2"
+                        :style="{
+                                  'cursor': 'pointer',
+                                  'background-color': tag.color,
+                                  'color': '#ffffff',
+                                  'border-radius': '10px',
+                                }"
+                  >
+                    {{ tag.name }}
+                  </span>
+              </div>
             </div>
-          </div>
-          <b-row class="form-group">
-            <b-col md="6" xl="3">
-              <b-button type="submit" variant="alt-info" class="mr-1 mb-3">
-                <i class="si si-refresh mr-2"></i> Обновить данные
-              </b-button>
-            </b-col>
-          </b-row>
-        </b-form>
-      </base-block>
+          </base-block>
+        </b-col>
+        <b-col sm="3"></b-col>
+      </b-row>
     </div>
   </div>
 </template>
@@ -148,13 +247,17 @@ export default {
         id: 0,
         hostname: "",
         ip: "",
+        created: ""
       },
       checkBoxesData: {
         tagIds: [],
         isChosenAll: false,
       },
       allTags: [],
-      projectName: "",
+      project: {
+        id: 0,
+        name: "",
+      },
       newProjectName: "",
       projects: [{value: "Не выбрано", text: "Не выбрано"}],
     }
@@ -167,53 +270,34 @@ export default {
       this.messages_data = {type: "warning", messages: []};
     }
     this.$http
-        .get("/project/retrieve-all-user-projects/")
+        .get(`/server/retrieve-server/${this.$route.params.serverId}/`)
         .then(res => {
-          if (res.data.status === "warning") {
-            this.$router.push({
-              name: 'retrieveServers',
-              params: {
-                messages_data: {type: res.data.status, messages: res.data.messages}
-              }
-            });
+          if (res.data.isLoggedIn === false) {
+            breakAuth.breakAuth(res);
           } else {
-            for (let project of res.data.userProjects) {
-              this.projects.push({
-                value: project.name,
-                text: project.name
+            if (res.data.status === "warning") {
+              this.$router.push({
+                name: 'retrieveServers',
+                params: {
+                  messages_data: {type: res.data.status, messages: res.data.messages}
+                }
               });
+            } else {
+              this.server = res.data.server;
+              this.project = res.data.project;
+              if (res.data.server.isAbleToUpdate) {
+                this.checkBoxesData.tagIds = res.data.tagsIdsOfServer;
+                for (let projectName of res.data.availableProjectsNames) {
+                  this.projects.push({
+                    value: projectName,
+                    text: projectName
+                  });
+                }
+                this.allTags = res.data.availableTags;
+              } else {
+                this.allTags = res.data.tagsOfServer;
+              }
             }
-            this.$http
-                .get(`/server/retrieve-server/${this.$route.params.projectId}/${this.$route.params.serverId}/`)
-                .then(res => {
-                  if (res.data.status === "warning") {
-                    this.$router.push({
-                      name: 'retrieveServers',
-                      params: {
-                        messages_data: {type: res.data.status, messages: res.data.messages}
-                      }
-                    });
-                  } else {
-                    this.server = res.data.projectServer.servers[0];
-                    this.projectName = res.data.projectServer.name;
-                    this.checkBoxesData.tagIds = res.data.projectServer.servers[0].tags.map(tag => tag.id);
-                    this.$http
-                        .get("/tag/retrieve-all-tags/")
-                        .then(res => {
-                          this.allTags = res.data.tags.sort(function (lhs, rhs) {
-                            if (lhs.name > rhs.name) {
-                              return 1;
-                            } else if (lhs.name < rhs.name) {
-                              return -1;
-                            } else {
-                              return 0
-                            }
-                          });
-                        })
-                        .catch(err => console.error(err));
-                  }
-                })
-                .catch(err => console.error(err));
           }
         })
         .catch(err => console.error(err));
@@ -229,6 +313,15 @@ export default {
       });
     },
 
+    retrieveTag(tagId) {
+      this.$router.push({
+        name: 'retrieveTag',
+        params: {
+          tagId: tagId,
+        }
+      });
+    },
+
     chooseAll() {
       if (this.checkBoxesData.isChosenAll) {
         this.checkBoxesData.tagIds = [];
@@ -240,6 +333,10 @@ export default {
       this.checkBoxesData.isChosenAll = !this.checkBoxesData.isChosenAll;
     },
 
+    deleteServer() {
+      console.log(this.server.id);
+    },
+
     updateServer() {
       if (this.$route.params.messages_data !== undefined) {
         this.messages_data = this.$route.params.messages_data;
@@ -247,7 +344,7 @@ export default {
         this.messages_data = {type: "warning", messages: []};
       }
       this.$http
-          .post(`/server/update-server/${this.$route.params.projectId}/${this.$route.params.serverId}/`, {
+          .post(`/server/update-server/${this.project.id}/${this.server.id}/`, {
             hostname: this.server.hostname,
             ip: this.server.ip,
             newProjectName: this.newProjectName,

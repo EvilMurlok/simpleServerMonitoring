@@ -8,7 +8,8 @@ const router = express.Router();
 router.get("/tag/delete-tag/:tagId/", middlewaresAuth.checkNotAuthenticated, tagControllers.delete_tag);
 router.get("/tag/retrieve-tag/:tagId/", middlewaresAuth.checkNotAuthenticated, tagControllers.retrieveTagById);
 router.get("/tag/retrieve-tags-by-name/", middlewaresAuth.checkNotAuthenticated, tagControllers.retrieve_tags_by_name);
-router.get("/tag/retrieve-all-tags/", middlewaresAuth.checkNotAuthenticated, tagControllers.retrieveAllTags);
+router.get("/tag/retrieve-all-tags/", middlewaresAuth.checkNotAuthenticated, tagControllers.retrieve_all_tags);
+router.get("/tag/retrieve-available-tags/", middlewaresAuth.checkNotAuthenticated, tagControllers.retrieve_available_tags);
 
 router.post("/tag/create-tag/", middlewaresAuth.checkNotAuthenticated, tagControllers.create_tag);
 router.post("/tag/edit-tag/:tagId/", middlewaresAuth.checkNotAuthenticated, tagControllers.edit_tag);

@@ -779,7 +779,7 @@ export default {
 
       if (this.newPermission.newPermissionUsersIds.length) {
         this.$http
-            .post("/permission/give-admin-permission-to-people/", { 
+            .post("/permission/give-admin-permission-to-people/", {
               permissionAdminName: `admin${this.project.name}`,
               userIds: this.newPermission.newPermissionUsersIds
             })
@@ -936,8 +936,12 @@ export default {
         });
       }
 
-      if ((this.newPermission.newPermissionServersActions.includes("Delete") || this.newPermission.newPermissionServersActions.includes("Update")) &&
-          !this.newPermission.newPermissionServersActions.includes("Retrieve")) {
+      if (
+          ((this.newPermission.newPermissionServersActions.includes("Delete") || this.newPermission.newPermissionServersActions.includes("Update")) &&
+              !this.newPermission.newPermissionServersActions.includes("Retrieve")) ||
+          ((this.newPermission.newPermissionTagsActions.includes("Delete") || this.newPermission.newPermissionTagsActions.includes("Update")) &&
+              !this.newPermission.newPermissionTagsActions.includes("Retrieve"))
+      ) {
         messages.push({
           text: "Невозможно задать действие 'UPDATE' или 'DELETE' и при этом не указать действие 'RETRIEVE'!"
         });

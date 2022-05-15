@@ -4,9 +4,9 @@
       <div
           class="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center py-2 text-center text-sm-left">
         <div class="flex-sm-fill">
-          <h2 class="h6 font-w500 text-muted mb-0">
+          <p class="h4 font-w500  mb-0">
             На этой странице можно посмотреть информацию о теге
-          </h2>
+          </p>
         </div>
       </div>
     </div>
@@ -39,7 +39,7 @@
                 <b-form-input size="lg"
                               id="tagNameInfo"
                               name="tagNameInfo"
-                              v-model="tag.name"
+                              v-model="duplicatedTag.name"
                               disabled
                 >
                 </b-form-input>
@@ -49,7 +49,7 @@
                 <div :style="{
                     'width': '100%',
                     'height': '2em',
-                    'background': tag.color,
+                    'background': duplicatedTag.color,
                     'border-radius': '10px',
                   }"
                 >
@@ -129,6 +129,10 @@ export default {
         color: "",
         created: "",
       },
+      duplicatedTag: {
+        color: "",
+        name: ""
+      },
       isAbleToUpdateTag: false,
       isAbleToDeleteTag: false,
     }
@@ -152,6 +156,7 @@ export default {
             });
           } else {
             this.tag = res.data.tagInfo[0];
+            this.duplicatedTag = {color: this.tag.color, name: this.tag.name};
             this.isAbleToUpdateTag = res.data.tagInfo[1];
             this.isAbleToDeleteTag = res.data.tagInfo[2];
           }

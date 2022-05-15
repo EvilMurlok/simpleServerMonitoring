@@ -136,7 +136,7 @@
                                 'height': '2em',
                                 'border': '2px solid green',
                                 'border-radius': '50%',
-                                'text-align': 'center',  /* выравнять текст по середине по горизонтали */
+                                'text-align': 'center',
                                 'background': '#92fba7',
                        }"
                   >
@@ -148,7 +148,7 @@
                                 'height': '2em',
                                 'border': '2px solid red',
                                 'border-radius': '50%',
-                                'text-align': 'center',  /* выравнять текст по середине по горизонтали */
+                                'text-align': 'center',
                                 'background': '#ffb0b0',
                        }"
                   >

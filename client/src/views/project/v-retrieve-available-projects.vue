@@ -76,7 +76,7 @@
               >
                 <i class="fa fa-plus opacity-50 mr-1"></i> Право
               </b-button>
-              <b-button @click="viewProject(project.id, project.isAbleToUpdateProject)"
+              <b-button @click="viewProject(project.id)"
                         size="sm"
                         variant="alt-info"
                         class="mr-3"
@@ -219,13 +219,9 @@ export default {
   },
 
   methods: {
-    viewProject(userProjectId, isAbleToUpdateProject) {
-      console.log(isAbleToUpdateProject);
+    viewProject(userProjectId) {
       this.$router.push({
         path: `/retrieve-project/${userProjectId}/`,
-        query: {
-          isAbleToUpdateProject,
-        }
       });
     },
 
@@ -294,10 +290,10 @@ export default {
       let sortedType = "DESC";
       if (sortedField === "created") {
         sortedType = this.sortData.sortTypeCreated = this.sortData.sortChangeType[this.sortData.sortTypeCreated];
-        [this.sortData.sortTypeName, this.sortData.sortTypeIp, this.sortData.sortTypeHostname] = ["", "", ""];
+        this.sortData.sortTypeName = "";
       } else {
         sortedType = this.sortData.sortTypeName = this.sortData.sortChangeType[this.sortData.sortTypeName];
-        [this.sortData.sortTypeCreated, this.sortData.sortTypeIp, this.sortData.sortTypeHostname] = ["", "", ""];
+        this.sortData.sortTypeCreated = "";
       }
 
       this.userAvailableProjects.sort((lhs, rhs) => {

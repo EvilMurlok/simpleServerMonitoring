@@ -134,7 +134,7 @@ module.exports = (sequelize) => {
             }]);
         }
 
-        static retrieveAvailableUserProjects = async ({userId = 0, projectName = ""}) => {
+        static retrieveAvailableUserProjects = async ({userId = 0, projectName = "%"}) => {
             const currentUserAvailableProjects = await this.findAll({
                 where: {userId: {[Op.ne]: userId}, name: {[Op.iLike]: `%${projectName}%`}},
                 attributes: ["id", "name", "created"],
@@ -259,16 +259,21 @@ module.exports = (sequelize) => {
                         include: {
                             model: sequelize.models.server,
                             required: false,
+                            attributes: ["id", "ip", "hostname", "created"],
                             include: {
                                 model: sequelize.models.tag,
+                                attributes: ["id", "name", "color"],
                                 required: false,
+                                through: {attributes: []}
                             }
                         },
                         where: {userId: userId},
+                        attributes: ["id", "name", "created"],
                         order: [[sortField, sortType]],
                         offset: offset,
                         limit: limit
                     }), (await this.findAll({
+                        attributes: ["id"],
                         where: {userId: userId},
                     })).length
                 ];

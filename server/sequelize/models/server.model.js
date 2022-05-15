@@ -403,17 +403,44 @@ module.exports = (sequelize) => {
                                 }
                             ]
                         },
-                        include: {
-                            model: sequelize.models.tag,
-                            required: tagName !== "%",
-                            attributes: ["id", "name", "color"],
-                            where: {
-                                name: {
-                                    [Op.iLike]: `%${tagName}%`
-                                }
+                        include: [
+                            {
+                                model: sequelize.models.permission,
+                                attributes: ["id"],
+                                through: {attributes: []},
+                                required: true,
+                                include: [
+                                    {
+                                        model: sequelize.models.ability,
+                                        required: true,
+                                        where: {
+                                            entity: "Server",
+                                            action: "Update"
+                                        },
+                                        attributes: ["entity", "action"],
+                                        through: {attributes: []}
+                                    },
+                                    {
+                                        model: sequelize.models.user,
+                                        required: true,
+                                        where: {id: userId},
+                                        attributes: [],
+                                        through: {attributes: []}
+                                    }
+                                ]
                             },
-                            through: {attributes: []}
-                        }
+                            {
+                                model: sequelize.models.tag,
+                                required: tagName !== "%",
+                                attributes: ["id", "name", "color"],
+                                where: {
+                                    name: {
+                                        [Op.iLike]: `%${tagName}%`
+                                    }
+                                },
+                                through: {attributes: []}
+                            }
+                        ],
                     }
                 });
                 if (tempProject) {
@@ -451,28 +478,16 @@ module.exports = (sequelize) => {
                         required: true,
                         attributes: ["id", "hostname", "ip", "created"],
                         where: {
-                            [Op.and]: [
-                                {
-                                    hostname: {
-                                        [Op.iLike]: `%${hostname}%`
-                                    }
-                                },
-                                {
-                                    ip: {
-                                        [Op.iLike]: `%${ip}%`
-                                    }
-                                },
-                                {
-                                    created: {
-                                        [Op.gte]: createdMin
-                                    }
-                                },
-                                {
-                                    created: {
-                                        [Op.lte]: createdMax
-                                    }
-                                }
-                            ]
+                            hostname: {
+                                [Op.iLike]: `%${hostname}%`
+                            },
+                            ip: {
+                                [Op.iLike]: `%${ip}%`
+                            },
+                            created: {
+                                [Op.gte]: createdMin,
+                                [Op.lte]: createdMax
+                            }
                         },
                         include: {
                             model: sequelize.models.tag,
@@ -489,6 +504,157 @@ module.exports = (sequelize) => {
                 },
                 order: [[sequelize.models.project, "name", "DESC"]]
             });
+        }
+
+        static retrieveAvailableUserServers = async ({
+                                                         userId = 0,
+                                                         name = "%",
+                                                         ip = "%",
+                                                         hostname = "%",
+                                                         tagName = "%",
+                                                         createdMin = "1970-01-01T00:00:00.000Z",
+                                                         createdMax = new Date(new Date().setHours(new Date().getHours() + 3)).toISOString()
+                                                     }) => {
+            const availableUserServers = await this.findAll({
+                where: {
+                    hostname: {
+                        [Op.iLike]: `%${hostname}%`
+                    },
+                    ip: {
+                        [Op.iLike]: `%${ip}%`
+                    },
+                    created: {
+                        [Op.gte]: createdMin,
+                        [Op.lte]: createdMax
+                    }
+                },
+                attributes: ["id", "hostname", "ip", "created"],
+                include: [
+                    {
+                        model: sequelize.models.permission,
+                        attributes: ["id"],
+                        through: {attributes: []},
+                        required: true,
+                        include: [
+                            {
+                                model: sequelize.models.project,
+                                attributes: ["id", "name"],
+                                required: true,
+                                where: {
+                                    userId: {
+                                        [Op.ne]: userId
+                                    },
+                                    name: {
+                                        [Op.iLike]: `%${name}%`
+                                    }
+                                }
+                            },
+                            {
+                                model: sequelize.models.ability,
+                                required: true,
+                                where: {
+                                    entity: "Server",
+                                    action: {
+                                        [Op.in]: ["Retrieve", "Update", "Delete"]
+                                    }
+                                },
+                                attributes: ["entity", "action"],
+                                through: {attributes: []}
+                            },
+                            {
+                                model: sequelize.models.user,
+                                required: true,
+                                where: {id: userId},
+                                attributes: [],
+                                through: {attributes: []}
+                            }
+                        ]
+                    },
+                    {
+                        model: sequelize.models.tag,
+                        attributes: ["id", "name", "color"],
+                        required: tagName !== "%",
+                        through: {attributes: []},
+                        include: {
+                            model: sequelize.models.permission,
+                            attributes: ["id"],
+                            through: {attributes: []},
+                            required: true,
+                            include: [
+                                {
+                                    model: sequelize.models.ability,
+                                    required: true,
+                                    where: {
+                                        entity: "Tag",
+                                        action: {
+                                            [Op.in]: ["Retrieve", "Update", "Delete"]
+                                        }
+                                    },
+                                    attributes: ["entity", "action"],
+                                    through: {attributes: []}
+                                },
+                                {
+                                    model: sequelize.models.user,
+                                    required: true,
+                                    where: {id: userId},
+                                    attributes: [],
+                                    through: {attributes: []}
+                                }
+                            ]
+                        }
+                    }
+                ],
+                order: [["hostname", "DESC"]]
+            });
+
+            const availableServers = [];
+            const alreadyAddedServers = [];
+            for (let availableUserServer of availableUserServers) {
+                if (!alreadyAddedServers.includes(availableUserServer.ip)) {
+                    let [isAbleToDelete, isAbleToUpdate] = [false, false];
+                    let projectName = "";
+                    for (let permission of availableUserServer.permissions) {
+                        projectName = permission.project.name;
+                        for (let ability of permission.abilities) {
+                            if (ability.entity === "Server" && ability.action === "Update") {
+                                isAbleToUpdate = true;
+                            }
+                            if (ability.entity === "Server" && ability.action === "Delete") {
+                                isAbleToDelete = true;
+                            }
+                        }
+                    }
+                    const tagsOfServer = [];
+                    for (let tag of availableUserServer.tags) {
+                        tagsOfServer.push({
+                            id: tag.id,
+                            name: tag.name,
+                            color: tag.color
+                        });
+                    }
+                    tagsOfServer.sort((lhs, rhs) => {
+                        if (lhs.name > rhs.name) {
+                            return 1;
+                        } else if (lhs.name < rhs.name) {
+                            return -1;
+                        } else {
+                            return 0;
+                        }
+                    });
+                    availableServers.push({
+                        id: availableUserServer.id,
+                        hostname: availableUserServer.hostname,
+                        ip: availableUserServer.ip,
+                        created: availableUserServer.created,
+                        isAbleToUpdate: isAbleToUpdate,
+                        isAbleToDelete: isAbleToDelete,
+                        tags: tagsOfServer,
+                        projectName: projectName,
+                    });
+                    alreadyAddedServers.push(availableUserServer.ip);
+                }
+            }
+            return availableServers;
         }
 
         static retrieveUserSortedServers = async ({
@@ -533,9 +699,12 @@ module.exports = (sequelize) => {
                     model: sequelize.models.server,
                     required: true,
                     where: {id: serverId},
+                    attributes: ["id", "hostname", "ip", "created"],
                     include: {
                         model: sequelize.models.tag,
                         required: false,
+                        attributes: ["id", "name", "color"],
+                        through: {attributes: []}
                     }
                 },
             });
@@ -544,20 +713,184 @@ module.exports = (sequelize) => {
             }
             throw new ServerNotFoundError("Such server not found!", [{
                 text: "В данном проекте такого сервера не найдено!"
-            }])
+            }]);
+        }
+
+        static retrieveServer = async ({userId = 0, serverId = 0}) => {
+            const currentServer = await this.findOne({
+                where: {id: serverId},
+                attributes: ["id", "hostname", "ip", "created", "projectId"],
+                include: [
+                    {
+                        model: sequelize.models.permission,
+                        attributes: ["id"],
+                        through: {attributes: []},
+                        required: true,
+                        include: [
+                            {
+                                model: sequelize.models.ability,
+                                required: true,
+                                where: {
+                                    entity: "Server",
+                                    action: {
+                                        [Op.in]: ["Retrieve", "Update", "Delete"]
+                                    }
+                                },
+                                attributes: ["entity", "action"],
+                                through: {attributes: []}
+                            },
+                            {
+                                model: sequelize.models.user,
+                                required: true,
+                                where: {id: userId},
+                                attributes: [],
+                                through: {attributes: []}
+                            }
+                        ]
+                    },
+                    {
+                        model: sequelize.models.tag,
+                        attributes: ["id", "name", "color"],
+                        required: false,
+                        through: {attributes: []},
+                        include: {
+                            model: sequelize.models.permission,
+                            attributes: ["id"],
+                            through: {attributes: []},
+                            required: true,
+                            include: [
+                                {
+                                    model: sequelize.models.ability,
+                                    required: true,
+                                    where: {
+                                        entity: "Tag",
+                                        action: {
+                                            [Op.in]: ["Retrieve"]
+                                        }
+                                    },
+                                    attributes: ["entity", "action"],
+                                    through: {attributes: []}
+                                },
+                                {
+                                    model: sequelize.models.user,
+                                    required: true,
+                                    where: {id: userId},
+                                    attributes: [],
+                                    through: {attributes: []}
+                                }
+                            ]
+                        }
+                    }
+                ]
+            });
+            if (currentServer) {
+                const project = await sequelize.models.project.findByPk(currentServer.projectId);
+                let [isAbleToUpdate, isAbleToDelete] = [false, false];
+                for (let permission of currentServer.permissions) {
+                    for (let ability of permission.abilities) {
+                        if (ability.entity === "Server" && ability.action === "Update") {
+                            isAbleToUpdate = true;
+                        }
+                        if (ability.entity === "Server" && ability.action === "Delete") {
+                            isAbleToDelete = true;
+                        }
+                    }
+                }
+                const [availableProjectsNames, availableTags] = [[], []];
+                let [availableProjects, serverTags] = [[], currentServer.tags];
+                if (isAbleToUpdate) {
+                    serverTags = (await this.findOne({
+                       where: {id: serverId},
+                        include: {
+                            model: sequelize.models.tag,
+                            attributes: ["id", "name", "color"],
+                            through: {attributes: []},
+                        }
+                    })).tags;
+                    availableProjects = await sequelize.models.project.findAll({
+                        attributes: ["name"],
+                        include: {
+                            model: sequelize.models.permission,
+                            required: true,
+                            attributes: ["id", "name", "projectId"],
+                            include: [
+                                {
+                                    model: sequelize.models.ability,
+                                    required: true,
+                                    attributes: ["entity", "action"],
+                                    through: {attributes: []}
+                                },
+                                {
+                                    model: sequelize.models.user,
+                                    required: true,
+                                    where: {id: userId},
+                                    attributes: [],
+                                    through: {attributes: []}
+                                }
+                            ]
+                        },
+                        order: [["name", "DESC"]]
+                    });
+                    for (let project of availableProjects) {
+                        if (!availableProjectsNames.includes(project.name)) {
+                            availableProjectsNames.push(project.name);
+                        }
+                    }
+
+                    const tempAvailableTags = await sequelize.models.tag.findAll({
+                        attributes: ["id", "name", "color"],
+                        order: [["name", "ASC"]]
+                    });
+                    const availableTagsIds = [];
+                    for (let tag of tempAvailableTags) {
+                        if (!availableTagsIds.includes(tag.id)) {
+                            availableTagsIds.push(tag.id);
+                            availableTags.push({
+                                id: tag.id,
+                                name: tag.name,
+                                color: tag.color
+                            });
+                        }
+                    }
+                }
+                const tagsOfServer = [];
+                const tagsIdsOfServer = [];
+                for (let tag of serverTags) {
+                    if (!tagsIdsOfServer.includes(tag.id)) {
+                        tagsOfServer.push({
+                            id: tag.id,
+                            name: tag.name,
+                            color: tag.color
+                        });
+                        tagsIdsOfServer.push(tag.id);
+                    }
+                }
+                return [
+                    {
+                        id: currentServer.id,
+                        hostname: currentServer.hostname,
+                        ip: currentServer.ip,
+                        created: currentServer.created,
+                        isAbleToUpdate: isAbleToUpdate,
+                        isAbleToDelete: isAbleToDelete
+                    },
+                    {id: project.id, name: project.name},
+                    availableProjectsNames,
+                    tagsOfServer,
+                    tagsIdsOfServer,
+                    availableTags
+                ];
+            }
+            throw new ServerNotFoundError("Such server not found!", [{
+                text: "Сервера не найден!"
+            }]);
         }
 
         static retrieveProjectServerByHostname = async ({hostname = "", projectId = 0}) => {
             const currentServer = await this.findOne({
                 where: {
-                    [Op.and]: [
-                        {
-                            projectId: projectId
-                        },
-                        {
-                            hostname: hostname
-                        }
-                    ]
+                    projectId: projectId,
+                    hostname: hostname
                 }
             });
             if (currentServer) {
@@ -573,7 +906,7 @@ module.exports = (sequelize) => {
                 where: {
                     id: tagIds
                 }
-            })
+            });
 
             let servers = [];
             for (let tag of tags) {
@@ -608,14 +941,8 @@ module.exports = (sequelize) => {
         static deletionServer = async ({serverId = 0, projectId = 0}) => {
             const currentServer = await this.findOne({
                 where: {
-                    [Op.and]: [
-                        {
-                            id: serverId
-                        },
-                        {
-                            projectId: projectId
-                        }
-                    ]
+                    id: serverId,
+                    projectId: projectId
                 }
             });
             if (currentServer) {

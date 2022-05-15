@@ -260,12 +260,11 @@ export default {
       });
     },
 
-    retrieveServer(serverId, projectId) {
+    retrieveServer(serverId) {
       this.$router.push({
-        path: `/retrieve-server/${projectId}/${serverId}/`,
+        name: 'retrieveServer',
         params: {
-          projectId: projectId,
-          serverId: serverId
+          serverId: serverId,
         }
       });
     },

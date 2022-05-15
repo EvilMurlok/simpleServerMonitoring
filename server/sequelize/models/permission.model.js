@@ -258,7 +258,7 @@ module.exports = (sequelize) => {
                         },
                         {
                             entity: {
-                                [Op.in]: ["Permission", "Tag"]
+                                [Op.in]: ["Permission"]
                             },
                             action: "Retrieve"
                         }
@@ -292,7 +292,7 @@ module.exports = (sequelize) => {
                     [Op.or]: [
                         {
                             entity: {
-                                [Op.in]: ["Dashboard", "Server", "Metric"]
+                                [Op.in]: ["Tag", "Dashboard", "Server", "Metric"]
                             }
                         },
                         {
@@ -311,7 +311,7 @@ module.exports = (sequelize) => {
                             [Op.and]: [
                                 {
                                     entity: {
-                                        [Op.in]: ["Permission", "Tag"]
+                                        [Op.in]: ["Permission"]
                                     }
                                 },
                                 {
@@ -839,6 +839,5 @@ module.exports = (sequelize) => {
             }
         }
     }
-
     return Permission;
 }

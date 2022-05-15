@@ -38,7 +38,7 @@ const edit_tag = async (req, res) => {
             tag: tagToEdit
         });
     } catch (e) {
-        if (e instanceof TagNotUpdatedError){
+        if (e instanceof TagNotUpdatedError) {
             res.send({
                 status: "info",
                 messages: e.messages
@@ -58,14 +58,14 @@ const retrieveTagById = async (req, res) => {
     try {
         const tagInfo = await models.tag.retrieveTag({userId: userId, tagId: tagId});
         res.send({
-           status: "success",
+            status: "success",
             tagInfo: tagInfo
         });
     } catch (e) {
         console.log(e);
         res.send({
-           status: "warning",
-           messages: e.messages
+            status: "warning",
+            messages: e.messages
         });
     }
 }
@@ -77,11 +77,50 @@ const retrieve_tags_by_name = async (req, res) => {
     });
 }
 
-const retrieveAllTags = async (req, res) => {
+const retrieve_all_tags = async (req, res) => {
     res.send({
         status: "success",
         tags: await models.tag.retrieveAllTags()
     });
+}
+
+const retrieve_available_tags = async (req, res) => {
+    const [
+        userId,
+        ip,
+        hostname,
+        tagName,
+        createdMin,
+        createdMax
+    ] = [
+        req.user.id,
+        req.query.ip,
+        req.query.hostname,
+        req.query.tagName,
+        req.query.createdMin,
+        req.query.createdMax
+    ];
+    try {
+        res.send({
+            status: "success",
+            availableTags: await models.tag.retrieveAvailableTags({
+                userId,
+                ip,
+                hostname,
+                tagName,
+                createdMin,
+                createdMax
+            })
+        });
+    } catch (e) {
+        console.log(e);
+        res.send({
+            status: "warning",
+            messages: [{
+                text: "Не удалось получить доступные теги!"
+            }]
+        });
+    }
 }
 
 const setServers = async (req, res) => {
@@ -117,7 +156,7 @@ const delete_tag = async (req, res) => {
         res.send({
             status: "success",
             messages: [{
-               text: "Сервер успешно удален!"
+                text: "Сервер успешно удален!"
             }],
             deletedTagCount: deletedTagCount
         });
@@ -133,7 +172,8 @@ module.exports = {
     create_tag,
     retrieveTagById,
     retrieve_tags_by_name,
-    retrieveAllTags,
+    retrieve_all_tags,
+    retrieve_available_tags,
     edit_tag,
     setServers,
     delete_tag

@@ -88,8 +88,8 @@
                 icon: 'fa fa-server'
               },
               {
-                name: 'Доступные мне (в разработке)',
-                // to: '/retrieve-servers/',
+                name: 'Доступные мне',
+                to: '/retrieve-available-servers/',
                 icon: 'fa fa-server'
               },
 
@@ -101,6 +101,11 @@
                 name: 'Добавить тег',
                 to: `/create-tag/`,
                 icon: 'fa fa-tag'
+              },
+              {
+                name: 'Доступные мне',
+                to: `/retrieve-available-tags/`,
+                icon: 'fa fa-tags'
               },
 
               {

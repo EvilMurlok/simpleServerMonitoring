@@ -241,6 +241,126 @@ module.exports = (sequelize) => {
             return [currentTag, isAbleToUpdateTag, isAbleToDeleteTag];
         }
 
+        static retrieveAvailableTags = async ({
+                                                  userId = 0,
+                                                  tagName = "%",
+                                                  ip = "%",
+                                                  hostname = "%",
+                                                  createdMin = "1970-01-01T00:00:00.000Z",
+                                                  createdMax = new Date(new Date().setHours(new Date().getHours() + 3)).toISOString()
+                                              }) => {
+            const availableTags = await this.findAll({
+                where: {
+                    name: {
+                        [Op.iLike]: `%${tagName}%`
+                    },
+                    created: {
+                        [Op.gte]: createdMin,
+                        [Op.lte]: createdMax
+                    },
+                },
+                attributes: ["id", "name", "color", "created"],
+                include: [
+                    {
+                        model: sequelize.models.permission,
+                        attributes: ["id"],
+                        through: {attributes: []},
+                        required: true,
+                        include: [
+                            {
+                                model: sequelize.models.ability,
+                                required: true,
+                                where: {
+                                    entity: "Tag",
+                                    action: {
+                                        [Op.in]: ["Retrieve", "Update", "Delete"]
+                                    }
+                                },
+                                attributes: ["entity", "action"],
+                                through: {attributes: []}
+                            },
+                            {
+                                model: sequelize.models.user,
+                                required: true,
+                                where: {id: userId},
+                                attributes: [],
+                                through: {attributes: []}
+                            }
+                        ]
+                    },
+                    {
+                        model: sequelize.models.server,
+                        where: {
+                            ip: {
+                                [Op.iLike]: `%${ip}%`
+                            },
+                            hostname: {
+                                [Op.iLike]: `%${hostname}%`
+                            }
+                        },
+                        attributes: ["id", "ip", "hostname"],
+                        through: {attributes: []},
+                        required: hostname !== "%" || ip !== "%",
+                        include: {
+                            model: sequelize.models.permission,
+                            attributes: ["id"],
+                            through: {attributes: []},
+                            required: true,
+                            include: [
+                                {
+                                    model: sequelize.models.ability,
+                                    required: true,
+                                    where: {
+                                        entity: "Server",
+                                        action: "Retrieve"
+                                    },
+                                    attributes: ["entity", "action"],
+                                    through: {attributes: []}
+                                },
+                                {
+                                    model: sequelize.models.user,
+                                    required: true,
+                                    where: {id: userId},
+                                    attributes: [],
+                                    through: {attributes: []}
+                                }
+                            ]
+                        },
+                        order: [["hostname", "ASC"]]
+                    }
+                ],
+                order: [["name", "DESC"]]
+            });
+            const alreadyAddedTags = [];
+            const availableTagsWithActions = [];
+            for (let availableTag of availableTags) {
+                if (!alreadyAddedTags.includes(availableTag.name)) {
+                    let [isAbleToUpdateTag, isAbleToDeleteTag] = [false, false];
+                    for (let permission of availableTag.permissions) {
+                        for (let ability of permission.abilities) {
+                            if (ability.entity === "Tag" && ability.action === "Update") {
+                                isAbleToUpdateTag = true;
+                            }
+                            if (ability.entity === "Tag" && ability.action === "Delete") {
+                                isAbleToDeleteTag = true;
+                            }
+                        }
+                    }
+                    availableTagsWithActions.push({
+                        id: availableTag.id,
+                        name: availableTag.name,
+                        color: availableTag.color,
+                        created: availableTag.created,
+                        servers: availableTag.servers,
+                        isAbleToUpdateTag: isAbleToUpdateTag,
+                        isAbleToDeleteTag: isAbleToDeleteTag
+                    });
+                    alreadyAddedTags.push(availableTag.name);
+                }
+            }
+            return availableTagsWithActions;
+        }
+
         static retrieveTagsByName = async ({tagName = "%"}) => {
             return (await sequelize.models.tag.findAll({
                 where: {
@@ -274,7 +394,7 @@ module.exports = (sequelize) => {
                 return tag;
             }
 
-            return this.create({
+            return await this.create({
                 name: tagName,
                 color: color
             });
@@ -291,11 +411,7 @@ module.exports = (sequelize) => {
 
         static retrieveAllTags = async () => {
             return await Tag.findAll({
-                where: {
-                    deleted: {
-                        [Op.is]: null
-                    }
-                }
+                attributes: ["id", "name", "color"]
             });
         }
 
@@ -354,18 +470,7 @@ module.exports = (sequelize) => {
 
         static deleteTag = async ({tagId = 0}) => {
             const deletedTag = await this.destroy({
-                where: {
-                    [Op.and]: [
-                        {
-                            id: tagId
-                        },
-                        {
-                            deleted: {
-                                [Op.is]: null
-                            }
-                        }
-                    ]
-                }
+                where: {id: tagId}
             });
             if (deletedTag > 0) {
                 return deletedTag;

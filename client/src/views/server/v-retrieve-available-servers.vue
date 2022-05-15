@@ -1,19 +1,13 @@
 <template>
-  <div class="v-show-servers">
+  <div class="v-retrieve-available-servers">
     <div class="content">
       <div
           class="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center py-2 text-center text-sm-left">
         <div class="flex-sm-fill">
-          <h1 class="h3 font-w700 mb-2">Доступные Вам сервера в каждом проекте</h1>
-        </div>
-        <div class="mt-3 mt-sm-0 ml-sm-3">
-          <b-button variant="alt-info" class="mr-1" to="/create-server/" v-click-ripple>
-            <i class="fa fa-plus opacity-50 mr-1"></i> Добавить сервер
-          </b-button>
+          <h1 class="h3 font-w700 mb-2">Доступные Вам серверы согласно имеющимся у Вас правам</h1>
         </div>
       </div>
     </div>
-    <!-- END Hero -->
 
     <div class="content mb-2 mt-3">
       <BaseMessage
@@ -138,20 +132,19 @@
           </b-button>
         </div>
       </b-form>
-    </div>
 
-    <div v-if="userServersAll.length > 0"
-         class="content"
-    >
-      <b-table-simple class="table-vcenter font-size-sm mb-3"
-                      fixed
-                      striped
-                      hover
-                      sticky-header="100%"
+      <div v-if="availableServersAll.length > 0"
+           class="content"
       >
-        <b-thead head-variant="dark">
-          <b-tr>
-            <b-th>
+        <b-table-simple class="table-vcenter font-size-sm mb-3"
+                        fixed
+                        striped
+                        hover
+                        sticky-header="100%"
+        >
+          <b-thead head-variant="dark">
+            <b-tr>
+              <b-th>
               <span class="ml-5"
                     style="cursor: pointer"
                     @click="sortField({sortedField: 'hostname'})"
@@ -164,8 +157,8 @@
                    v-else-if="sortData.sortTypeHostname === 'DESC'">
                 </i>
               </span>
-            </b-th>
-            <b-th>
+              </b-th>
+              <b-th>
               <span class="ml-5"
                     style="cursor: pointer"
                     @click="sortField({sortedField: 'ip'})"
@@ -178,8 +171,8 @@
                    v-else-if="sortData.sortTypeIp === 'DESC'">
                 </i>
               </span>
-            </b-th>
-            <b-th>
+              </b-th>
+              <b-th>
               <span class="ml-2"
                     style="cursor: pointer"
                     @click="sortField({sortedField: 'created'})"
@@ -192,8 +185,8 @@
                    v-else-if="sortData.sortTypeCreated === 'DESC'">
                 </i>
               </span>
-            </b-th>
-            <b-th>
+              </b-th>
+              <b-th>
               <span class="ml-4"
                     style="cursor: pointer"
                     @click="sortField({sortedField: 'projectName'})"
@@ -206,31 +199,31 @@
                    v-else-if="sortData.sortTypeName === 'DESC'">
                 </i>
               </span>
-            </b-th>
-            <b-th>
-              <span class="ml-5">Теги</span>
-            </b-th>
-            <b-th class="text-center">Опции</b-th>
-          </b-tr>
-        </b-thead>
-        <b-tbody v-for="server in userServersPart"
-                 :key="server.id">
-          <b-tr content-full
-                rounded>
-            <b-td>
-              <b class="ml-3">{{ server.hostname }}</b>
-            </b-td>
-            <b-td>
-              <b class="ml-3">{{ server.ip }}</b>
-            </b-td>
-            <b-td class="d-none d-sm-table-cell">
-              <b-badge variant="primary" class="ml-3">{{ new Date(server.created).toLocaleString() }}</b-badge>
-            </b-td>
-            <b-td>
-              <b class="ml-3">{{ server.projectName }}</b>
-            </b-td>
-            <b-td>
-              <div class="d-flex flex-wrap ">
+              </b-th>
+              <b-th>
+                <span class="ml-5">Теги</span>
+              </b-th>
+              <b-th class="text-center">Опции</b-th>
+            </b-tr>
+          </b-thead>
+          <b-tbody v-for="server in availableServersPart"
+                   :key="server.id">
+            <b-tr content-full
+                  rounded>
+              <b-td>
+                <b class="ml-3">{{ server.hostname }}</b>
+              </b-td>
+              <b-td>
+                <b class="ml-3">{{ server.ip }}</b>
+              </b-td>
+              <b-td class="d-none d-sm-table-cell">
+                <b-badge variant="primary" class="ml-3">{{ new Date(server.created).toLocaleString() }}</b-badge>
+              </b-td>
+              <b-td>
+                <b class="ml-3">{{ server.projectName }}</b>
+              </b-td>
+              <b-td>
+                <div class="d-flex flex-wrap ">
                 <span v-for="tag in server.tags"
                       :key="tag.name"
                       class="p-1"
@@ -244,57 +237,59 @@
                 >
                   {{ tag.name }}
                 </span>
-              </div>
-            </b-td>
-            <b-td class="text-right">
-              <b-button @click="retrieveServer(server.serverId)"
-                        size="sm"
-                        variant="alt-info"
-                        class="mr-3"
-              >
-                <i class="fa fa-fw fa-info-circle"></i>
-              </b-button>
-              <b-button @click="deleteServer(server.serverId)"
-                        size="sm"
-                        variant="alt-danger"
-                        class="mr-3"
-              >
-                <i class="fa fa-trash mr-1"></i>
-              </b-button>
-            </b-td>
-          </b-tr>
-        </b-tbody>
-      </b-table-simple>
-      <b-button v-if="pagination.isShowMore === true"
-                class="btn btn-outline-info mt-3 mb-3"
-                @click="showMore(false)"
-                variant="alt-info"
-                block
-      >
-        <i class="fa fa-fw fa-plus m-1"></i> Загрузить ещё
-      </b-button>
-      <div class="d-flex justify-content-between">
-        <ul class="pagination mt-3">
-          <li class="page-item"
-              v-for="number in pagination.pagesNumbers"
-              :key="number"
-          >
-            <a class="page-link" @click="showCurrentPage(number)">{{ number }}</a>
-          </li>
-        </ul>
-        <div>
-          <b-dropdown id="dropdown-1" :text="pagination.chosenVariant" class="m-md-2">
-            <b-dropdown-item v-for="dropdownVariant in pagination.dropdownVariants"
-                             :key="dropdownVariant.text"
-                             @click="changePagination(dropdownVariant)"
+                </div>
+              </b-td>
+              <b-td class="text-right">
+                <b-button @click="retrieveServer(server.id)"
+                          size="sm"
+                          variant="alt-info"
+                          class="mr-3"
+                >
+                  <i class="fa fa-fw fa-info-circle"></i>
+                </b-button>
+                <b-button v-if="server.isAbleToDelete === true"
+                          @click="deleteServer(server.id)"
+                          size="sm"
+                          variant="alt-danger"
+                          class="mr-3"
+                >
+                  <i class="fa fa-trash mr-1"></i>
+                </b-button>
+              </b-td>
+            </b-tr>
+          </b-tbody>
+        </b-table-simple>
+        <b-button v-if="pagination.isShowMore === true"
+                  class="btn btn-outline-info mt-3 mb-3"
+                  @click="showMore(false)"
+                  variant="alt-info"
+                  block
+        >
+          <i class="fa fa-fw fa-plus m-1"></i> Загрузить ещё
+        </b-button>
+        <div class="d-flex justify-content-between">
+          <ul class="pagination mt-3">
+            <li class="page-item"
+                v-for="number in pagination.pagesNumbers"
+                :key="number"
             >
-              {{ dropdownVariant.text }}
-            </b-dropdown-item>
-          </b-dropdown>
+              <a class="page-link" @click="showCurrentPage(number)">{{ number }}</a>
+            </li>
+          </ul>
+          <div>
+            <b-dropdown id="dropdown-1" :text="pagination.chosenVariant" class="m-md-2">
+              <b-dropdown-item v-for="dropdownVariant in pagination.dropdownVariants"
+                               :key="dropdownVariant.text"
+                               @click="changePagination(dropdownVariant)"
+              >
+                {{ dropdownVariant.text }}
+              </b-dropdown-item>
+            </b-dropdown>
+          </div>
         </div>
       </div>
+      <div v-else class="content">По данному фильтру не найдено ни одного доступного сервера!</div>
     </div>
-    <div v-else class="content">По данному фильтру не найдено ни одного сервера!</div>
   </div>
 </template>
 
@@ -303,7 +298,7 @@ import BaseMessage from "@/layouts/partials/BaseMessage";
 import breakAuth from "@/utils/authorization";
 
 export default {
-  name: "v-show-servers",
+  name: "v-retrieve-available-servers",
 
   components: {
     BaseMessage
@@ -314,11 +309,11 @@ export default {
       sortData: {
         sortComparator: {"DESC>": -1, "DESC<": 1, "ASC>": 1, "ASC<": -1},
         sortChangeType: {"DESC": "ASC", "ASC": "DESC", "": "ASC"},
-        sortedField: "name",
+        sortedField: "hostname",
         sortTypeCreated: "",
-        sortTypeHostname: "",
+        sortTypeHostname: "DESC",
         sortTypeIp: "",
-        sortTypeName: "DESC",
+        sortTypeName: "",
       },
       filterData: {
         filterMinCreationDate: "",
@@ -331,8 +326,8 @@ export default {
         filterTag: "",
       },
       messages_data: {type: "warning", messages: []},
-      userServersAll: [],
-      userServersPart: [],
+      availableServersAll: [],
+      availableServersPart: [],
       pagination: {
         dropdownVariants: [
           {text: "Показать 5", limit: 5},
@@ -360,7 +355,7 @@ export default {
       this.messages_data = {type: "warning", messages: []};
     }
     this.$http
-        .get(`/server/retrieve-filtered-user-servers/`, {
+        .get(`/server/retrieve-available-user-servers/`, {
           params: {
             name: (this.$route.query.name === undefined || !this.$route.query.name) ? "%" : this.$route.query.name,
             ip: (this.$route.query.ip === undefined || !this.$route.query.ip) ? "%" : this.$route.query.ip,
@@ -396,45 +391,23 @@ export default {
             this.filterData.filterMinCreationTime = currentMinDateTime.slice(11, 16);
             this.filterData.filterMaxCreationDate = currentMaxDateTime.slice(0, 10);
             this.filterData.filterMaxCreationTime = currentMaxDateTime.slice(11, 16);
-            if (res.data.userServers[0]) {
-              for (let project of res.data.userServers[0].projects) {
-                for (let server of project.servers) {
-                  this.userServersAll.push({
-                    serverId: server.id,
-                    projectId: project.id,
-                    created: server.created,
-                    hostname: server.hostname,
-                    ip: server.ip,
-                    projectName: project.name,
-                    tags: server.tags.sort((lhs, rhs) => {
-                      if (lhs.name > rhs.name) {
-                        return 1;
-                      } else if (lhs.name < rhs.name) {
-                        return -1;
-                      } else {
-                        return 0;
-                      }
-                    })
-                  });
+            this.availableServersAll = res.data.availableServers;
+            this.pagination.dropdownVariants[this.pagination.dropdownVariants.length - 1].limit = this.availableServersAll.length;
+            if (this.availableServersAll.length <= this.pagination.limit) {
+              this.pagination.pagesNumbers = [1,];
+              this.pagination.isShowMore = false;
+            } else {
+              if (this.availableServersAll.length % this.pagination.limit) {
+                for (let i = 1; i <= (this.availableServersAll.length / this.pagination.limit >> 0) + 1; ++i) {
+                  this.pagination.pagesNumbers.push(i);
                 }
-              }
-              this.pagination.dropdownVariants[this.pagination.dropdownVariants.length - 1].limit = this.userServersAll.length;
-              if (this.userServersAll.length <= this.pagination.limit) {
-                this.pagination.pagesNumbers = [1,];
-                this.pagination.isShowMore = false;
               } else {
-                if (this.userServersAll.length % this.pagination.limit) {
-                  for (let i = 1; i <= (this.userServersAll.length / this.pagination.limit >> 0) + 1; ++i) {
-                    this.pagination.pagesNumbers.push(i);
-                  }
-                } else {
-                  for (let i = 1; i <= (this.userServersAll.length / this.pagination.limit >> 0); ++i) {
-                    this.pagination.pagesNumbers.push(i);
-                  }
+                for (let i = 1; i <= (this.availableServersAll.length / this.pagination.limit >> 0); ++i) {
+                  this.pagination.pagesNumbers.push(i);
                 }
               }
-              this.showCurrentPage(1);
             }
+            this.showCurrentPage(1);
           }
         })
         .catch(err => console.error(err));
@@ -471,17 +444,17 @@ export default {
       this.pagination.chosenVariant = dropdownVariant.text;
       this.pagination.limit = dropdownVariant.limit;
       this.pagination.pagesNumbers = [];
-      if (this.userServersAll.length <= this.pagination.limit) {
+      if (this.availableServersAll.length <= this.pagination.limit) {
         this.pagination.pagesNumbers = [1,];
         this.pagination.isShowMore = false;
       } else {
         this.pagination.isShowMore = true;
-        if (this.userServersAll.length % this.pagination.limit) {
-          for (let i = 1; i <= (this.userServersAll.length / this.pagination.limit >> 0) + 1; ++i) {
+        if (this.availableServersAll.length % this.pagination.limit) {
+          for (let i = 1; i <= (this.availableServersAll.length / this.pagination.limit >> 0) + 1; ++i) {
             this.pagination.pagesNumbers.push(i);
           }
         } else {
-          for (let i = 1; i <= (this.userServersAll.length / this.pagination.limit >> 0); ++i) {
+          for (let i = 1; i <= (this.availableServersAll.length / this.pagination.limit >> 0); ++i) {
             this.pagination.pagesNumbers.push(i);
           }
         }
@@ -492,13 +465,13 @@ export default {
     showMore(isStart) {
       this.pagination.isShowedMore = true;
       if (isStart) {
-        this.userServersPart = [];
+        this.availableServersPart = [];
       }
-      this.userServersPart = [...this.userServersPart, ...(this.userServersAll.slice(this.pagination.offset, this.pagination.offset + this.pagination.limit))];
+      this.availableServersPart = [...this.availableServersPart, ...(this.availableServersAll.slice(this.pagination.offset, this.pagination.offset + this.pagination.limit))];
       this.pagination.offset += this.pagination.limit;
-      if (this.pagination.offset >= this.userServersAll.length) {
+      if (this.pagination.offset >= this.availableServersAll.length) {
         this.pagination.isShowMore = false;
-        this.pagination.offset = this.userServersAll.length;
+        this.pagination.offset = this.availableServersAll.length;
       } else {
         this.pagination.isShowMore = true;
       }
@@ -509,7 +482,7 @@ export default {
       this.pagination.currentPage = pageNumber;
       this.pagination.startPageServerIndex = this.pagination.limit * (pageNumber - 1);
       const serverEndIndex = this.pagination.offset = this.pagination.startPageServerIndex + this.pagination.limit;
-      this.userServersPart = this.userServersAll.slice(this.pagination.startPageServerIndex, serverEndIndex);
+      this.availableServersPart = this.availableServersAll.slice(this.pagination.startPageServerIndex, serverEndIndex);
       this.pagination.isShowMore = pageNumber !== this.pagination.pagesNumbers[this.pagination.pagesNumbers.length - 1];
     },
 
@@ -534,7 +507,7 @@ export default {
         minDateString = minDateString.toISOString();
         maxDateString = maxDateString.toISOString();
         this.$router.push({
-          name: "retrieveServers",
+          name: "retrieveAvailableServers",
           query: {
             name: this.filterData.filterProjectName || "",
             hostname: this.filterData.filterHostname || "",
@@ -568,7 +541,7 @@ export default {
         [this.sortData.sortTypeCreated, this.sortData.sortTypeIp, this.sortData.sortTypeHostname] = ["", "", ""];
       }
 
-      this.userServersAll.sort((lhs, rhs) => {
+      this.availableServersAll.sort((lhs, rhs) => {
         if (lhs[this.sortData.sortedField] > rhs[this.sortData.sortedField]) {
           return this.sortData.sortComparator[sortedType + ">"];
         }
@@ -579,11 +552,11 @@ export default {
       });
 
       if (this.pagination.isShowedMore) {
-        this.userServersPart = this.userServersAll.slice(this.pagination.startPageServerIndex, this.pagination.offset);
+        this.availableServersPart = this.availableServersAll.slice(this.pagination.startPageServerIndex, this.pagination.offset);
       } else {
         this.showCurrentPage(this.pagination.currentPage);
       }
     },
-  },
+  }
 }
 </script>

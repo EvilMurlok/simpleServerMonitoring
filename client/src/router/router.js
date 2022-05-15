@@ -19,11 +19,11 @@ import vRetrieveAvailableUserProjects from "@/views/project/v-retrieve-available
 import vCreateServer from "@/views/server/v-create-server";
 import vRetrieveServer from "@/views/server/v-retrieve-server";
 import vRetrieveServers from "@/views/server/v-retrieve-servers";
-
+import vRetrieveAvailableServers from "@/views/server/v-retrieve-available-servers"
 // tags
 import vCreateTag from "@/views/tag/v-create-tag";
 import vRetrieveTag from "@/views/tag/v-retrieve-tag";
-
+import retrieveAvailableTags from "@/views/tag/v-retrieve-available-tags"
 // permissions
 import vRetrieveProjectPermissions from "@/views/permission/v-retrieve-project-permissions";
 import vRetrieveCommonPermissions from "@/views/permission/v-retrieve-common-permissions";
@@ -178,14 +178,28 @@ let router = new Router({
             ]
         },
         {
-            path: '/retrieve-server/:projectId/:serverId/',
+            path: '/retrieve-available-servers/',
             component: LayoutBackend,
             meta: {
                 requiresAuth: true
             },
             children: [
                 {
-                    path: '/retrieve-server/:projectId/:serverId/',
+                    path: '/retrieve-available-servers/',
+                    name: 'retrieveAvailableServers',
+                    component: vRetrieveAvailableServers
+                }
+            ]
+        },
+        {
+            path: '/retrieve-server/:serverId/',
+            component: LayoutBackend,
+            meta: {
+                requiresAuth: true
+            },
+            children: [
+                {
+                    path: '/retrieve-server/:serverId/',
                     name: 'retrieveServer',
                     component: vRetrieveServer
                 }
@@ -221,6 +235,21 @@ let router = new Router({
                 }
             ]
         },
+        {
+            path: '/retrieve-available-tags/',
+            component: LayoutBackend,
+            meta: {
+                requiresAuth: true
+            },
+            children: [
+                {
+                    path: '/retrieve-available-tags/',
+                    name: 'retrieveAvailableTags',
+                    component: retrieveAvailableTags
+                }
+            ]
+        },
+
 
         // permissions
         {

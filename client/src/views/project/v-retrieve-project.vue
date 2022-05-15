@@ -4,9 +4,9 @@
       <div
           class="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center py-2 text-center text-sm-left">
         <div class="flex-sm-fill">
-          <h2 class="h6 font-w500 text-muted mb-0">
+          <p class="h4 font-w500 mb-0">
             На этой странице можно посмотреть информацию о проекте и изменить её
-          </h2>
+          </p>
         </div>
       </div>
     </div>

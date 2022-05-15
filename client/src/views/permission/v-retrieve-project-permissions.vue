@@ -226,13 +226,13 @@
               <b-thead head-variant="dark">
                 <b-tr>
                   <b-th class="text-left col-2">
-                    <span class="ml-5">Сущность</span>
+                    <span class="ml-2">Сущность</span>
                   </b-th>
                   <b-th class="col-3">
-                    <span class="ml-5">Действия</span>
+                    <span>Действия</span>
                   </b-th>
                   <b-th class="col-8">
-                    <span class="ml-4">Единицы сущностей</span>
+                    <span class="ml-2">Единицы сущностей</span>
                   </b-th>
                 </b-tr>
               </b-thead>

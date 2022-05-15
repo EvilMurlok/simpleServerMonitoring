@@ -84,7 +84,7 @@ const retrieve_available_servers_to_create_tag = async (req, res) => {
             createdMax
         });
 
-        let availableProjectsToCreateTag = [];
+        let availableProjectsToCreateTag;
 
         if (userProjectsWithServers[0]) {
             availableProjectsToCreateTag = userProjectsWithServers[0].projects.concat(availableProjectsWithServers);
@@ -137,6 +137,47 @@ const retrieve_filtered_user_servers = async (req, res) => {
             userServers: userServers
         })
     } catch (e) {
+        res.send({
+            status: "warning",
+            messages: e.messages
+        })
+    }
+}
+
+const retrieve_available_user_servers = async (req, res) => {
+    const [
+        userId,
+        name,
+        ip,
+        hostname,
+        tagName,
+        createdMin,
+        createdMax
+    ] = [
+        req.user.id,
+        req.query.name,
+        req.query.ip,
+        req.query.hostname,
+        req.query.tag,
+        req.query.createdMin,
+        req.query.createdMax
+    ];
+    try {
+        const availableServers = await models.server.retrieveAvailableUserServers({
+            userId,
+            name,
+            ip,
+            hostname,
+            tagName,
+            createdMin,
+            createdMax
+        });
+        res.send({
+            status: "success",
+            availableServers: availableServers
+        })
+    } catch (e) {
+        console.log(e);
         res.send({
             status: "warning",
             messages: e.messages
@@ -199,8 +240,36 @@ const retrieve_server_in_project = async (req, res) => {
         res.send({
             status: "success",
             projectServer: projectServer
-        })
+        });
     } catch (e) {
+        res.send({
+            status: "warning",
+            messages: e.messages
+        });
+    }
+}
+
+const retrieve_server = async (req, res) => {
+    const [userId, serverId] = [req.user.id, req.params.serverId];
+    try {
+        const [server,
+            project,
+            availableProjectsNames,
+            tagsOfServer,
+            tagsIdsOfServer,
+            availableTags
+        ] = await models.server.retrieveServer({userId, serverId});
+        res.send({
+            status: "success",
+            server: server,
+            project: project,
+            availableProjectsNames: availableProjectsNames,
+            tagsOfServer: tagsOfServer,
+            tagsIdsOfServer: tagsIdsOfServer,
+            availableTags: availableTags
+        });
+    } catch (e) {
+        console.log(e);
         res.send({
             status: "warning",
             messages: e.messages
@@ -211,12 +280,20 @@ const retrieve_server_in_project = async (req, res) => {
 const update_server = async (req, res) => {
     const [serverId, projectId] = [req.params.serverId, req.params.projectId];
     const {hostname, ip, newProjectName, tagIds} = req.body;
+    console.log(hostname, ip, newProjectName, tagIds);
     let editedServer = "";
     try {
         if (!newProjectName || newProjectName === "Не выбрано") {
             [, editedServer] = await models.server.editServer({projectId, serverId, hostname, ip, tagIds});
         } else {
-            [, editedServer] = await models.server.editServer({projectId, serverId, newProjectName, hostname, ip, tagIds});
+            [, editedServer] = await models.server.editServer({
+                projectId,
+                serverId,
+                newProjectName,
+                hostname,
+                ip,
+                tagIds
+            });
         }
         res.send({
             status: "success",
@@ -270,7 +347,9 @@ module.exports = {
     retrieve_user_servers_by_hostname_ip,
     retrieve_available_servers_to_create_tag,
     retrieve_filtered_user_servers,
+    retrieve_available_user_servers,
     retrieve_user_sorted_servers,
+    retrieve_server,
     retrieve_server_in_project,
     retrieve_server_by_tags,
     update_server,
